@@ -4,6 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nutrition — FitAI</title>
+
+<!-- PWA / Add to Home Screen -->
+<link rel="manifest" href="/fitai/manifest.json">
+<meta name="theme-color" content="#3B82F6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitAI">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/bogdangodluk22-art/FitAI/main/site/app.png">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/fitai/sw.js', { scope: '/fitai/' })
+        .catch(function (err) { console.warn('SW registration failed:', err); });
+    });
+  }
+</script>
 <meta name="description" content="Your AI-generated meal plan, adapted to your training every day.">
 <meta property="og:title" content="Nutrition — FitAI">
 <meta property="og:description" content="Your AI-generated meal plan, adapted to your training every day.">
