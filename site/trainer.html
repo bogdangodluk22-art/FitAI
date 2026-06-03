@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Trainer — FitAI</title>
+<meta name="description" content="Talk to your personal AI coach by voice. Anytime, anywhere.">
+<meta property="og:title" content="AI Trainer — FitAI">
+<meta property="og:description" content="Talk to your personal AI coach by voice. Anytime, anywhere.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/trainer.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Trainer — FitAI">
+<meta name="twitter:description" content="Talk to your personal AI coach by voice. Anytime, anywhere.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://elevenlabs.io/convai-widget/index.js" async></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="i18n.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080C14;
+  --surface:#0F1623;
+  --elevated:#161E2E;
+  --border:#1E293B;
+  --blue:#2563EB;
+  --blue-h:#1D4ED8;
+  --green:#10B981;
+  --amber:#F59E0B;
+  --red:#EF4444;
+  --text:#F8FAFC;
+  --muted:#94A3B8;
+  --dimmed:#475569;
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+  overflow:hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ══════════════════════════════════════
+   NAV
+══════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:64px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,12,20,0.94);
+  backdrop-filter:blur(20px);
+}
+.nav-logo img{height:68px;width:auto;filter:brightness(1.1);transform:scale(1.5);transform-origin:left center;}
+.nav-center{display:flex;align-items:center;gap:4px;}
+.nav-link{
+  background:none;border:none;color:var(--dimmed);
+  font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;
+  padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;
+  text-decoration:none;display:inline-flex;align-items:center;
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-link.active{color:var(--text);background:rgba(37,99,235,0.1);}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
+.nav-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--blue);display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',sans-serif;font-size:15px;color:#fff;font-weight:700;
+}
+/* ── Nav avatar: photo / gradient-initial + dropdown menu (shared) ── */
+.nav-avatar{cursor:pointer;overflow:hidden;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:50%;}
+.nav-avatar.loading{opacity:0.55;pointer-events:none;}
+.nav-avatar-wrap{position:relative;display:inline-flex;}
+.nav-avatar-menu{position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:#0F1623;border:1px solid rgba(255,255,255,0.10);border-radius:12px;padding:6px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.7);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;z-index:600;}
+.nav-avatar-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.nav-avatar-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#F8FAFC;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.nav-avatar-menu button:hover{background:rgba(255,255,255,0.06);}
+.nav-avatar-menu button svg{width:15px;height:15px;flex-shrink:0;opacity:0.85;}
+.nav-avatar-menu button.danger{color:#F87171;}
+.nav-btn{
+  background:none;border:1.5px solid var(--border);color:var(--muted);
+  padding:7px 16px;border-radius:8px;font-family:'Outfit',sans-serif;
+  font-size:13px;cursor:pointer;transition:all 0.2s;
+}
+.nav-btn:hover{border-color:var(--muted);color:var(--text);}
+
+/* ══════════════════════════════════════
+   MAIN LAYOUT — full height below nav
+══════════════════════════════════════ */
+#app{
+  position:relative;z-index:1;
+  padding-top:64px;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ══════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════ */
+#loading-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:flex-end;justify-content:center;gap:20px;
+  transition:opacity 0.5s ease;
+}
+#loading-screen.hidden{opacity:0;pointer-events:none;}
+.loading-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:2px solid var(--border);
+  border-top-color:var(--blue);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:3px;text-transform:uppercase;color:var(--muted);
+}
+
+/* ══════════════════════════════════════
+   DESKTOP LAYOUT — split 40/60
+══════════════════════════════════════ */
+.session-wrap{
+  flex:1;
+  display:grid;
+  grid-template-columns:600px 1fr;
+  height:calc(100vh - 64px);
+  overflow:hidden;
+}
+
+/* ── LEFT: video zone ── */
+.video-zone{
+  position:relative;
+  background:var(--bg);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-right:1px solid var(--border);
+  padding:100px 20px 80px;
+}
+
+/* ── PHONE FRAME (same as landing page) ── */
+.phone-wrap{
+  width:400px;
+  position:relative;
+  flex-shrink:0;
+}
+.phone-img-frame{
+  width:100%;
+  display:block;
+  position:relative;
+  z-index:10;
+  pointer-events:none;
+  filter:drop-shadow(0 40px 80px rgba(0,0,0,.9));
+}
+/* Screen inside phone PNG — calibrated coordinates from landing page */
+.phone-screen-inner{
+  position:absolute;
+  top:3.6%;
+  left:17%;
+  right:17%;
+  bottom:3.7%;
+  border-radius:12%;
+  overflow:hidden;
+  background:#000;
+  z-index:1;
+}
+.trainer-video{
+  width:140%;
+  height:100%;
+  object-fit:cover;
+  object-position:left top;
+  display:block;
+  margin-left:-20%;
+  transition:opacity 0.4s ease;
+}
+/* Shift the in-screen trainer video slightly left — phone frame stays put. Applies to both Alex & Kira. */
+#trainerVideo{ transform:translateX(-14px); }
+
+/* Phone glow — hidden, using status badge only */
+.phone-glow-ring{ display:none; }
+/* Phone bottom glow */
+.phone-bottom-glow{
+  position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);
+  width:120px;height:40px;
+  background:radial-gradient(ellipse,rgba(37,99,235,.25) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* status badge */
+.video-status{
+  position:absolute;bottom:10%;left:50%;transform:translateX(-50%);
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;
+  background:rgba(8,12,20,0.8);backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:20px;
+  padding:5px 14px;color:var(--muted);
+  white-space:nowrap;z-index:20;
+  transition:all 0.3s ease;
+}
+.video-status.listening{color:#60A5FA;border-color:rgba(96,165,250,0.4);background:rgba(37,99,235,0.15);}
+.video-status.speaking{color:var(--green);border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.1);}
+
+/* trainer nameplate below phone */
+.trainer-nameplate{
+  position:absolute;
+  bottom:38px;
+  left:50%;
+  transform:translateX(-50%);
+  text-align:center;
+  z-index:20;
+  white-space:nowrap;
+}
+.trainer-nameplate-name{
+  font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);line-height:1;
+}
+.trainer-nameplate-role{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--blue);margin-top:3px;
+}
+
+/* ── RIGHT: session panel ── */
+.session-panel{
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  background:var(--bg);
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:none;
+}
+.session-panel::-webkit-scrollbar{display:none;}
+
+/* panel header */
+.panel-header{
+  padding:32px 40px 24px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.panel-tag{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--blue);margin-bottom:8px;
+}
+.panel-header-row{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.panel-title{
+  font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--text);line-height:1;
+}
+/* UA Cyrillic fix: Bebas Neue lacks Cyrillic glyphs → swap to Oswald (already loaded). .trainer-nameplate-name shows Alex/Kira (Latin) — Oswald renders Latin fine. */
+html[lang="ua"] .panel-title,
+html[lang="ua"] .trainer-nameplate-name{
+  font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:0;
+}
+.panel-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+/* header action buttons */
+.header-actions{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+#start-btn{
+  background:var(--blue);
+  border:none;border-radius:10px;
+  color:#fff;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;
+  padding:10px 20px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  transition:all 0.2s;
+  box-shadow:0 4px 16px rgba(37,99,235,0.3);
+  white-space:nowrap;
+}
+#start-btn:hover{background:var(--blue-h);box-shadow:0 4px 24px rgba(37,99,235,0.5);transform:translateY(-1px);}
+#start-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.start-btn-icon{font-size:16px;}
+
+/* end session */
+#end-btn{
+  background:none;border:1.5px solid var(--border);color:var(--muted);
+  padding:10px 18px;border-radius:10px;
+  font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;
+  transition:all 0.2s;display:none;
+  white-space:nowrap;
+}
+#end-btn:hover{border-color:var(--red);color:var(--red);}
+#end-btn.show{display:block;}
+
+/* user profile summary */
+.profile-summary{
+  display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;
+}
+.profile-chip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.profile-chip-label{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--dimmed);
+}
+.profile-chip-val{font-size:13px;font-weight:600;color:var(--text);}
+
+/* today's workout summary */
+.today-plan{
+  padding:24px 40px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.today-plan-title{
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+}
+/* exercise rows — dashboard style */
+.ex-row{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(30,41,59,0.5);
+  transition:background 0.18s;
+}
+.ex-row:last-child{border-bottom:none;}
+.ex-row:hover{background:rgba(37,99,235,0.05);}
+.ex-row-num{
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  color:var(--dimmed);width:22px;flex-shrink:0;text-align:right;
+}
+.ex-row-info{flex:1;min-width:0;}
+.ex-row-name{
+  font-size:15px;font-weight:600;color:var(--text);
+  margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ex-row-tags{display:flex;gap:6px;}
+.ex-tag{
+  font-size:11px;font-family:'JetBrains Mono',monospace;
+  padding:3px 8px;border-radius:6px;
+  background:rgba(30,41,59,0.8);color:var(--muted);border:1px solid var(--border);
+}
+.ex-tag.sets{color:#60a5fa;border-color:rgba(37,99,235,0.25);background:rgba(37,99,235,0.06);}
+.ex-tag.rest{color:var(--amber);border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.06);}
+.ex-row-thumb{
+  width:60px;height:60px;border-radius:10px;overflow:hidden;
+  flex-shrink:0;background:var(--elevated);border:1px solid var(--border);
+}
+.ex-row-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+.ex-row-thumb-placeholder{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+
+/* widget area — kept for spacing reference */
+.widget-area{ display:none; }
+
+/* ElevenLabs widget container — FIXED, outside scroll */
+#widget-wrap{
+  position:fixed;
+  bottom:32px;
+  right:40px;
+  z-index:9999;
+  width:320px;
+  display:none;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:12px;
+}
+#widget-wrap.show{display:flex;}
+
+.widget-status-text{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  text-align:center;
+}
+
+/* tips */
+.session-tips{
+  padding:24px 40px 24px;
+  flex-shrink:0;
+  margin-top:auto; /* pin tips to bottom so the panel reads balanced even with no plan loaded */
+  border-top:1px solid var(--border);
+}
+.tips-title{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--dimmed);margin-bottom:10px;
+}
+.tips-list{display:flex;flex-direction:column;gap:6px;}
+.tip{font-size:12px;color:var(--dimmed);display:flex;align-items:center;gap:8px;}
+.tip::before{content:'›';color:var(--blue);font-size:14px;flex-shrink:0;}
+
+/* Quick-tips toggle ("?" icon) — mobile only */
+.tips-toggle{display:none;}
+
+/* ══════════════════════════════════════
+   MOBILE LAYOUT ≤768px
+   — fullscreen video + overlay
+══════════════════════════════════════ */
+@media(max-width:768px){
+  /* let the page scroll if content overflows; only lock horizontal */
+  html,body{overflow-x:hidden;overflow-y:auto;}
+
+  /* hide the standard navbar for a full-screen, FaceTime-style experience */
+  nav{display:none;}
+
+  /* stage = simple full-viewport, no fixed height that clips */
+  #app{padding-top:0;height:auto;min-height:100dvh;display:block;}
+  .session-wrap{display:block;height:auto;overflow:visible;position:relative;}
+
+  /* ── VIDEO — true fullscreen, edge to edge, no frame, no crop tricks ── */
+  .video-zone{
+    position:fixed;inset:0;width:100%;height:100dvh;
+    z-index:0;padding:0;border:none;background:#000;
+    align-items:stretch;justify-content:stretch;
+  }
+  .phone-wrap{position:absolute;inset:0;width:100%;height:100%;}
+  .phone-img-frame,.phone-glow-ring,.phone-bottom-glow,.trainer-nameplate{display:none;}
+  .phone-screen-inner{
+    position:absolute;inset:0;top:0;left:0;right:0;bottom:0;
+    border-radius:0;overflow:hidden;background:#000;z-index:0;
+  }
+  #trainerVideo{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center;transform:none;margin:0;
+  }
+
+  /* cinematic vignette — darken top & bottom so overlays stay legible */
+  .video-zone::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:1;
+    background:linear-gradient(to bottom,
+      rgba(5,7,13,0.55) 0%, transparent 20%, transparent 50%, rgba(5,7,13,0.9) 100%);
+  }
+
+  /* ── TOP: thin floating status bar ── */
+  .mobile-status-bar{
+    display:flex;
+    position:fixed;top:0;left:0;right:0;z-index:30;
+    padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 16px;
+    background:linear-gradient(to bottom,rgba(5,7,13,0.7) 0%,transparent 100%);
+    border:none;
+    align-items:center;justify-content:space-between;
+  }
+  .mobile-trainer-info{display:flex;align-items:center;gap:10px;}
+  .mobile-back{
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(8,12,20,0.5);border:1px solid rgba(255,255,255,0.14);
+    color:#fff;text-decoration:none;backdrop-filter:blur(10px);
+  }
+  .mobile-back svg{width:18px;height:18px;}
+  .mobile-trainer-dot{
+    width:8px;height:8px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 10px rgba(16,185,129,0.85);
+    animation:dot-pulse 2s ease-in-out infinite;
+  }
+  @keyframes dot-pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .mobile-trainer-name{font-size:16px;font-weight:600;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
+  .mobile-session-badge{
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;
+    text-transform:uppercase;color:#cfe0ff;
+    background:rgba(37,99,235,0.18);border:1px solid rgba(96,165,250,0.35);
+    border-radius:20px;padding:5px 11px;backdrop-filter:blur(10px);
+  }
+
+  /* live state pill (Waiting / Listening / Speaking) — aligned with the top status row */
+  .video-status{
+    position:fixed;top:calc(env(safe-area-inset-top,0px) + 19px);bottom:auto;left:50%;
+    transform:translateX(-50%);z-index:35;
+    background:rgba(5,7,13,0.5);backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);
+  }
+
+  /* ── BOTTOM: floating overlay, gradient fade transparent → dark ── */
+  .session-panel{
+    position:fixed;left:0;right:0;bottom:0;top:auto;
+    z-index:20;border:none;border-radius:0;backdrop-filter:none;
+    background:linear-gradient(to bottom,transparent 0%,rgba(5,7,13,0.55) 28%,rgba(5,7,13,0.96) 100%);
+    max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:64px 18px calc(env(safe-area-inset-bottom,0px) + 22px);
+    display:flex;flex-direction:column;
+    animation:none;
+  }
+  .session-panel::-webkit-scrollbar{display:none;}
+
+  /* header: drop eyebrow/title/sub, keep chips + button */
+  .panel-header{padding:0;border:none;display:flex;flex-direction:column;gap:14px;}
+  .panel-tag{display:none;}
+  .panel-header-row{display:block;}
+  .panel-header-row .panel-title,.panel-header-row .panel-sub{display:none;}
+  .header-actions{display:flex;flex-direction:column;gap:10px;width:100%;}
+
+  /* chips float ABOVE the button — small & subtle */
+  .profile-summary{order:-1;margin:0;gap:8px;justify-content:center;}
+  .profile-chip{
+    flex-direction:row;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);
+    border-radius:20px;padding:6px 12px;backdrop-filter:blur(8px);
+  }
+  .profile-chip-label{color:rgba(255,255,255,0.5);}
+  .profile-chip-val{color:#fff;font-size:12px;}
+
+  /* premium "Start Session" button — large, centered */
+  #start-btn{
+    width:100%;justify-content:center;
+    padding:17px;border-radius:16px;font-size:16px;font-weight:700;
+    background:linear-gradient(180deg,#2A7CE6,#1D4ED8);
+    border:1px solid rgba(255,255,255,0.18);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),0 14px 40px -12px rgba(37,99,235,0.85);
+  }
+  .start-btn-icon{font-size:18px;}
+  #end-btn{width:100%;text-align:center;padding:15px;border-radius:14px;}
+  #end-btn.show{display:block;}
+
+  /* today's workout stays hidden on mobile */
+  .today-plan{display:none;}
+
+  /* "?" toggle for Quick Tips */
+  .tips-toggle{
+    display:flex;align-items:center;justify-content:center;
+    position:absolute;top:18px;right:18px;z-index:3;
+    width:30px;height:30px;border-radius:50%;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+    color:rgba(255,255,255,0.85);font-size:14px;font-weight:700;cursor:pointer;
+    backdrop-filter:blur(8px);
+  }
+
+  /* Quick Tips — hidden by default; revealed via "?" (or by scrolling the panel) */
+  .session-tips{
+    border:none;margin-top:0;padding:0 2px;
+    max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .35s ease,opacity .3s ease,margin .3s ease,padding .3s ease;
+  }
+  .session-panel.tips-open .session-tips{
+    max-height:260px;opacity:1;margin-top:16px;padding:14px 2px 2px;
+    border-top:1px solid rgba(255,255,255,0.1);
+  }
+  .tips-title{color:rgba(255,255,255,0.55);}
+  .tip{color:rgba(255,255,255,0.72);}
+
+  /* ElevenLabs widget — bottom, full-width-ish, over the gradient */
+  #widget-wrap{
+    left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+    width:auto;align-items:center;
+  }
+  .widget-status-text{color:rgba(255,255,255,0.72);}
+}
+@media(min-width:769px){
+  .mobile-status-bar{display:none;}
+}
+
+/* ══════════════════════════════════════
+   ELEVENLABS WIDGET OVERRIDE
+══════════════════════════════════════ */
+elevenlabs-convai{
+  --el-color-primary: #3b82f6;
+  --el-color-primary-hover: #2563eb;
+  --el-color-background: #0d1117;
+  --el-color-surface: #111827;
+  --el-color-text: #ffffff;
+  --el-color-text-subtle: #6b7280;
+  --el-color-border: #1f2937;
+  --el-border-radius-button: 18px;
+  --el-border-radius-bubble: 15px;
+  --el-border-radius-sheet: 24px;
+  width:100%;
+  display:block;
+}
+
+/* ══════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════ */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.session-panel{animation:fadeIn 0.5s 0.2s cubic-bezier(0.22,1,0.36,1) both;}
+.tablet-outer{animation:fadeIn 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both;}
+/* ── PREMIUM PAYWALL + UPGRADE PILL ── */
+.nav-upgrade{display:none;align-items:center;gap:5px;text-decoration:none;background:linear-gradient(135deg,#2A7CE6,#1D4ED8);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:7px 15px;border-radius:9px;border:1px solid rgba(255,255,255,0.16);box-shadow:0 4px 14px -4px rgba(37,99,235,0.6);transition:all 0.2s;}
+.nav-upgrade:hover{transform:translateY(-1px);box-shadow:0 8px 22px -5px rgba(37,99,235,0.75);}
+.nav-upgrade span{font-size:13px;line-height:1;}
+.pw-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,7,13,0.72);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity 0.25s;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pw-overlay.open{opacity:1;pointer-events:auto;}
+.pw-modal{position:relative;width:100%;max-width:420px;background:radial-gradient(120% 70% at 100% 0%,rgba(37,99,235,0.14),transparent 58%),linear-gradient(180deg,rgba(37,99,235,0.06),var(--surface) 42%);border:1px solid rgba(37,99,235,0.3);border-radius:20px;padding:32px 28px 26px;box-shadow:0 0 0 1px rgba(37,99,235,0.06),0 40px 100px -30px rgba(0,0,0,0.8);transform:translateY(12px) scale(0.98);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);text-align:center;}
+.pw-overlay.open .pw-modal{transform:none;}
+.pw-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue) 28%,var(--green) 72%,transparent);}
+.pw-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.pw-close:hover{color:var(--text);border-color:var(--muted);}
+.pw-close svg{width:14px;height:14px;}
+.pw-badge{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#7FB2F2;margin-bottom:14px;}
+.pw-badge svg{width:13px;height:13px;}
+.pw-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text);line-height:1.1;margin-bottom:10px;}
+.pw-line{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:24px;}
+.pw-cta{display:block;width:100%;padding:14px;border-radius:12px;background:linear-gradient(180deg,#2A7CE6,var(--blue));color:#fff;border:1px solid rgba(255,255,255,0.16);font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all 0.2s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),0 10px 30px -12px rgba(37,99,235,0.6);}
+.pw-cta:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 16px 40px -12px rgba(37,99,235,0.75);}
+.pw-skip{display:block;width:100%;margin-top:10px;background:none;border:none;color:var(--muted);font-family:'Outfit',sans-serif;font-size:12.5px;cursor:pointer;opacity:0.8;}
+.pw-skip:hover{opacity:1;}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="dashboard.html" class="nav-logo" style="text-decoration:none;">
+    <img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span style="display:none;font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);">FIT<span style="color:var(--blue)">AI</span></span>
+  </a>
+  <div class="nav-center">
+    <a href="dashboard.html" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+    <a href="library.html" class="nav-link" data-i18n="nav.library">Library</a>
+    <a href="nutrition.html" class="nav-link" data-i18n="nav.nutrition">🥗 Nutrition</a>
+    <a href="progress.html" class="nav-link" data-i18n="nav.progress">📸 Progress</a>
+    <a href="trainer.html" class="nav-link active" data-i18n="nav.trainer">🎙 AI Trainer</a>
+    <a href="referral.html" class="nav-link" data-i18n="nav.invite">🎁 Invite</a>
+  </div>
+  <div class="nav-right">
+    <a href="pricing.html" class="nav-upgrade" id="navUpgrade" data-i18n-html="nav.upgrade">Upgrade <span>⚡</span></a>
+    <div class="nav-user">
+      <div class="nav-avatar" id="navInitials">—</div>
+      <span id="navName" style="font-size:14px;color:var(--muted);" data-i18n="trainer.nav_loading">Loading...</span>
+    </div>
+    <button class="nav-btn" onclick="signOut()" data-i18n="nav.signout">Sign out</button>
+  </div>
+</nav>
+
+<!-- MOBILE STATUS BAR -->
+<div class="mobile-status-bar">
+  <div class="mobile-trainer-info">
+    <a class="mobile-back" href="dashboard.html" aria-label="Back to dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div class="mobile-trainer-dot"></div>
+    <span class="mobile-trainer-name" id="mobileTrainerName">Alex</span>
+  </div>
+  <div class="mobile-session-badge" data-i18n="trainer.mobile_badge">AI SESSION</div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" data-i18n="trainer.loading">Loading your session...</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="session-wrap">
+
+    <!-- LEFT: VIDEO ZONE -->
+    <div class="video-zone">
+      <div class="phone-wrap">
+        <!-- Phone frame image on top (same as landing) -->
+        <img class="phone-img-frame"
+             src="https://builtwithai.pro/fitai/media/phone.png"
+             alt="Phone frame">
+        <!-- Glow ring (speaking state) -->
+        <div class="phone-glow-ring" id="phoneGlowRing"></div>
+        <!-- Screen content underneath -->
+        <div class="phone-screen-inner">
+          <video id="trainerVideo" autoplay loop muted playsinline>
+            <source id="videoSrc" src="" type="video/mp4">
+          </video>
+        </div>
+        <div class="phone-bottom-glow"></div>
+      </div>
+
+      <!-- status badge over video -->
+      <div class="video-status" id="videoStatus" data-i18n="trainer.status_waiting">● Waiting</div>
+    </div>
+
+    <!-- RIGHT: SESSION PANEL -->
+    <div class="session-panel">
+
+      <!-- mobile-only: reveal Quick Tips -->
+      <button class="tips-toggle" onclick="toggleTips()" aria-label="Quick tips">?</button>
+
+      <div class="panel-header">
+        <div class="panel-tag" data-i18n="trainer.panel_tag">AI Trainer Session</div>
+        <div class="panel-header-row">
+          <div>
+            <div class="panel-title" id="panelTitle">Session with Alex</div>
+            <div class="panel-sub" id="panelSub">Your personal AI coach is ready</div>
+          </div>
+          <div class="header-actions">
+            <button id="start-btn" onclick="startSession()" disabled>
+              <span class="start-btn-icon">🎙</span>
+              Start Session
+            </button>
+            <button id="end-btn" onclick="endSession()" data-i18n="trainer.end_session">End Session</button>
+          </div>
+        </div>
+
+        <div class="profile-summary" id="profileSummary">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="today-plan" id="todayPlan">
+        <div class="today-plan-title" data-i18n="trainer.today_workout">Today's Workout</div>
+        <div id="todayExercises">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="session-tips" id="sessionTips">
+        <div class="tips-title" data-i18n="trainer.tips_title">Quick Tips</div>
+        <div class="tips-list">
+          <div class="tip" data-i18n="trainer.tip1">Speak naturally — ask about form, swaps, or motivation</div>
+          <div class="tip" data-i18n="trainer.tip2">Alex knows your plan and fitness level</div>
+          <div class="tip" data-i18n="trainer.tip3">Say "too easy" or "my knee hurts" — Alex will adapt</div>
+        </div>
+      </div>
+
+    </div><!-- /session-panel -->
+  </div><!-- /session-wrap -->
+</div><!-- /app -->
+
+<!-- FIXED ELEVENLABS WIDGET — outside scroll container -->
+<div id="widget-wrap">
+  <div class="widget-status-text" id="widgetStatusText" data-i18n="trainer.ws_active">Session active — speak naturally</div>
+  <elevenlabs-convai id="elWidget"></elevenlabs-convai>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════════════════════════
+//  NAV AVATAR — photo upload + gradient-initial fallback (shared block)
+//  Storage: fitai-users/avatars/{user_id} → profiles.avatar_url
+//  (this page's avatar element id is 'navInitials')
+// ════════════════════════════════════════════════════════════════
+const FitAIAvatar = (() => {
+  const AV_BUCKET = 'fitai-users';
+  const GRADIENTS = [
+    'linear-gradient(135deg,#2563EB,#7C3AED)',
+    'linear-gradient(135deg,#10B981,#0EA5E9)',
+    'linear-gradient(135deg,#F59E0B,#EF4444)',
+    'linear-gradient(135deg,#EC4899,#8B5CF6)',
+    'linear-gradient(135deg,#06B6D4,#3B82F6)',
+    'linear-gradient(135deg,#8B5CF6,#EC4899)',
+    'linear-gradient(135deg,#22C55E,#15803D)',
+    'linear-gradient(135deg,#F43F5E,#FB923C)'
+  ];
+  const cfg = { elId:'navAvatar', uid:null, token:null, name:'', avatarUrl:null };
+  let menuEl = null, fileEl = null, wrapEl = null, wired = false;
+
+  const el = () => document.getElementById(cfg.elId);
+  const letterFor = n => { const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; };
+  function gradientFor(seed){
+    const s = (seed||'?').toString().toUpperCase();
+    let h = 0; for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return GRADIENTS[h % GRADIENTS.length];
+  }
+
+  function render(){
+    const a = el(); if (!a) return;
+    if (cfg.avatarUrl){
+      a.style.background = 'none';
+      const grad = gradientFor(cfg.name || cfg.uid), ltr = letterFor(cfg.name);
+      a.innerHTML = '<img src="'+cfg.avatarUrl+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';">';
+    } else {
+      a.style.background = gradientFor(cfg.name || cfg.uid);
+      a.textContent = letterFor(cfg.name);
+    }
+    if (menuEl){
+      const rm = menuEl.querySelector('[data-act=remove]');
+      if (rm) rm.style.display = cfg.avatarUrl ? '' : 'none';
+    }
+  }
+
+  function buildMenu(){
+    const a = el(); if (!a || wired) return;
+    wrapEl = document.createElement('div');
+    wrapEl.className = 'nav-avatar-wrap';
+    a.parentNode.insertBefore(wrapEl, a);
+    wrapEl.appendChild(a);
+
+    menuEl = document.createElement('div');
+    menuEl.className = 'nav-avatar-menu';
+    menuEl.innerHTML =
+      '<button data-act="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' + FitAILang.t('nav.upload_photo') + '</button>' +
+      '<button data-act="remove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' + FitAILang.t('nav.remove_photo') + '</button>' +
+      '<div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 6px;"></div>' +
+      '<button data-act="signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' + FitAILang.t('nav.signout') + '</button>';
+    wrapEl.appendChild(menuEl);
+
+    fileEl = document.createElement('input');
+    fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+    wrapEl.appendChild(fileEl);
+
+    a.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.toggle('open'); });
+    document.addEventListener('click', () => menuEl.classList.remove('open'));
+    menuEl.querySelector('[data-act=upload]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); fileEl.click(); });
+    menuEl.querySelector('[data-act=remove]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); removePhoto(); });
+    const _so = menuEl.querySelector('[data-act=signout]');
+    if (_so) _so.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); if (typeof signOut === 'function') signOut(); });
+    fileEl.addEventListener('change', onFile);
+    wired = true;
+  }
+
+  async function onFile(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !cfg.uid || !cfg.token) return;
+    if (!file.type.startsWith('image/')) { alert(FitAILang.t('av.err_image')); return; }
+    if (file.size > 5*1024*1024) { alert(FitAILang.t('av.err_too_large')); return; }
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const path = 'avatars/' + cfg.uid;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/' + AV_BUCKET + '/' + path, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':file.type, 'x-upsert':'true' },
+        body:file
+      });
+      if (!up.ok) throw new Error('Storage upload failed ('+up.status+')');
+      const publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + AV_BUCKET + '/' + path + '?t=' + Date.now();
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: publicUrl })
+      });
+      if (!pr.ok) throw new Error('Saving avatar failed ('+pr.status+')');
+      cfg.avatarUrl = publicUrl;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = publicUrl;
+      render();
+    } catch(err){
+      alert(err.message || FitAILang.t('av.err_upload'));
+    } finally {
+      if (a) a.classList.remove('loading');
+    }
+  }
+
+  async function removePhoto(){
+    if (!cfg.uid || !cfg.token) return;
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: null })
+      });
+      if (!pr.ok) throw new Error('Could not remove photo ('+pr.status+')');
+      cfg.avatarUrl = null;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = null;
+      render();
+    } catch(err){ alert(err.message || FitAILang.t('av.err_remove')); }
+    finally { if (a) a.classList.remove('loading'); }
+  }
+
+  function init(opts){
+    cfg.elId      = opts.elId || 'navAvatar';
+    cfg.uid       = opts.uid || null;
+    cfg.token     = opts.token || null;
+    cfg.name      = opts.name || '';
+    cfg.avatarUrl = opts.avatarUrl || null;
+    buildMenu();
+    render();
+  }
+  return { init, render };
+})();
+
+// ── PREMIUM GATING ──
+let currentProfile = null;
+let avToken = null;
+function isPremium(){ return !!(currentProfile && currentProfile.plan === 'premium'); }
+function showPaywall(title, line){
+  document.getElementById('pwTitle').textContent = title;
+  document.getElementById('pwLine').textContent = line;
+  document.getElementById('paywallOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePaywall(){
+  document.getElementById('paywallOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function refreshUpgradePill(){
+  const up = document.getElementById('navUpgrade');
+  if (up) up.style.display = isPremium() ? 'none' : 'inline-flex';
+}
+
+
+const VIDEO_BASE = 'https://builtwithai.pro/fitai/media/videos/';
+// Canonical name→slug map — kept in sync with exercises_insert.sql / dashboard.html, so each NAME
+// maps to the slug whose `${slug}-male.mp4` clip actually exists on the server.
+const EXERCISE_SLUGS = {
+  'Bench Press':'bench-press','Incline Dumbbell Press':'incline-dumbbell-press',
+  'Decline Bench Press':'decline-bench-press','Cable Flyes':'cable-flyes',
+  'Chest Dips':'chest-dips','Pec Deck Machine':'pec-deck',
+  'Barbell Row':'barbell-row','Pull-ups':'pull-ups','Lat Pulldown':'lat-pulldown',
+  'Seated Cable Row':'seated-cable-row','T-Bar Row':'t-bar-row','Face Pulls':'face-pulls',
+  'Single-Arm Dumbbell Row':'single-arm-row','Deadlift':'deadlift',
+  'Overhead Press':'overhead-press','Dumbbell Lateral Raises':'lateral-raises',
+  'Front Raises':'front-raises','Rear Delt Flyes':'rear-delt-flyes',
+  'Arnold Press':'arnold-press','Upright Row':'upright-row',
+  'Squats':'squats','Leg Press':'leg-press','Romanian Deadlift':'romanian-deadlift',
+  'Leg Curls':'leg-curls','Leg Extensions':'leg-extensions','Calf Raises':'calf-raises',
+  'Hip Thrust':'hip-thrust','Lunges':'lunges','Hack Squat':'hack-squat',
+  'Barbell Curl':'barbell-curl','Hammer Curl':'hammer-curl','Preacher Curl':'preacher-curl',
+  'Tricep Pushdown':'tricep-pushdown','Skull Crushers':'skull-crushers',
+  'Overhead Tricep Extension':'overhead-tricep','Dips':'dips',
+  'Plank':'plank','Cable Crunches':'cable-crunches','Hanging Leg Raises':'hanging-leg-raises',
+  'Ab Wheel Rollout':'ab-wheel','Russian Twists':'russian-twists',
+  'Push-ups':'push-ups','Wide Push-ups':'wide-push-ups','Diamond Push-ups':'diamond-push-ups',
+  'Pike Push-ups':'pike-push-ups','Decline Push-ups':'decline-push-ups',
+  'Inverted Row':'inverted-row','Superman':'superman','Good Mornings':'good-mornings',
+  'Bodyweight Squats':'bw-squats','Jump Squats':'jump-squats',
+  'Reverse Lunges':'reverse-lunges','Glute Bridge':'glute-bridge',
+  'Crunches':'crunches','Leg Raises':'leg-raises-home','Mountain Climbers':'mountain-climbers',
+  'Bicycle Crunches':'bicycle-crunches','Side Plank':'side-plank',
+  // Home catalog — location-specific slugs (the gym/home variants differ in the KB)
+  'Dumbbell Row':'dumbbell-row-home','Resistance Band Row':'band-row',
+  'Dumbbell Shoulder Press':'db-shoulder-press','Dumbbell Front Raises':'db-front-home',
+  'Single-Leg Glute Bridge':'single-leg-bridge','Wall Sit':'wall-sit',
+  'Step-ups':'step-ups','Dead Bug':'dead-bug',
+  // Outdoor catalog (from the Exercise Knowledge Base)
+  'Chin-ups':'chin-ups','Bench Dips':'bench-dips','Parallel Bar Dips':'bar-dips',
+  'Wide-Grip Pull-ups':'wide-pull-ups','Commando Pull-ups':'commando-pull-ups',
+  'Hanging Knee Raises':'hanging-knee-raises',
+  'Box Jumps':'box-jumps','Walking Lunges':'walking-lunges','Sprint Intervals':'sprints',
+  'Hill Sprints':'hill-sprints','Running':'running','Jump Rope':'jump-rope','L-Sit':'l-sit',
+};
+// Normalized + loose indexes collapse plan-generator wording drift (case/spacing/hyphen, and
+// singular/plural like "Calf Raise" ↔ "Calf Raises") onto the canonical slug.
+function normExName(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+function looseExKey(s){ return normExName(s).replace(/\s+/g, '').replace(/s$/, ''); }
+const EXERCISE_SLUGS_NORM = {};
+const EXERCISE_SLUGS_LOOSE = {};
+Object.keys(EXERCISE_SLUGS).forEach(k => {
+  EXERCISE_SLUGS_NORM[normExName(k)]  = EXERCISE_SLUGS[k];
+  EXERCISE_SLUGS_LOOSE[looseExKey(k)] = EXERCISE_SLUGS[k];
+});
+function exerciseSlug(name){
+  if (!name) return null;
+  return EXERCISE_SLUGS[name]
+      || EXERCISE_SLUGS_NORM[normExName(name)]
+      || EXERCISE_SLUGS_LOOSE[looseExKey(name)]
+      || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      || null;
+}
+
+// ── TRAINER VIDEO FALLBACK + LAZY LOAD (Problems 1-3) ──
+// Female ("Kira") clips aren't all uploaded yet → on a missing -female.mp4, retry -male.mp4 once.
+function videoTryFallback(vid){
+  if (!vid) return false;
+  const src = vid.getAttribute('src') || vid.currentSrc || '';
+  if (src.indexOf('-female.mp4') !== -1 && vid.dataset.fb !== '1'){
+    vid.dataset.fb = '1';
+    vid.setAttribute('src', src.replace('-female.mp4', '-male.mp4'));
+    vid.load(); const p = vid.play(); if (p && p.catch) p.catch(()=>{});
+    return true;
+  }
+  return false;
+}
+const exVideoCache = new Map();   // remote url → blob object URL (instant revisits)
+const exInFlight    = new Set();
+function cachedExClip(url){ return url && exVideoCache.has(url) ? exVideoCache.get(url) : null; }
+async function preloadExClip(url){
+  if (!url || exVideoCache.has(url) || exInFlight.has(url)) return;
+  exInFlight.add(url);
+  try {
+    const resp = await fetch(url);
+    if (resp.ok) exVideoCache.set(url, URL.createObjectURL(await resp.blob()));
+  } catch(e){ /* offline / 404 — leave uncached */ }
+  finally { exInFlight.delete(url); }
+}
+// Only fetch a thumbnail's clip once it nears the viewport (no more loading every clip at once).
+const exThumbObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        const vid = en.target;
+        obs.unobserve(vid);
+        if (!vid.getAttribute('src') && vid.dataset.src){
+          vid.src = cachedExClip(vid.dataset.src) || vid.dataset.src;
+          vid.load();
+        }
+      });
+    }, { rootMargin: '300px 0px' })
+  : null;
+const AGENTS = {
+  male:   'agent_7901kszcyd83fmxb8qraydxkfs3b',  // Alex
+  female: 'agent_4001kt03z71rfe8b2zj5ddd2z9b4'   // Kira
+};
+
+// GitHub video base — Alex only for now
+const GITHUB_BASE = 'https://builtwithai.pro/fitai/media/';
+
+const VIDEOS = {
+  alex: {
+    idle:      GITHUB_BASE + 'Alex-Idle.mp4',
+    listening: GITHUB_BASE + 'Alex-Listening.mp4',
+    speaking:  GITHUB_BASE + 'Alex-Speaking.mp4',
+  },
+  kira: {
+    idle:      GITHUB_BASE + 'Kira-Idle.mp4',
+    listening: GITHUB_BASE + 'Kira-Listening.mp4',
+    speaking:  GITHUB_BASE + 'Kira-Speaking.mp4',
+  }
+};
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let currentUser   = null;
+let userProfile   = null;
+let currentPlan   = null;
+let sessionActive = false;
+let currentVideoState = null; // null forces first setVideoState call to always execute
+let trainerGender = 'male'; // male = Alex, female = Kira
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  currentUser = session.user;
+  avToken = session.access_token;
+  const uid = currentUser.id;
+  const headers = {
+    apikey: SUPABASE_ANON,
+    Authorization: `Bearer ${session.access_token}`
+  };
+
+  try {
+    const [profRes, planRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}&select=*`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/plans?user_id=eq.${uid}&select=*&order=created_at.desc&limit=1`, { headers })
+    ]);
+
+    userProfile = (await profRes.json())[0] || {};
+    currentPlan = (await planRes.json())[0] || null;
+
+    // trainer gender from profile
+    trainerGender = userProfile.trainer === 'female' ? 'female' : 'male';
+
+  } catch(e) {
+    console.error('Data load error:', e);
+    userProfile = {};
+    currentPlan = null;
+  }
+
+  currentProfile = userProfile;
+  refreshUpgradePill();
+  renderUI();
+  hideLoading();
+}
+
+function renderUI() {
+  const name    = userProfile.full_name || userProfile.name || 'there';
+  const goal    = userProfile.goal || 'Build muscle';
+  const level   = userProfile.level || 'Intermediate';
+  const place   = userProfile.place || 'Gym';
+  const trainer = trainerGender === 'female' ? 'Kira' : 'Alex';
+  const trainerRole = trainerGender === 'female'
+    ? 'Wellness & Functional Coach'
+    : 'Strength & Conditioning Coach';
+
+  // Nav
+  document.getElementById('navName').textContent = name;
+  FitAIAvatar.init({ elId:'navInitials', uid: currentUser.id, token: avToken, name, avatarUrl: currentProfile && currentProfile.avatar_url });
+
+  // Trainer info
+  document.getElementById('panelTitle').textContent = `${FitAILang.t('trainer.panel_title')} ${trainer}`;
+  document.getElementById('panelSub').textContent = `${trainer} ${FitAILang.t('trainer.panel_sub')}`;
+  document.getElementById('mobileTrainerName').textContent = trainer;
+
+  // Profile chips
+  const chips = [
+    { label: FitAILang.t('trainer.chip_goal'), val: goal },
+    { label: FitAILang.t('trainer.chip_level'), val: level },
+    { label: FitAILang.t('trainer.chip_training'), val: place },
+  ];
+  document.getElementById('profileSummary').innerHTML = chips.map(c => `
+    <div class="profile-chip">
+      <span class="profile-chip-label">${c.label}</span>
+      <span class="profile-chip-val">${c.val}</span>
+    </div>
+  `).join('');
+
+  // Today's workout — same structure as dashboard: plan.training_plan.week[].exercises[]
+  const tp = currentPlan?.training_plan || {};
+  const week = tp.week || [];
+  const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const todayIdx = new Date().getDay();
+  const todayName = DAYS[todayIdx === 0 ? 6 : todayIdx - 1];
+  const todayDay = week.find(d => d.day === todayName) || week[0] || null;
+  const todayExs = todayDay?.exercises || [];
+
+  if (todayExs.length) {
+    const _trainerKey = trainerGender === 'female' ? 'female' : 'male';
+    document.getElementById('todayExercises').innerHTML = todayExs.map((ex, i) => {
+      const slug = exerciseSlug(ex.name);
+      // data-src (not src) + preload="none" so the list isn't blocked by every clip downloading at once.
+      const videoUrl = slug ? `${VIDEO_BASE}${slug}-${_trainerKey}.mp4` : null;
+      const thumbHtml = videoUrl
+        ? `<video class="ex-row-vid" data-src="${videoUrl}" muted playsinline preload="none" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="if(!videoTryFallback(this)){this.style.display='none'}"></video>`
+        : `<div class="ex-row-thumb-placeholder">🏋️</div>`;
+      return `<div class="ex-row">
+        <div class="ex-row-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="ex-row-info">
+          <div class="ex-row-name">${ex.name}</div>
+          <div class="ex-row-tags">
+            <span class="ex-tag sets">${ex.sets||3} × ${ex.reps||10}</span>
+            <span class="ex-tag rest">${(ex.rest_sec||60)+FitAILang.t('trainer.sec_rest')}</span>
+          </div>
+        </div>
+        <div class="ex-row-thumb">${thumbHtml}</div>
+      </div>`;
+    }).join('');
+
+    // Problem 3: eagerly warm today's FIRST clip (and -male as the female→male fallback) so it's
+    // ready before the user interacts; the rest lazy-load as they scroll into view.
+    const firstSlug = exerciseSlug(todayExs[0].name);
+    if (firstSlug) {
+      preloadExClip(`${VIDEO_BASE}${firstSlug}-male.mp4`);
+      if (_trainerKey !== 'male') preloadExClip(`${VIDEO_BASE}${firstSlug}-${_trainerKey}.mp4`);
+    }
+
+    // Lazy-load each thumbnail near the viewport; hover plays it (loading on demand if needed)
+    document.querySelectorAll('#todayExercises .ex-row').forEach(row => {
+      const vid = row.querySelector('.ex-row-vid');
+      if (!vid) return;
+      if (exThumbObserver) exThumbObserver.observe(vid);
+      const ensureLoaded = () => {
+        if (!vid.getAttribute('src') && vid.dataset.src) {
+          vid.src = cachedExClip(vid.dataset.src) || vid.dataset.src;
+          vid.load();
+        }
+      };
+      row.addEventListener('mouseenter', () => { ensureLoaded(); vid.currentTime=0; vid.play().catch(()=>{}); });
+      row.addEventListener('mouseleave', () => { vid.pause(); vid.currentTime=0; });
+    });
+  } else {
+    document.getElementById('todayPlan').style.display = 'none';
+  }
+
+  // Set video to idle
+  setVideoState('idle');
+
+  // Enable start button
+  const btn = document.getElementById('start-btn');
+  btn.disabled = false;
+  btn.innerHTML = `<span class="start-btn-icon">🎙</span> ${FitAILang.t('trainer.start_with')} ${trainer}`;
+}
+
+// ══════════════════════════════════════
+//  VIDEO STATE MACHINE
+// ══════════════════════════════════════
+function setVideoState(state) {
+  if (currentVideoState === state) return;
+  currentVideoState = state;
+
+  const key = trainerGender === 'female' ? 'kira' : 'alex';
+  const src = VIDEOS[key]?.[state] || VIDEOS.alex.idle;
+
+  const video = document.getElementById('trainerVideo');
+  const srcEl = document.getElementById('videoSrc');
+  const glow  = document.getElementById('phoneGlowRing');
+  const badge = document.getElementById('videoStatus');
+
+  // Fade out → switch src → fade in
+  video.style.opacity = '0';
+  setTimeout(() => {
+    srcEl.src = src;
+    video.load();
+    video.play().catch(()=>{});
+    video.style.opacity = '1';
+  }, 300);
+
+  // Glow
+  glow.className = 'phone-glow-ring' + (state === 'speaking' ? ' speaking' : '');
+
+  // Status badge
+  const labels = { idle: FitAILang.t('trainer.status_waiting'), listening: FitAILang.t('trainer.status_listening'), speaking: FitAILang.t('trainer.status_speaking') };
+  badge.textContent = labels[state] || FitAILang.t('trainer.status_waiting');
+  badge.className = 'video-status ' + (state !== 'idle' ? state : '');
+}
+
+// ══════════════════════════════════════
+//  SESSION CONTROL
+// ══════════════════════════════════════
+function startSession() {
+  if (sessionActive) return;
+  if (!isPremium()) { showPaywall(FitAILang.t('trainer.pw_voice_title'), FitAILang.t('trainer.pw_voice_line')); return; }
+  sessionActive = true;
+
+  const name  = userProfile.full_name || userProfile.name || 'there';
+  const goal  = userProfile.goal || 'Build muscle';
+  const level = userProfile.level || 'Intermediate';
+  const place = userProfile.place || 'Gym';
+
+  let planSummary = 'No plan assigned yet';
+  if (currentPlan?.training_plan?.week?.length) {
+    const _DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const _tn = _DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+    const _td = currentPlan.training_plan.week.find(d => d.day === _tn) || currentPlan.training_plan.week[0];
+    const _exs = (_td?.exercises || []).slice(0,6).map(e => `${e.name} ${e.sets||3}x${e.reps||10}`).join(', ');
+    planSummary = `Today is ${_td?.day || 'training day'}. Exercises: ${_exs || 'rest day'}. Focus: ${currentPlan.training_plan.focus || 'general fitness'}.`;
+  }
+
+  // Switch UI
+  document.getElementById('start-btn').style.display = 'none';
+  document.getElementById('end-btn').classList.add('show');
+  document.getElementById('widget-wrap').classList.add('show');
+  document.getElementById('sessionTips').style.display = 'none';
+
+  // Recreate widget fresh (MeetHR approach)
+  const wrap = document.getElementById('widget-wrap');
+  const oldW = document.getElementById('elWidget');
+  if (oldW) oldW.remove();
+
+  const widget = document.createElement('elevenlabs-convai');
+  widget.id = 'elWidget';
+  widget.setAttribute('agent-id', AGENTS[trainerGender] || AGENTS.male);
+  widget.setAttribute('variant', 'compact');
+  widget.setAttribute('collapsible', 'false');
+  widget.style.cssText = [
+    '--el-bg-color:#0d1117',
+    '--el-text-color:#ffffff',
+    '--el-border-color:#1f2937',
+    '--el-border-radius:18px',
+    '--el-btn-color:#3b82f6',
+    '--el-btn-text-color:#ffffff',
+    '--el-btn-radius:18px',
+    '--el-focus-color:#3b82f6',
+    'width:100%',
+    'display:block'
+  ].join(';');
+
+  widget.setAttribute('dynamic-variables', JSON.stringify({
+    user_name: name, fitness_goal: goal,
+    fitness_level: level, training_place: place, current_plan: planSummary
+  }));
+
+  wrap.appendChild(widget);
+
+  // НЕ перемикаємо відео тут — чекаємо на подію від EL
+  // setVideoState лише після call-started від ElevenLabs
+  attachWidgetListeners(widget);
+}
+
+// Mobile: toggle the Quick Tips drawer in the bottom overlay
+function toggleTips() {
+  const panel = document.querySelector('.session-panel');
+  if (panel) panel.classList.toggle('tips-open');
+}
+
+function endSession() {
+  sessionActive = false;
+  _isSpeaking = false;
+  if (_speakObserver) { _speakObserver.disconnect(); _speakObserver = null; }
+  if (_shadowWatchInterval) { clearInterval(_shadowWatchInterval); _shadowWatchInterval = null; }
+
+  const wrap = document.getElementById('widget-wrap');
+  const oldWidget = document.getElementById('elWidget');
+  if (oldWidget) oldWidget.remove();
+  wrap.classList.remove('show');
+
+  document.getElementById('start-btn').style.display = 'flex';
+  document.getElementById('start-btn').innerHTML = `<span class="start-btn-icon">🎙</span> ${FitAILang.t('trainer.start_new')}`;
+  document.getElementById('end-btn').classList.remove('show');
+  document.getElementById('sessionTips').style.display = 'block';
+
+  setVideoState('idle');
+}
+
+// ══════════════════════════════════════
+//  WIDGET EVENT LISTENERS
+//  — sync video state with ElevenLabs
+// ══════════════════════════════════════
+let _speakObserver = null;
+let _isSpeaking = false;
+let _shadowWatchInterval = null;
+
+function attachWidgetListeners(widget) {
+  if (!widget) widget = document.getElementById('elWidget');
+  if (!widget) return;
+
+  const trainerLabel = trainerGender === 'female' ? 'Kira' : 'Alex';
+
+  // ── Стандартні події EL ──
+  // call-started: юзер натиснув кнопку у віджеті й дзвінок почався
+  widget.addEventListener('elevenlabs-convai:call-started', () => {
+    setVideoState('listening');
+    const el = document.getElementById('widgetStatusText');
+    if (el) el.textContent = FitAILang.t('trainer.ws_active');
+  });
+
+  // call-ended: дзвінок завершено через віджет
+  widget.addEventListener('elevenlabs-convai:call-ended', () => {
+    setVideoState('idle');
+    _isSpeaking = false;
+    const el = document.getElementById('widgetStatusText');
+    if (el) el.textContent = FitAILang.t('trainer.ws_ended');
+  });
+
+  // ── Shadow DOM: чекаємо shadowRoot (1 секунда як в MeetHR) ──
+  setTimeout(() => {
+    const shadow = widget.shadowRoot;
+    if (!shadow) return;
+
+    // Приховуємо branding
+    const styleEl = document.createElement('style');
+    styleEl.textContent = [
+      '[class*="_poweredBy_"]{display:none!important}',
+      '[class*="_feedback_"]{display:none!important}',
+      '[class*="_minimize_"]{display:none!important}'
+    ].join('');
+    shadow.appendChild(styleEl);
+
+    // detectSpeaking — точна копія з MeetHR + метод по _avatarBackground_ scale
+    // (в консолі видно що саме _avatarBackground_ змінює scale під час мовлення)
+    const detectSpeaking = () => {
+      // Метод 1: "Talk to interrupt" (full mode)
+      if ((shadow.textContent || '').includes('Talk to interrupt')) return true;
+
+      // Метод 2: _avatarBackground_ scale > 1.0 = пульсація = агент говорить
+      const bg = shadow.querySelector('[class*="_avatarBackground_"]');
+      if (bg) {
+        const sc = (bg.getAttribute('style') || '').match(/scale\(([\d.]+)\)/);
+        if (sc && parseFloat(sc[1]) > 1.0) return true;
+      }
+
+      // Метод 3: _avatarImage_ opacity > 0.7 (compact mode fallback)
+      const img = shadow.querySelector('[class*="_avatarImage_"]');
+      if (img) {
+        const op = (img.getAttribute('style') || '').match(/opacity:\s*([\d.]+)/);
+        if (op && parseFloat(op[1]) > 0.7) return true;
+      }
+
+      return false;
+    };
+
+    let lastSpeakingState = 'idle';
+
+    if (_speakObserver) _speakObserver.disconnect();
+
+    _speakObserver = new MutationObserver(() => {
+      const isSpeaking = detectSpeaking();
+      const newState = isSpeaking ? 'speaking' : 'listening';
+      if (newState === lastSpeakingState) return;
+      lastSpeakingState = newState;
+
+      if (currentVideoState === 'idle') currentVideoState = 'listening';
+      setVideoState(newState);
+
+      const el = document.getElementById('widgetStatusText');
+      if (el) el.textContent = newState === 'speaking'
+        ? `${trainerLabel} ${FitAILang.t('trainer.ws_speaking')}`
+        : FitAILang.t('trainer.ws_turn');
+    });
+
+    _speakObserver.observe(shadow, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ['style']
+    });
+
+    widget._observer = _speakObserver;
+  }, 1000);
+}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function hideLoading() {
+  const screen = document.getElementById('loading-screen');
+  screen.classList.add('hidden');
+  setTimeout(() => screen.style.display = 'none', 600);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ══════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════
+init();
+</script>
+<!-- ── PREMIUM PAYWALL ── -->
+<div class="pw-overlay" id="paywallOverlay" onclick="if(event.target===this)closePaywall()">
+  <div class="pw-modal" role="dialog" aria-modal="true" aria-label="Premium feature">
+    <button class="pw-close" onclick="closePaywall()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <div class="pw-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> <span data-i18n="trainer.pw_feature">Premium feature</span></div>
+    <div class="pw-title" id="pwTitle" data-i18n="trainer.pw_feature">Premium feature</div>
+    <div class="pw-line" id="pwLine"></div>
+    <a class="pw-cta" href="pricing.html" data-i18n="trainer.pw_cta">See plans →</a>
+    <button class="pw-skip" onclick="closePaywall()" data-i18n="trainer.pw_skip">Maybe later</button>
+  </div>
+</div>
+</body>
+</html>

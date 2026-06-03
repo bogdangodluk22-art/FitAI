@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invite Friends — FitAI</title>
+<meta name="description" content="Invite friends to FitAI and earn rewards together.">
+<meta property="og:title" content="Invite Friends — FitAI">
+<meta property="og:description" content="Invite friends to FitAI and earn rewards together.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/referral.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Invite Friends — FitAI">
+<meta name="twitter:description" content="Invite friends to FitAI and earn rewards together.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080C14;--surface:#0F1623;--elevated:#161E2E;
+  --border:#1E293B;--blue:#2563EB;--blue-h:#1D4ED8;
+  --green:#10B981;--amber:#F59E0B;--red:#EF4444;
+  --text:#F8FAFC;--muted:#94A3B8;--dimmed:#475569;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;border-bottom:1px solid var(--border);background:rgba(8,12,20,0.94);backdrop-filter:blur(20px);}
+.nav-logo img{height:68px;width:auto;filter:brightness(1.1);transform:scale(1.5);transform-origin:left center;}
+.nav-center{display:flex;align-items:center;gap:4px;}
+.nav-link{background:none;border:none;color:var(--dimmed);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-link.active{color:var(--text);background:rgba(37,99,235,0.1);}
+.nav-link-nutrition{background:rgba(16,185,129,0.08);border:1.5px solid rgba(16,185,129,0.3);color:var(--green);padding:7px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.nav-link-nutrition:hover{border-color:var(--green);background:rgba(16,185,129,0.14);}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:15px;color:#fff;font-weight:700;}
+/* ── Nav avatar: photo / gradient-initial + dropdown menu (shared) ── */
+.nav-avatar{cursor:pointer;overflow:hidden;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:50%;}
+.nav-avatar.loading{opacity:0.55;pointer-events:none;}
+.nav-avatar-wrap{position:relative;display:inline-flex;}
+.nav-avatar-menu{position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:#0F1623;border:1px solid rgba(255,255,255,0.10);border-radius:12px;padding:6px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.7);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;z-index:600;}
+.nav-avatar-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.nav-avatar-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#F8FAFC;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.nav-avatar-menu button:hover{background:rgba(255,255,255,0.06);}
+.nav-avatar-menu button svg{width:15px;height:15px;flex-shrink:0;opacity:0.85;}
+.nav-avatar-menu button.danger{color:#F87171;}
+.nav-btn{background:none;border:1.5px solid var(--border);color:var(--muted);padding:7px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.nav-btn:hover{border-color:var(--muted);color:var(--text);}
+.nav-upgrade{display:none;align-items:center;gap:5px;text-decoration:none;background:linear-gradient(135deg,#2A7CE6,#1D4ED8);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:7px 15px;border-radius:9px;border:1px solid rgba(255,255,255,0.16);box-shadow:0 4px 14px -4px rgba(37,99,235,0.6);transition:all 0.2s;}
+.nav-upgrade:hover{transform:translateY(-1px);box-shadow:0 8px 22px -5px rgba(37,99,235,0.75);}
+.nav-upgrade span{font-size:13px;line-height:1;}
+.nav-premium-badge{display:none;align-items:center;gap:6px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.3px;padding:7px 15px;border-radius:9px;color:#F6C453;background:linear-gradient(135deg,rgba(246,196,83,0.18),rgba(245,158,11,0.10));border:1px solid rgba(246,196,83,0.45);box-shadow:0 0 16px -5px rgba(245,158,11,0.5) inset;cursor:pointer;transition:all 0.2s;}
+.nav-premium-badge:hover{border-color:rgba(246,196,83,0.75);transform:translateY(-1px);}
+.nav-premium-badge span{color:#F6C453;font-size:13px;line-height:1;}
+@media(max-width:768px){nav{padding:0 20px;}.nav-center{display:none;}.nav-user{flex-direction:row-reverse;}.nav-btn{display:none;}}
+
+/* ── PAGE ── */
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:104px 32px 90px;}
+.hero{text-align:center;margin-bottom:38px;}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--blue);font-weight:600;margin-bottom:14px;}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,66px);line-height:0.95;letter-spacing:1px;margin-bottom:14px;}
+.hero h1 span{color:var(--blue);}
+.hero p{font-size:15px;color:var(--muted);max-width:560px;margin:0 auto;line-height:1.6;}
+
+.grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:20px;align-items:stretch;}
+@media(max-width:860px){.grid{grid-template-columns:1fr;}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px;}
+.card-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dimmed);margin-bottom:14px;}
+
+.code-box{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--bg);border:1px dashed var(--border);border-radius:12px;padding:15px 18px;margin-bottom:12px;}
+.code-val{font-family:'JetBrains Mono',monospace;font-size:25px;font-weight:600;letter-spacing:3px;color:var(--text);}
+.code-mini{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.code-mini:hover{color:var(--text);background:rgba(255,255,255,0.09);}
+.code-link{font-size:12px;color:var(--muted);word-break:break-all;margin-bottom:18px;line-height:1.5;}
+.btn-primary{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:linear-gradient(180deg,#2A7CE6,var(--blue));color:#fff;border:1px solid rgba(255,255,255,0.16);box-shadow:inset 0 1px 0 rgba(255,255,255,0.22),0 10px 30px -12px rgba(37,99,235,0.6);transition:all 0.2s;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 16px 40px -12px rgba(37,99,235,0.7);}
+.share-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px;}
+.share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:10px;font-size:13px;font-weight:600;color:var(--text);background:rgba(255,255,255,0.04);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;text-decoration:none;}
+.share-btn:hover{background:rgba(255,255,255,0.08);transform:translateY(-1px);}
+.share-btn svg{width:16px;height:16px;}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:15px 10px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:38px;line-height:1;}
+.stat-val.blue{color:var(--blue);}.stat-val.green{color:var(--green);}.stat-val.amber{color:var(--amber);}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dimmed);margin-top:6px;}
+
+.ms-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.ms-next{font-size:13px;color:var(--muted);}
+.ms-next b{color:var(--green);font-weight:600;}
+.ms-track{position:relative;height:8px;background:var(--bg);border:1px solid var(--border);border-radius:99px;margin:30px 6px 44px;}
+.ms-fill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#2A7CE6,#10B981);width:0;transition:width 0.7s cubic-bezier(.16,1,.3,1);}
+.ms-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--surface);border:2px solid var(--border);z-index:2;}
+.ms-dot.hit{border-color:var(--green);background:var(--green);box-shadow:0 0 12px -2px rgba(16,185,129,0.6);}
+.ms-tick{position:absolute;top:16px;transform:translateX(-50%);text-align:center;font-size:10px;color:var(--dimmed);width:84px;line-height:1.4;}
+.ms-tick b{display:block;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:2px;}
+
+.friend{display:flex;align-items:center;gap:14px;padding:14px 2px;border-bottom:1px solid var(--border);}
+.friend:last-child{border-bottom:none;}
+.f-av{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;color:#fff;font-size:17px;overflow:hidden;}
+.f-av img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.f-name{flex:1;font-weight:500;font-size:15px;}
+.f-date{font-size:11px;color:var(--dimmed);font-family:'JetBrains Mono',monospace;margin-top:2px;font-weight:400;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:5px 11px;border-radius:99px;font-weight:600;white-space:nowrap;}
+.badge.joined{color:var(--green);background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);}
+.badge.pending{color:var(--amber);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.28);}
+.empty{text-align:center;padding:42px 20px;color:var(--muted);}
+.empty .ico{font-size:34px;margin-bottom:10px;opacity:0.6;}
+.empty-sub{font-size:13px;color:var(--dimmed);margin-top:4px;}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--elevated);border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all 0.3s;z-index:1000;box-shadow:0 12px 30px -10px rgba(0,0,0,0.6);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><a href="dashboard.html"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a></div>
+  <div class="nav-center">
+    <a href="dashboard.html" class="nav-link">Dashboard</a>
+    <a href="library.html" class="nav-link">Library</a>
+    <a href="nutrition.html" class="nav-link-nutrition">🥗 Nutrition</a>
+    <a href="progress.html" class="nav-link">📸 Progress</a>
+    <a href="trainer.html" class="nav-link">🎙 AI Trainer</a>
+    <a href="referral.html" class="nav-link active">🎁 Invite</a>
+  </div>
+  <div class="nav-right">
+    <a href="pricing.html" class="nav-upgrade" id="navUpgrade">Upgrade <span>⚡</span></a>
+    <button class="nav-premium-badge" id="navPremium" onclick="openPremiumModal()">Premium <span>✦</span></button>
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <span id="navName">...</span>
+    </div>
+    <button class="nav-btn" onclick="signOut()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="eyebrow">Invite &amp; Earn</div>
+    <h1>GIVE 14 DAYS. <span>GET 14 DAYS.</span></h1>
+    <p>Share your link — your friend starts with <b style="color:var(--text)">14 days of Premium free</b>. When they set up their plan, you get 14 days too. Hit milestones for free months.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- SHARE CARD -->
+    <div class="card">
+      <div class="card-label">Your referral link</div>
+      <div class="code-box">
+        <span class="code-val" id="codeVal">—</span>
+        <button class="code-mini" onclick="copyCode()">Copy code</button>
+      </div>
+      <div class="code-link" id="codeLink"></div>
+      <button class="btn-primary" onclick="copyLink()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy invite link
+      </button>
+      <div class="share-row">
+        <a class="share-btn" id="shWa" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.3A8 8 0 0 0 4.9 17l-1 3.6 3.7-1A8 8 0 1 0 17.6 6.3Zm-5.6 12a6.6 6.6 0 0 1-3.4-.9l-.2-.1-2.2.6.6-2.1-.2-.3a6.6 6.6 0 1 1 5.4 2.8Zm3.6-4.9c-.2-.1-1.2-.6-1.3-.6l-.4-.1c-.1 0-.3.1-.4.3l-.6.6c-.1.1-.2.1-.4 0a5.4 5.4 0 0 1-1.6-1 6 6 0 0 1-1.1-1.4c-.1-.2 0-.3.1-.4l.3-.4.2-.3v-.4l-.6-1.4c-.1-.4-.3-.3-.4-.3h-.4a.7.7 0 0 0-.5.2c-.2.2-.7.7-.7 1.6s.7 1.9.8 2c.1.2 1.4 2.1 3.3 2.9 1.6.7 1.9.5 2.3.5s1.2-.5 1.3-1 .2-.9.1-1Z"/></svg>
+          WhatsApp
+        </a>
+        <a class="share-btn" id="shTg" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19c-.2 1-.9 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-8c.4-.3-.1-.5-.6-.2L6.9 13 2.4 11.6c-1-.3-1-1 .2-1.4l17-6.6c.8-.3 1.5.2 1.3 1.4Z"/></svg>
+          Telegram
+        </a>
+        <a class="share-btn" id="shX" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2H21l-6.5 7.4L22 22h-6l-4.7-6.2L5.9 22H3l7-8L2 2h6.2l4.3 5.7L18.2 2Zm-1 18h1.6L7.1 3.7H5.4L17.2 20Z"/></svg>
+          X
+        </a>
+        <button class="share-btn" onclick="nativeShare()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          Share…
+        </button>
+      </div>
+    </div>
+
+    <!-- REWARDS CARD -->
+    <div class="card">
+      <div class="card-label">Your rewards</div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val blue" id="stInvited">0</div><div class="stat-label">Invited</div></div>
+        <div class="stat"><div class="stat-val green" id="stJoined">0</div><div class="stat-label">Joined</div></div>
+        <div class="stat"><div class="stat-val amber" id="stDays">0</div><div class="stat-label">Premium days</div></div>
+      </div>
+
+      <div class="ms-head">
+        <div class="card-label" style="margin:0">Milestones</div>
+        <div class="ms-next" id="msNext">&nbsp;</div>
+      </div>
+      <div class="ms-track">
+        <div class="ms-fill" id="msFill"></div>
+        <div class="ms-dot" id="msDot3"  style="left:30%"></div>
+        <div class="ms-dot" id="msDot5"  style="left:50%"></div>
+        <div class="ms-dot" id="msDot10" style="left:100%"></div>
+        <div class="ms-tick" style="left:30%"><b>3</b>1 month</div>
+        <div class="ms-tick" style="left:50%"><b>5</b>3 months</div>
+        <div class="ms-tick" style="left:100%"><b>10</b>1 year</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INVITED FRIENDS -->
+  <div class="card" style="margin-top:20px">
+    <div class="card-label">Your invites</div>
+    <div id="friendsList">
+      <div class="empty"><div class="ico">⏳</div>Loading…</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════════════════════════
+//  NAV AVATAR — photo upload + gradient-initial fallback (shared block)
+//  Storage: fitai-users/avatars/{user_id} → profiles.avatar_url
+// ════════════════════════════════════════════════════════════════
+const FitAIAvatar = (() => {
+  const AV_BUCKET = 'fitai-users';
+  const GRADIENTS = [
+    'linear-gradient(135deg,#2563EB,#7C3AED)',
+    'linear-gradient(135deg,#10B981,#0EA5E9)',
+    'linear-gradient(135deg,#F59E0B,#EF4444)',
+    'linear-gradient(135deg,#EC4899,#8B5CF6)',
+    'linear-gradient(135deg,#06B6D4,#3B82F6)',
+    'linear-gradient(135deg,#8B5CF6,#EC4899)',
+    'linear-gradient(135deg,#22C55E,#15803D)',
+    'linear-gradient(135deg,#F43F5E,#FB923C)'
+  ];
+  const cfg = { elId:'navAvatar', uid:null, token:null, name:'', avatarUrl:null };
+  let menuEl = null, fileEl = null, wrapEl = null, wired = false;
+
+  const el = () => document.getElementById(cfg.elId);
+  const letterFor = n => { const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; };
+  function gradientFor(seed){
+    const s = (seed||'?').toString().toUpperCase();
+    let h = 0; for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return GRADIENTS[h % GRADIENTS.length];
+  }
+
+  function render(){
+    const a = el(); if (!a) return;
+    if (cfg.avatarUrl){
+      a.style.background = 'none';
+      const grad = gradientFor(cfg.name || cfg.uid), ltr = letterFor(cfg.name);
+      a.innerHTML = '<img src="'+cfg.avatarUrl+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';">';
+    } else {
+      a.style.background = gradientFor(cfg.name || cfg.uid);
+      a.textContent = letterFor(cfg.name);
+    }
+    if (menuEl){
+      const rm = menuEl.querySelector('[data-act=remove]');
+      if (rm) rm.style.display = cfg.avatarUrl ? '' : 'none';
+    }
+  }
+
+  function buildMenu(){
+    const a = el(); if (!a || wired) return;
+    wrapEl = document.createElement('div');
+    wrapEl.className = 'nav-avatar-wrap';
+    a.parentNode.insertBefore(wrapEl, a);
+    wrapEl.appendChild(a);
+
+    menuEl = document.createElement('div');
+    menuEl.className = 'nav-avatar-menu';
+    menuEl.innerHTML =
+      '<button data-act="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload photo</button>' +
+      '<button data-act="remove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Remove photo</button>' +
+      '<div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 6px;"></div>' +
+      '<button data-act="signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button>';
+    wrapEl.appendChild(menuEl);
+
+    fileEl = document.createElement('input');
+    fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+    wrapEl.appendChild(fileEl);
+
+    a.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.toggle('open'); });
+    document.addEventListener('click', () => menuEl.classList.remove('open'));
+    menuEl.querySelector('[data-act=upload]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); fileEl.click(); });
+    menuEl.querySelector('[data-act=remove]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); removePhoto(); });
+    const _so = menuEl.querySelector('[data-act=signout]');
+    if (_so) _so.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); if (typeof signOut === 'function') signOut(); });
+    fileEl.addEventListener('change', onFile);
+    wired = true;
+  }
+
+  async function onFile(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !cfg.uid || !cfg.token) return;
+    if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
+    if (file.size > 5*1024*1024) { alert('Image is too large (max 5 MB).'); return; }
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const path = 'avatars/' + cfg.uid;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/' + AV_BUCKET + '/' + path, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':file.type, 'x-upsert':'true' },
+        body:file
+      });
+      if (!up.ok) throw new Error('Storage upload failed ('+up.status+')');
+      const publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + AV_BUCKET + '/' + path + '?t=' + Date.now();
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: publicUrl })
+      });
+      if (!pr.ok) throw new Error('Saving avatar failed ('+pr.status+')');
+      cfg.avatarUrl = publicUrl;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = publicUrl;
+      render();
+    } catch(err){
+      alert(err.message || 'Could not upload photo.');
+    } finally {
+      if (a) a.classList.remove('loading');
+    }
+  }
+
+  async function removePhoto(){
+    if (!cfg.uid || !cfg.token) return;
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: null })
+      });
+      if (!pr.ok) throw new Error('Could not remove photo ('+pr.status+')');
+      cfg.avatarUrl = null;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = null;
+      render();
+    } catch(err){ alert(err.message || 'Could not remove photo.'); }
+    finally { if (a) a.classList.remove('loading'); }
+  }
+
+  function init(opts){
+    cfg.elId      = opts.elId || 'navAvatar';
+    cfg.uid       = opts.uid || null;
+    cfg.token     = opts.token || null;
+    cfg.name      = opts.name || '';
+    cfg.avatarUrl = opts.avatarUrl || null;
+    buildMenu();
+    render();
+  }
+  return { init, render };
+})();
+
+// ── Page state + nav helpers ──
+let currentProfile = null;
+let shareUrl = '';
+let referralCode = '';
+function isPremium(){ return !!(currentProfile && (currentProfile.plan === 'premium' || currentProfile.is_premium === true)); }
+function updateNavPlan(){
+  const pill = document.getElementById('navUpgrade');
+  const prem = document.getElementById('navPremium');
+  const p = isPremium();
+  if (pill) pill.style.display = p ? 'none' : 'inline-flex';
+  if (prem) prem.style.display = p ? 'inline-flex' : 'none';
+}
+function openPremiumModal(){ window.location.href = 'dashboard.html'; } // membership managed on the dashboard
+function signOut(){ sb.auth.signOut().then(() => window.location.href = 'index.html'); }
+
+// ── Share ──
+const SHARE_TEXT = 'Get 14 days of FitAI Premium free — your AI trainer + nutritionist in one. Join with my link:';
+function buildShare(code){
+  referralCode = code;
+  shareUrl = new URL('index.html?ref=' + encodeURIComponent(code), location.href).href;
+  document.getElementById('codeVal').textContent = code;
+  document.getElementById('codeLink').textContent = shareUrl;
+  document.getElementById('shWa').href = 'https://wa.me/?text=' + encodeURIComponent(SHARE_TEXT + ' ' + shareUrl);
+  document.getElementById('shTg').href = 'https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(SHARE_TEXT);
+  document.getElementById('shX').href  = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(SHARE_TEXT) + '&url=' + encodeURIComponent(shareUrl);
+}
+function copyLink(){
+  if (!shareUrl) return;
+  (navigator.clipboard ? navigator.clipboard.writeText(shareUrl) : Promise.reject())
+    .then(() => toast('Invite link copied!'), () => toast('Copy failed — long-press to copy'));
+}
+function copyCode(){
+  if (!referralCode) return;
+  (navigator.clipboard ? navigator.clipboard.writeText(referralCode) : Promise.reject())
+    .then(() => toast('Code copied!'), () => toast('Copy failed'));
+}
+function nativeShare(){
+  if (navigator.share) navigator.share({ title:'FitAI', text: SHARE_TEXT, url: shareUrl }).catch(()=>{});
+  else copyLink();
+}
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── List avatars (gradient fallback, same palette as the nav) ──
+const LGRAD = [
+  'linear-gradient(135deg,#2563EB,#7C3AED)','linear-gradient(135deg,#10B981,#0EA5E9)',
+  'linear-gradient(135deg,#F59E0B,#EF4444)','linear-gradient(135deg,#EC4899,#8B5CF6)',
+  'linear-gradient(135deg,#06B6D4,#3B82F6)','linear-gradient(135deg,#8B5CF6,#EC4899)',
+  'linear-gradient(135deg,#22C55E,#15803D)','linear-gradient(135deg,#F43F5E,#FB923C)'
+];
+function lgrad(seed){ const s=(seed||'?').toString().toUpperCase(); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return LGRAD[h%LGRAD.length]; }
+function lletter(n){ const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function friendAvatar(name, url){
+  const ltr = lletter(name), grad = lgrad(name);
+  if (url) return '<div class="f-av"><img src="'+esc(url)+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';"></div>';
+  return '<div class="f-av" style="background:'+grad+'">'+ltr+'</div>';
+}
+function fmtDate(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d.getTime())) return ''; return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+
+// ── Renders ──
+function renderStats(s){
+  document.getElementById('stInvited').textContent = s.invited_count || 0;
+  document.getElementById('stJoined').textContent  = s.joined_count || 0;
+  document.getElementById('stDays').textContent    = s.premium_days_earned || 0;
+}
+function renderMilestone(joined){
+  joined = joined || 0;
+  const pct = Math.min(joined, 10) / 10 * 100;
+  document.getElementById('msFill').style.width = pct + '%';
+  document.getElementById('msDot3').classList.toggle('hit',  joined >= 3);
+  document.getElementById('msDot5').classList.toggle('hit',  joined >= 5);
+  document.getElementById('msDot10').classList.toggle('hit', joined >= 10);
+  const TH = [{n:3,label:'1 free month'},{n:5,label:'3 free months'},{n:10,label:'1 free year'}];
+  const next = TH.find(t => joined < t.n);
+  document.getElementById('msNext').innerHTML = next
+    ? '<b>' + (next.n - joined) + '</b> more to ' + next.label
+    : 'All rewards unlocked 🎉';
+}
+function renderFriends(list){
+  const box = document.getElementById('friendsList');
+  if (!list || !list.length){
+    box.innerHTML = '<div class="empty"><div class="ico">🎁</div>No invites yet'
+      + '<div class="empty-sub">Share your link above — you both get 14 days of Premium.</div></div>';
+    return;
+  }
+  box.innerHTML = list.map(f => {
+    const joined = f.status === 'qualified' || f.status === 'rewarded';
+    const badge = joined ? '<span class="badge joined">Joined</span>' : '<span class="badge pending">Pending</span>';
+    const dateIso = joined ? (f.qualified_at || f.created_at) : f.created_at;
+    return '<div class="friend">' + friendAvatar(f.referee_name, f.referee_avatar)
+      + '<div class="f-name">' + esc(f.referee_name || 'Friend')
+      + '<div class="f-date">' + fmtDate(dateIso) + '</div></div>'
+      + badge + '</div>';
+  }).join('');
+}
+
+// ── Init ──
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'signin.html'; return; }
+  const uid = session.user.id;
+  const token = session.access_token;
+  const headers = { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + token };
+
+  // Profile (code, name, avatar, plan)
+  try {
+    const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + uid + '&select=name,referral_code,avatar_url,plan', { headers });
+    currentProfile = (await pr.json())[0] || {};
+  } catch(e){ currentProfile = {}; }
+
+  document.getElementById('navName').textContent = currentProfile.name || session.user.email?.split('@')[0] || 'User';
+  FitAIAvatar.init({ uid, token, name: currentProfile.name || '', avatarUrl: currentProfile.avatar_url });
+  updateNavPlan();
+  buildShare(currentProfile.referral_code || '—');
+
+  // Stats
+  try {
+    const sr = await fetch(SUPABASE_URL + '/rest/v1/referral_stats?user_id=eq.' + uid + '&select=invited_count,joined_count,premium_days_earned,milestone_tier', { headers });
+    const stats = (await sr.json())[0] || { invited_count:0, joined_count:0, premium_days_earned:0 };
+    renderStats(stats);
+    renderMilestone(stats.joined_count);
+  } catch(e){ renderStats({}); renderMilestone(0); }
+
+  // Invited friends (via SECURITY DEFINER RPC — RLS-safe cross-profile read)
+  try {
+    const lr = await fetch(SUPABASE_URL + '/rest/v1/rpc/my_referrals', {
+      method:'POST', headers:{ ...headers, 'Content-Type':'application/json' }, body:'{}'
+    });
+    const list = await lr.json();
+    renderFriends(Array.isArray(list) ? list : []);
+  } catch(e){ renderFriends([]); }
+}
+init();
+</script>
+</body>
+</html>

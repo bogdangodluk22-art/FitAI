@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition Setup — FitAI</title>
+<meta name="description" content="Set up your personalized nutrition plan with FitAI.">
+<meta property="og:title" content="Nutrition Setup — FitAI">
+<meta property="og:description" content="Set up your personalized nutrition plan with FitAI.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/nutrition-onboarding.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nutrition Setup — FitAI">
+<meta name="twitter:description" content="Set up your personalized nutrition plan with FitAI.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="i18n.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#080C14; --surface:#0F1623; --elevated:#161E2E;
+  --border:#1E293B; --blue:#2563EB; --blue-h:#1D4ED8;
+  --green:#10B981; --amber:#F59E0B; --red:#EF4444;
+  --text:#F8FAFC; --muted:#94A3B8; --dimmed:#475569;
+}
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; min-height:100vh; overflow-x:hidden; }
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ── TOP BAR ── */
+.ob-topbar {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 48px; background:rgba(8,12,20,0.92); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.ob-logo img { height:52px; filter:brightness(1.1); transform:scale(1.4); transform-origin:left center; }
+.ob-step-label { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.ob-step-fraction { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--dimmed); }
+
+/* ── PROGRESS ── */
+.ob-progress-wrap { padding:84px 48px 0; }
+.ob-progress-track { height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.ob-progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--green)); border-radius:2px; transition:width 0.5s cubic-bezier(0.16,1,0.3,1); }
+.ob-step-dots { display:flex; gap:8px; padding:12px 48px 0; }
+.ob-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.12); transition:all 0.3s; }
+.ob-dot.active { background:var(--green); transform:scale(1.3); }
+.ob-dot.done { background:rgba(16,185,129,0.5); }
+
+/* ── MAIN CONTENT ── */
+.ob-content {
+  position:relative; z-index:1; padding:32px 48px 100px;
+  display:flex; justify-content:center;
+}
+.ob-step { display:none; width:100%; max-width:900px; animation:stepIn 0.45s cubic-bezier(0.16,1,0.3,1) forwards; }
+.ob-step.active { display:block; }
+.ob-step.exit { animation:stepOut 0.3s ease-in forwards; pointer-events:none; }
+
+@keyframes stepIn { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+@keyframes stepOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-20px)} }
+
+/* ── STEP HEADERS ── */
+.ob-step-tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
+.ob-step-title { font-family:'Oswald',sans-serif; font-weight:700; font-size:clamp(40px,5vw,64px); line-height:1.0; color:var(--text); margin-bottom:10px; text-transform:uppercase; }
+.ob-step-sub { font-size:15px; color:var(--muted); margin-bottom:36px; line-height:1.6; max-width:560px; }
+
+/* ── PHOTO CARDS (big) ── */
+.n-photo-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin-bottom:40px; }
+.n-photo-card {
+  position:relative; border-radius:18px; overflow:hidden; height:280px;
+  cursor:pointer; border:2px solid transparent;
+  transition:all 0.28s cubic-bezier(0.16,1,0.3,1);
+}
+.n-photo-card:hover { transform:translateY(-4px); box-shadow:0 20px 48px rgba(0,0,0,0.4); }
+.n-photo-card.selected { border-color:var(--green); box-shadow:0 0 0 1px var(--green),0 20px 48px rgba(16,185,129,0.2); }
+.n-photo-card-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:brightness(0.6); transition:transform 0.4s,filter 0.25s; }
+.n-photo-card:hover .n-photo-card-bg { transform:scale(1.05); filter:brightness(0.75); }
+.n-photo-card.selected .n-photo-card-bg { filter:brightness(0.85); }
+.n-photo-card-overlay { position:absolute; inset:0; background:linear-gradient(to bottom,rgba(8,12,20,0) 30%,rgba(8,12,20,0.9) 100%); }
+.n-photo-card-check {
+  position:absolute; top:12px; right:12px; width:26px; height:26px; border-radius:50%;
+  border:1.5px solid rgba(248,250,252,0.3); background:rgba(8,12,20,0.4); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center; z-index:3;
+  transition:all 0.2s;
+}
+.n-photo-card-check svg { width:13px; height:13px; stroke:transparent; }
+.n-photo-card.selected .n-photo-card-check { background:var(--green); border-color:var(--green); }
+.n-photo-card.selected .n-photo-card-check svg { stroke:#fff; }
+.n-photo-card-body { position:absolute; bottom:0; left:0; right:0; padding:20px 20px 18px; z-index:3; }
+.n-photo-card-title { font-family:'Oswald',sans-serif; font-size:24px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:4px; }
+.n-photo-card-desc { font-size:12px; color:rgba(248,250,252,0.6); font-family:'Outfit',sans-serif; line-height:1.4; }
+
+/* ── SMALL OPTION CARDS ── */
+.n-option-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:40px; }
+.n-option-card {
+  background:var(--surface); border:1.5px solid var(--border);
+  border-radius:14px; padding:18px 16px 16px; cursor:pointer;
+  transition:all 0.22s; text-align:center;
+}
+.n-option-card:hover { border-color:rgba(16,185,129,0.4); transform:translateY(-2px); }
+.n-option-card.selected { border-color:var(--green); background:rgba(16,185,129,0.08); box-shadow:0 0 0 1px var(--green); }
+.n-option-icon { font-size:28px; margin-bottom:8px; }
+.n-option-title { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:4px; }
+.n-option-card.selected .n-option-title { color:var(--green); }
+.n-option-desc { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; letter-spacing:0.5px; }
+
+/* ── PREMIUM REFINEMENT — Step 5 "What matters most to you?" cards (scoped, leaves Step 3 untouched) ── */
+#n-step-5 .n-option-grid { grid-template-columns:repeat(auto-fit,minmax(172px,1fr)); gap:16px; }
+#n-step-5 .n-option-card {
+  background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(15,22,35,0.55));
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:16px; padding:28px 18px 22px;
+  backdrop-filter:blur(14px) saturate(1.2);
+  box-shadow:0 10px 30px -14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+  transition:transform 0.24s cubic-bezier(0.16,1,0.3,1), border-color 0.22s, background 0.22s, box-shadow 0.22s;
+}
+#n-step-5 .n-option-card:hover {
+  border-color:rgba(255,255,255,0.22);
+  background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(15,22,35,0.6));
+  transform:translateY(-3px);
+  box-shadow:0 18px 40px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+#n-step-5 .n-option-card.selected {
+  border-color:var(--blue);
+  background:linear-gradient(180deg, rgba(37,99,235,0.16), rgba(37,99,235,0.06));
+  box-shadow:0 0 0 1px var(--blue), 0 16px 44px -14px rgba(37,99,235,0.5), inset 0 1px 0 rgba(255,255,255,0.10);
+}
+#n-step-5 .n-option-icon {
+  width:34px; height:34px; margin:0 auto 12px; font-size:0;
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(248,250,252,0.6);
+  transition:color 0.22s, transform 0.22s;
+}
+#n-step-5 .n-option-icon svg { width:100%; height:100%; display:block; }
+#n-step-5 .n-option-card:hover .n-option-icon { transform:translateY(-1px) scale(1.05); }
+#n-step-5 .n-option-card.selected .n-option-icon { color:var(--blue); }
+#n-step-5 .n-option-card.selected .n-option-title { color:#fff; }
+
+/* ── MULTI SELECT PILLS ── */
+.n-pills { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:40px; }
+.n-pill {
+  padding:10px 18px; border-radius:999px;
+  border:1.5px solid var(--border); background:var(--surface);
+  font-family:'Outfit',sans-serif; font-size:14px; font-weight:500;
+  color:var(--muted); cursor:pointer; transition:all 0.2s;
+}
+.n-pill:hover { border-color:var(--green); color:var(--text); }
+.n-pill.selected { border-color:var(--green); background:rgba(16,185,129,0.1); color:var(--green); }
+
+/* ── TEXT INPUT ── */
+.n-input-wrap { margin-bottom:32px; }
+.n-input-label { font-size:11px; color:var(--muted); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; display:block; margin-bottom:8px; }
+.n-input {
+  width:100%; background:rgba(8,12,20,0.7); border:1.5px solid var(--border);
+  border-radius:10px; padding:14px 16px; color:var(--text);
+  font-family:'Outfit',sans-serif; font-size:15px; outline:none;
+  transition:border-color 0.2s; resize:none;
+}
+.n-input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(16,185,129,0.1); }
+.n-input::placeholder { color:var(--dimmed); }
+
+/* ── NAV ── */
+.goal-nav { display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-top:8px; }
+.btn-ghost { background:none; border:1.5px solid var(--border); color:var(--muted); padding:12px 24px; border-radius:10px; font-family:'Outfit',sans-serif; font-size:14px; cursor:pointer; transition:all 0.2s; }
+.btn-ghost:hover { border-color:var(--muted); color:var(--text); }
+.btn-primary { background:var(--green); color:#fff; border:none; padding:13px 32px; border-radius:10px; font-family:'Oswald',sans-serif; font-size:17px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.22s; }
+.btn-primary:hover:not(:disabled) { background:#0da271; transform:translateY(-1px); box-shadow:0 8px 24px rgba(16,185,129,0.3); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+/* ── GENERATING SCREEN ── */
+.gen-screen { display:none; position:fixed; inset:0; z-index:500; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; gap:40px; }
+.gen-screen.show { display:flex; }
+.gen-spinner { width:56px; height:56px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--green); animation:spin 0.9s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.gen-title { font-family:'Oswald',sans-serif; font-size:32px; font-weight:700; text-transform:uppercase; color:var(--text); text-align:center; }
+.gen-sub { font-size:14px; color:var(--muted); text-align:center; }
+.gen-steps { display:flex; flex-direction:column; gap:12px; }
+.gen-step-item { display:flex; align-items:center; gap:14px; padding:12px 20px; border-radius:12px; background:var(--surface); border:1px solid var(--border); min-width:280px; opacity:0.4; transition:all 0.3s; }
+.gen-step-item.active { opacity:1; border-color:var(--green); background:rgba(16,185,129,0.06); }
+.gen-step-item.done { opacity:0.7; }
+.gs-icon { font-size:18px; width:24px; text-align:center; }
+.gs-text { font-size:13px; color:var(--muted); font-family:'Outfit',sans-serif; }
+.gen-step-item.active .gs-text { color:var(--text); }
+
+/* ── SUCCESS SCREEN ── */
+.success-screen {
+  display:none; position:fixed; inset:0; z-index:500;
+  flex-direction:column; align-items:center; justify-content:center;
+  background:var(--bg); padding:40px;
+}
+.success-screen.show { display:flex; }
+.success-screen-video-bg { position:absolute; inset:0; overflow:hidden; }
+.success-screen-video-bg video { width:100%; height:100%; object-fit:cover; opacity:0.2; }
+.success-screen-video-bg::after { content:''; position:absolute; inset:0; background:rgba(8,12,20,0.6); }
+.success-inner { position:relative; z-index:2; text-align:center; max-width:560px; }
+.success-tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); letter-spacing:3px; text-transform:uppercase; margin-bottom:20px; padding:6px 14px; border:1px solid rgba(16,185,129,0.3); border-radius:999px; display:inline-block; }
+.success-headline { font-family:'Oswald',sans-serif; font-size:clamp(40px,7vw,72px); font-weight:700; text-transform:uppercase; line-height:1; color:var(--text); margin-bottom:12px; }
+.success-headline span { color:var(--green); }
+.success-tagline { font-size:16px; color:var(--muted); margin-bottom:36px; line-height:1.6; }
+.success-cta {
+  display:block; width:100%; padding:16px 32px; margin-bottom:14px;
+  background:var(--green); color:#fff; border:none; border-radius:12px;
+  font-family:'Oswald',sans-serif; font-size:18px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all 0.22s;
+}
+.success-cta:hover { background:#0da271; transform:translateY(-1px); box-shadow:0 8px 24px rgba(16,185,129,0.35); }
+.success-note { font-size:12px; color:var(--dimmed); line-height:1.5; }
+
+@media(max-width:768px) {
+  .ob-topbar,.ob-progress-wrap,.ob-step-dots { padding-left:20px; padding-right:20px; }
+  .ob-content { padding:24px 20px 100px; }
+  .n-photo-cards { grid-template-columns:1fr 1fr; }
+  .n-photo-card { height:200px; }
+}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="ob-topbar">
+  <div class="ob-logo"><a href="dashboard.html"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a></div>
+  <div style="text-align:center;">
+    <div class="ob-step-label" id="stepLabel">MEALS</div>
+    <div class="ob-step-fraction" id="stepFraction">1 / 5</div>
+  </div>
+  <div style="width:80px;"></div>
+</div>
+
+<!-- PROGRESS -->
+<div class="ob-progress-wrap">
+  <div class="ob-progress-track">
+    <div class="ob-progress-fill" id="progressFill" style="width:20%"></div>
+  </div>
+</div>
+<div class="ob-step-dots" id="stepDots"></div>
+
+<!-- ══════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════ -->
+<div class="ob-content">
+
+  <!-- ═══ STEP 1 — MEALS PER DAY ═══ -->
+  <div class="ob-step active" id="n-step-1" style="max-width:900px;">
+    <div class="ob-step-tag" data-i18n="nut_onb.s1_tag">Step 1 of 5 · Nutrition Setup</div>
+    <div class="ob-step-title" data-i18n-html="nut_onb.s1_title">How often do<br><span style="color:var(--green)">you eat?</span></div>
+    <div class="ob-step-sub" data-i18n="nut_onb.s1_sub">We'll build your daily meal rhythm around your lifestyle.</div>
+
+    <div class="n-photo-cards">
+      <div class="n-photo-card" onclick="selectN(1,'meals',2,this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.meals2_t">2–3 meals</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.meals2_d">Classic three-meal structure</div>
+        </div>
+      </div>
+      <div class="n-photo-card" onclick="selectN(1,'meals',4,this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.meals4_t">4–5 meals</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.meals4_d">Meals + snacks, athlete style</div>
+        </div>
+      </div>
+      <div class="n-photo-card" onclick="selectN(1,'meals',6,this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.meals6_t">6+ meals</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.meals6_d">Frequent small portions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="goal-nav">
+      <button class="btn-ghost" onclick="window.history.back()" data-i18n="nut_onb.back">← Back</button>
+      <button class="btn-primary" id="n1-next" disabled onclick="nNext()" data-i18n="nut_onb.continue">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2 — COOKING TIME ═══ -->
+  <div class="ob-step" id="n-step-2" style="max-width:900px;">
+    <div class="ob-step-tag" data-i18n="nut_onb.s2_tag">Step 2 of 5 · Nutrition Setup</div>
+    <div class="ob-step-title" data-i18n-html="nut_onb.s2_title">How much time<br><span style="color:var(--green)">to cook?</span></div>
+    <div class="ob-step-sub" data-i18n="nut_onb.s2_sub">Be honest — your plan should fit your real life.</div>
+
+    <div class="n-photo-cards">
+      <div class="n-photo-card" onclick="selectN(2,'cook_time','quick',this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.cook_quick_t">Under 15 min</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.cook_quick_d">Quick and simple meals only</div>
+        </div>
+      </div>
+      <div class="n-photo-card" onclick="selectN(2,'cook_time','moderate',this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.cook_mod_t">15–30 min</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.cook_mod_d">Standard home cooking</div>
+        </div>
+      </div>
+      <div class="n-photo-card" onclick="selectN(2,'cook_time','full',this)">
+        <div class="n-photo-card-bg" style="background-image:url('https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=600&auto=format&fit=crop&q=80');"></div>
+        <div class="n-photo-card-overlay"></div>
+        <div class="n-photo-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="n-photo-card-body">
+          <div class="n-photo-card-title" data-i18n="nut_onb.cook_full_t">30+ min</div>
+          <div class="n-photo-card-desc" data-i18n="nut_onb.cook_full_d">I enjoy cooking proper meals</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="goal-nav">
+      <button class="btn-ghost" onclick="nBack()" data-i18n="nut_onb.back">← Back</button>
+      <button class="btn-primary" id="n2-next" disabled onclick="nNext()" data-i18n="nut_onb.continue">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3 — BUDGET ═══ -->
+  <div class="ob-step" id="n-step-3" style="max-width:900px;">
+    <div class="ob-step-tag" data-i18n="nut_onb.s3_tag">Step 3 of 5 · Nutrition Setup</div>
+    <div class="ob-step-title" data-i18n-html="nut_onb.s3_title">What's your<br><span style="color:var(--green)">food budget?</span></div>
+    <div class="ob-step-sub" data-i18n="nut_onb.s3_sub">We'll suggest meals that match what you're comfortable spending.</div>
+
+    <div class="n-option-grid" style="max-width:680px;">
+      <div class="n-option-card" onclick="selectN(3,'budget','budget',this)">
+        <div class="n-option-icon">💰</div>
+        <div class="n-option-title" data-i18n="nut_onb.budget_low_t">Budget</div>
+        <div class="n-option-desc" data-i18n="nut_onb.budget_low_d">Simple & affordable</div>
+      </div>
+      <div class="n-option-card" onclick="selectN(3,'budget','moderate',this)">
+        <div class="n-option-icon">🛒</div>
+        <div class="n-option-title" data-i18n="nut_onb.budget_mod_t">Moderate</div>
+        <div class="n-option-desc" data-i18n="nut_onb.budget_mod_d">Balanced quality & cost</div>
+      </div>
+      <div class="n-option-card" onclick="selectN(3,'budget','premium',this)">
+        <div class="n-option-icon">⭐</div>
+        <div class="n-option-title" data-i18n="nut_onb.budget_prem_t">Premium</div>
+        <div class="n-option-desc" data-i18n="nut_onb.budget_prem_d">Best quality ingredients</div>
+      </div>
+    </div>
+
+    <div class="goal-nav">
+      <button class="btn-ghost" onclick="nBack()" data-i18n="nut_onb.back">← Back</button>
+      <button class="btn-primary" id="n3-next" disabled onclick="nNext()" data-i18n="nut_onb.continue">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4 — DISLIKES & ALLERGIES ═══ -->
+  <div class="ob-step" id="n-step-4" style="max-width:900px;">
+    <div class="ob-step-tag" data-i18n="nut_onb.s4_tag">Step 4 of 5 · Nutrition Setup</div>
+    <div class="ob-step-title" data-i18n-html="nut_onb.s4_title">Any limits we<br><span style="color:var(--green)">should know?</span></div>
+    <div class="ob-step-sub" data-i18n="nut_onb.s4_sub">Select anything that applies. You can also type specific preferences below.</div>
+
+    <div class="n-pills" id="n-restrictions">
+      <div class="n-pill" data-val="vegetarian" onclick="togglePill(this)" data-i18n="nut_onb.r_vegetarian">Vegetarian</div>
+      <div class="n-pill" data-val="vegan" onclick="togglePill(this)" data-i18n="nut_onb.r_vegan">Vegan</div>
+      <div class="n-pill" data-val="gluten-free" onclick="togglePill(this)" data-i18n="nut_onb.r_gluten">Gluten-Free</div>
+      <div class="n-pill" data-val="lactose-free" onclick="togglePill(this)" data-i18n="nut_onb.r_lactose">Lactose-Free</div>
+      <div class="n-pill" data-val="no-pork" onclick="togglePill(this)" data-i18n="nut_onb.r_nopork">No Pork</div>
+      <div class="n-pill" data-val="no-seafood" onclick="togglePill(this)" data-i18n="nut_onb.r_noseafood">No Seafood</div>
+      <div class="n-pill" data-val="no-nuts" onclick="togglePill(this)" data-i18n="nut_onb.r_nonuts">No Nuts</div>
+      <div class="n-pill" data-val="keto" onclick="togglePill(this)" data-i18n="nut_onb.r_keto">Keto</div>
+      <div class="n-pill" data-val="halal" onclick="togglePill(this)" data-i18n="nut_onb.r_halal">Halal</div>
+    </div>
+
+    <div class="n-input-wrap">
+      <label class="n-input-label" data-i18n="nut_onb.extra_label">Anything else? (optional)</label>
+      <textarea class="n-input" id="n-extra" rows="2" data-i18n-ph="nut_onb.extra_ph" placeholder="e.g. I don't like broccoli, I love chicken..."></textarea>
+    </div>
+
+    <div class="goal-nav">
+      <button class="btn-ghost" onclick="nBack()" data-i18n="nut_onb.back">← Back</button>
+      <button class="btn-primary" onclick="nNext()" data-i18n="nut_onb.continue">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 5 — FOOD PREFERENCES ═══ -->
+  <div class="ob-step" id="n-step-5" style="max-width:900px;">
+    <div class="ob-step-tag" data-i18n="nut_onb.s5_tag">Step 5 of 5 · Nutrition Setup</div>
+    <div class="ob-step-title" data-i18n-html="nut_onb.s5_title">What matters<br><span style="color:var(--green)">most to you?</span></div>
+    <div class="ob-step-sub" data-i18n="nut_onb.s5_sub">Pick all that apply. This shapes the tone and style of your plan.</div>
+
+    <div class="n-option-grid" style="max-width:100%;">
+      <div class="n-option-card" onclick="toggleOption(this,'taste')">
+        <div class="n-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div class="n-option-title" data-i18n="nut_onb.p_tasty_t">Tasty</div>
+        <div class="n-option-desc" data-i18n="nut_onb.p_tasty_d">Flavor first</div>
+      </div>
+      <div class="n-option-card" onclick="toggleOption(this,'speed')">
+        <div class="n-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="n-option-title" data-i18n="nut_onb.p_quick_t">Quick</div>
+        <div class="n-option-desc" data-i18n="nut_onb.p_quick_d">Minimum effort</div>
+      </div>
+      <div class="n-option-card" onclick="toggleOption(this,'healthy')">
+        <div class="n-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg></div>
+        <div class="n-option-title" data-i18n="nut_onb.p_healthy_t">Healthy</div>
+        <div class="n-option-desc" data-i18n="nut_onb.p_healthy_d">Nutrient-dense</div>
+      </div>
+      <div class="n-option-card" onclick="toggleOption(this,'filling')">
+        <div class="n-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+        <div class="n-option-title" data-i18n="nut_onb.p_filling_t">Filling</div>
+        <div class="n-option-desc" data-i18n="nut_onb.p_filling_d">Stay full longer</div>
+      </div>
+      <div class="n-option-card" onclick="toggleOption(this,'variety')">
+        <div class="n-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="n-option-title" data-i18n="nut_onb.p_variety_t">Variety</div>
+        <div class="n-option-desc" data-i18n="nut_onb.p_variety_d">Different every day</div>
+      </div>
+    </div>
+
+    <div class="goal-nav">
+      <button class="btn-ghost" onclick="nBack()" data-i18n="nut_onb.back">← Back</button>
+      <button class="btn-primary" onclick="finishNutrition()" data-i18n="nut_onb.generate">Generate My Plan →</button>
+    </div>
+  </div>
+
+</div><!-- /ob-content -->
+
+<!-- ═══ GENERATING SCREEN ═══ -->
+<div class="gen-screen" id="genScreen">
+  <div class="gen-spinner"></div>
+  <div>
+    <div class="gen-title" data-i18n-html="nut_onb.gen_title">Building Your<br>Nutrition Plan</div>
+    <div class="gen-sub" data-i18n="nut_onb.gen_sub">AI is syncing with your training schedule</div>
+  </div>
+  <div class="gen-steps">
+    <div class="gen-step-item" id="ngs-1"><span class="gs-icon">📊</span><span class="gs-text" data-i18n="nut_onb.gen_s1">Reading your training plan...</span></div>
+    <div class="gen-step-item" id="ngs-2"><span class="gs-icon">🥗</span><span class="gs-text" data-i18n="nut_onb.gen_s2">Calculating macros & calories...</span></div>
+    <div class="gen-step-item" id="ngs-3"><span class="gs-icon">🍽️</span><span class="gs-text" data-i18n="nut_onb.gen_s3">Building your 7-day meal plan...</span></div>
+    <div class="gen-step-item" id="ngs-4"><span class="gs-icon">✅</span><span class="gs-text" data-i18n="nut_onb.gen_s4">Finalizing your nutrition guide...</span></div>
+  </div>
+</div>
+
+<!-- ═══ SUCCESS SCREEN ═══ -->
+<div class="success-screen" id="successScreen">
+  <div class="success-screen-video-bg">
+    <video autoplay muted loop playsinline>
+      <source src="https://builtwithai.pro/fitai/media/quest-bg.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="success-inner">
+    <div class="success-tag" data-i18n="nut_onb.suc_tag">🥗 NUTRITION PLAN READY</div>
+    <div class="success-headline" data-i18n-html="nut_onb.suc_headline">Your Fuel Plan<br>Is <span>Live.</span></div>
+    <div class="success-tagline" data-i18n="nut_onb.suc_tagline">7 days of personalized meals synced with your training — ready inside your dashboard.</div>
+    <button class="success-cta" onclick="window.location.href='dashboard.html'" data-i18n="nut_onb.suc_cta">GO TO MY DASHBOARD →</button>
+    <p class="success-note" data-i18n="nut_onb.suc_note">You can regenerate or adjust your plan anytime from the Nutrition section</p>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const NUTRITION_WEBHOOK = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-nutrition';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const TOTAL_N = 5;
+let currentStep = 1;
+const nAnswers = {
+  meals: null,
+  cook_time: null,
+  budget: null,
+  restrictions: [],
+  preferences: [],
+  extra_notes: ''
+};
+
+// ── PROGRESS UI ──
+function updateUI() {
+  const pct = (currentStep / TOTAL_N) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepFraction').textContent = `${currentStep} / ${TOTAL_N}`;
+
+  const labels = [
+    FitAILang.t('nut_onb.lbl_meals'), FitAILang.t('nut_onb.lbl_cooking'), FitAILang.t('nut_onb.lbl_budget'),
+    FitAILang.t('nut_onb.lbl_limits'), FitAILang.t('nut_onb.lbl_priorities')
+  ];
+  document.getElementById('stepLabel').textContent = labels[currentStep - 1] || '';
+
+  // Dots
+  const dotsEl = document.getElementById('stepDots');
+  dotsEl.innerHTML = '';
+  for (let i = 1; i <= TOTAL_N; i++) {
+    const d = document.createElement('div');
+    d.className = 'ob-dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    dotsEl.appendChild(d);
+  }
+}
+
+// ── SELECTION HELPERS ──
+function selectN(step, key, val, el) {
+  nAnswers[key] = val;
+  const card = el.closest('.n-photo-cards, .n-option-grid');
+  card.querySelectorAll('.n-photo-card, .n-option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const btn = document.getElementById(`n${step}-next`);
+  if (btn) { btn.disabled = false; }
+}
+
+function togglePill(el) {
+  el.classList.toggle('selected');
+  nAnswers.restrictions = [...document.querySelectorAll('#n-restrictions .n-pill.selected')].map(p => p.dataset.val);
+}
+
+const selectedPrefs = new Set();
+function toggleOption(el, val) {
+  el.classList.toggle('selected');
+  if (selectedPrefs.has(val)) selectedPrefs.delete(val);
+  else selectedPrefs.add(val);
+  nAnswers.preferences = [...selectedPrefs];
+}
+
+// ── NAVIGATION ──
+function nNext() {
+  const curr = document.getElementById(`n-step-${currentStep}`);
+  curr.classList.add('exit');
+  setTimeout(() => {
+    curr.classList.remove('active', 'exit');
+    currentStep++;
+    const next = document.getElementById(`n-step-${currentStep}`);
+    if (next) next.classList.add('active');
+    updateUI();
+    window.scrollTo(0, 0);
+  }, 280);
+}
+
+function nBack() {
+  if (currentStep === 1) { window.history.back(); return; }
+  const curr = document.getElementById(`n-step-${currentStep}`);
+  curr.classList.remove('active');
+  currentStep--;
+  document.getElementById(`n-step-${currentStep}`).classList.add('active');
+  updateUI();
+  window.scrollTo(0, 0);
+}
+
+// ── FINISH ──
+async function finishNutrition() {
+  nAnswers.extra_notes = document.getElementById('n-extra')?.value?.trim() || '';
+
+  document.getElementById('genScreen').classList.add('show');
+  setNGenStep(0);
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'signin.html'; return; }
+    const userId = session.user.id;
+
+    setNGenStep(1);
+
+    // Fetch current training plan from Supabase
+    const planResp = await fetch(
+      `${SUPABASE_URL}/rest/v1/plans?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${session.access_token}` } }
+    );
+    const plans = await planResp.json();
+    const currentPlan = plans[0] || null;
+
+    setNGenStep(2);
+
+    // Fetch profile
+    const profResp = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${session.access_token}` } }
+    );
+    const profiles = await profResp.json();
+    const profile = profiles[0] || {};
+
+    const payload = {
+      user_id:      userId,
+      meals:        nAnswers.meals        || 3,
+      cook_time:    nAnswers.cook_time    || 'moderate',
+      budget:       nAnswers.budget       || 'moderate',
+      restrictions: nAnswers.restrictions || [],
+      preferences:  nAnswers.preferences  || [],
+      extra_notes:  nAnswers.extra_notes  || '',
+      profile:      profile,
+      training_plan: currentPlan?.training_plan || null,
+      daily_kcal:   currentPlan?.daily_kcal    || null,
+      lang:         localStorage.getItem('fitai_lang') || 'en'
+    };
+
+    setNGenStep(3);
+
+    const resp = await fetch(NUTRITION_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) throw new Error('Webhook error: ' + resp.status);
+
+    setNGenStep(4);
+    setTimeout(() => {
+      document.getElementById('genScreen').classList.remove('show');
+      document.getElementById('successScreen').classList.add('show');
+    }, 1200);
+
+  } catch(err) {
+    console.error('Nutrition onboarding error:', err);
+    document.getElementById('genScreen').classList.remove('show');
+    alert(FitAILang.t('nut_onb.err_generic'));
+  }
+}
+
+function setNGenStep(idx) {
+  const ids = ['ngs-1','ngs-2','ngs-3','ngs-4'];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (i < idx) el.className = 'gen-step-item done';
+    else if (i === idx) el.className = 'gen-step-item active';
+    else el.className = 'gen-step-item';
+  });
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.href = 'signin.html';
+  });
+  updateUI();
+});
+</script>
+</body>
+</html>

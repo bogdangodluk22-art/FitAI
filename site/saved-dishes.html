@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saved Dishes — FitAI</title>
+<meta name="description" content="Your saved recipes and meal ideas from FitAI.">
+<meta property="og:title" content="Saved Dishes — FitAI">
+<meta property="og:description" content="Your saved recipes and meal ideas from FitAI.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/saved-dishes.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Saved Dishes — FitAI">
+<meta name="twitter:description" content="Your saved recipes and meal ideas from FitAI.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#080C14;--surface:#0F1623;--elevated:#161E2E;
+  --border:#1E293B;--blue:#2563EB;--blue-h:#1D4ED8;--green:#10B981;
+  --amber:#F59E0B;--red:#EF4444;
+  --text:#F8FAFC;--muted:#94A3B8;--dimmed:#475569;
+  --page-pad:48px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 var(--page-pad);height:64px;border-bottom:1px solid var(--border);background:rgba(8,12,20,0.94);backdrop-filter:blur(20px);}
+.nav-logo img{height:68px;filter:brightness(1.1);transform:scale(1.5);transform-origin:left center;}
+.nav-center{display:flex;align-items:center;gap:4px;}
+.nav-link{background:none;border:none;color:var(--dimmed);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-link.active{color:var(--text);background:rgba(245,158,11,0.1);}
+.nav-link-nutrition{background:rgba(16,185,129,0.08);border:1.5px solid rgba(16,185,129,0.3);color:var(--green);padding:7px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.nav-right{display:flex;align-items:center;gap:16px;}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:15px;color:#fff;font-weight:700;}
+/* ── Nav avatar: photo / gradient-initial + dropdown menu (shared) ── */
+.nav-avatar{cursor:pointer;overflow:hidden;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:50%;}
+.nav-avatar.loading{opacity:0.55;pointer-events:none;}
+.nav-avatar-wrap{position:relative;display:inline-flex;}
+.nav-avatar-menu{position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:#0F1623;border:1px solid rgba(255,255,255,0.10);border-radius:12px;padding:6px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.7);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;z-index:600;}
+.nav-avatar-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.nav-avatar-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#F8FAFC;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.nav-avatar-menu button:hover{background:rgba(255,255,255,0.06);}
+.nav-avatar-menu button svg{width:15px;height:15px;flex-shrink:0;opacity:0.85;}
+.nav-avatar-menu button.danger{color:#F87171;}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
+.nav-btn{background:none;border:1.5px solid var(--border);color:var(--muted);padding:7px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.nav-btn:hover{border-color:var(--muted);color:var(--text);}
+
+.page{position:relative;z-index:1;padding:80px var(--page-pad) 60px;}
+
+.page-header{padding:32px 0 28px;border-bottom:1px solid var(--border);margin-bottom:32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,5vw,64px);line-height:1;color:var(--text);}
+.page-title span{color:var(--amber);}
+/* UA Cyrillic fix: Bebas Neue lacks Cyrillic glyphs → swap page title to Oswald (already loaded). Numeric .dish-kcal stays on Bebas. */
+html[lang="ua"] .page-title{ font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0; }
+.page-sub{font-size:14px;color:var(--muted);margin-top:8px;}
+
+.clear-btn{background:none;border:1.5px solid var(--border);color:var(--dimmed);padding:9px 18px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.clear-btn:hover{border-color:var(--red);color:var(--red);}
+
+.dishes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+
+.dish-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.25s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;}
+.dish-card:hover{border-color:rgba(245,158,11,0.35);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.3);}
+.dish-img{width:100%;height:180px;object-fit:cover;background:var(--elevated);display:block;}
+.dish-img-placeholder{width:100%;height:180px;background:var(--elevated);display:flex;align-items:center;justify-content:center;font-size:48px;}
+.dish-body{padding:18px;flex:1;display:flex;flex-direction:column;}
+.dish-name{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:6px;line-height:1.1;}
+.dish-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;flex:1;}
+.dish-footer{display:flex;align-items:center;justify-content:space-between;}
+.dish-kcal{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);}
+.dish-kcal-label{font-size:10px;color:var(--dimmed);}
+.dish-actions{display:flex;gap:6px;}
+.dish-recipe-btn{background:none;border:1.5px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;font-size:11px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.dish-recipe-btn:hover{border-color:var(--green);color:var(--green);}
+.dish-remove-btn{background:none;border:1.5px solid var(--border);color:var(--dimmed);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+.dish-remove-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 300px);padding:80px 40px;text-align:center;}
+.empty-icon{font-size:64px;margin-bottom:24px;opacity:0.4;}
+.empty-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:10px;}
+.empty-sub{font-size:14px;color:var(--muted);margin-bottom:28px;max-width:400px;line-height:1.7;}
+.empty-btn{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all 0.22s;}
+.empty-btn:hover{background:#0da271;transform:translateY(-1px);}
+
+/* Recipe modal */
+.recipe-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.25s;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.recipe-overlay.open{opacity:1;pointer-events:auto;}
+.recipe-modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:560px;position:relative;transform:scale(0.95) translateY(16px);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);max-height:80vh;overflow-y:auto;scrollbar-width:none;}
+.recipe-modal::-webkit-scrollbar{display:none;}
+.recipe-overlay.open .recipe-modal{transform:scale(1) translateY(0);}
+.recipe-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+.recipe-title{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:20px;}
+.recipe-body{font-size:14px;color:var(--muted);line-height:1.8;}
+.recipe-close{position:absolute;top:16px;right:16px;background:none;border:1.5px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.recipe-close:hover{border-color:var(--text);color:var(--text);}
+.recipe-spinner{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--green);animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:768px){:root{--page-pad:20px;}nav{padding:0 20px;}.nav-center{display:none;}.nav-user{flex-direction:row-reverse;}.nav-btn{display:none;}.dishes-grid{grid-template-columns:1fr;}}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><a href="dashboard.html"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a></div>
+  <div class="nav-center">
+    <a href="dashboard.html" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+    <a href="library.html" class="nav-link" data-i18n="nav.library">Library</a>
+    <a href="nutrition.html" class="nav-link-nutrition" data-i18n="nav.nutrition">🥗 Nutrition</a>
+    <a href="saved-dishes.html" class="nav-link active" data-i18n="nav.saved">⭐ Saved</a>
+    <a href="referral.html" class="nav-link" data-i18n="nav.invite">🎁 Invite</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">B</div>
+      <span id="navName">...</span>
+    </div>
+    <button class="nav-btn" onclick="signOut()" data-i18n="nav.signout">Sign Out</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-tag" data-i18n="saved.tag">⭐ Your Collection</div>
+      <div class="page-title" data-i18n-html="saved.title">Saved <span>Dishes</span></div>
+      <div class="page-sub" id="countLabel" data-i18n="saved.loading">Loading...</div>
+    </div>
+    <button class="clear-btn" id="clearBtn" onclick="clearAll()" style="display:none;" data-i18n="saved.clear">Clear all</button>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="empty-icon">🍽️</div>
+    <div class="empty-title" data-i18n="saved.empty_title">No saved dishes yet</div>
+    <div class="empty-sub" data-i18n="saved.empty_sub">Go to the Nutrition section, use "What's in my fridge?" and save dishes you like.</div>
+    <a href="nutrition.html" class="empty-btn" data-i18n-html="saved.empty_btn">
+      <span>🥗</span> Go to Nutrition
+    </a>
+  </div>
+
+  <!-- Dishes grid -->
+  <div class="dishes-grid" id="dishesGrid"></div>
+</div>
+
+<!-- Recipe modal -->
+<div class="recipe-overlay" id="recipeOverlay">
+  <div class="recipe-modal">
+    <button class="recipe-close" onclick="closeRecipe()">✕</button>
+    <div class="recipe-tag" data-i18n="saved.recipe_tag">🍳 Recipe</div>
+    <div class="recipe-title" id="recipeTitle">...</div>
+    <div class="recipe-body" id="recipeBody">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="recipe-spinner"></div>
+        <span data-i18n="saved.getting_recipe_ai">Getting recipe from AI...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAVED_KEY = 'fitai_saved_dishes';
+const RECIPE_WEBHOOK = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-recipe';
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════════════════════════
+//  NAV AVATAR — photo upload + gradient-initial fallback (shared block)
+//  Storage: fitai-users/avatars/{user_id} → profiles.avatar_url
+// ════════════════════════════════════════════════════════════════
+const FitAIAvatar = (() => {
+  const AV_BUCKET = 'fitai-users';
+  const GRADIENTS = [
+    'linear-gradient(135deg,#2563EB,#7C3AED)',
+    'linear-gradient(135deg,#10B981,#0EA5E9)',
+    'linear-gradient(135deg,#F59E0B,#EF4444)',
+    'linear-gradient(135deg,#EC4899,#8B5CF6)',
+    'linear-gradient(135deg,#06B6D4,#3B82F6)',
+    'linear-gradient(135deg,#8B5CF6,#EC4899)',
+    'linear-gradient(135deg,#22C55E,#15803D)',
+    'linear-gradient(135deg,#F43F5E,#FB923C)'
+  ];
+  const cfg = { elId:'navAvatar', uid:null, token:null, name:'', avatarUrl:null };
+  let menuEl = null, fileEl = null, wrapEl = null, wired = false;
+
+  const el = () => document.getElementById(cfg.elId);
+  const letterFor = n => { const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; };
+  function gradientFor(seed){
+    const s = (seed||'?').toString().toUpperCase();
+    let h = 0; for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return GRADIENTS[h % GRADIENTS.length];
+  }
+
+  function render(){
+    const a = el(); if (!a) return;
+    if (cfg.avatarUrl){
+      a.style.background = 'none';
+      const grad = gradientFor(cfg.name || cfg.uid), ltr = letterFor(cfg.name);
+      a.innerHTML = '<img src="'+cfg.avatarUrl+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';">';
+    } else {
+      a.style.background = gradientFor(cfg.name || cfg.uid);
+      a.textContent = letterFor(cfg.name);
+    }
+    if (menuEl){
+      const rm = menuEl.querySelector('[data-act=remove]');
+      if (rm) rm.style.display = cfg.avatarUrl ? '' : 'none';
+    }
+  }
+
+  function buildMenu(){
+    const a = el(); if (!a || wired) return;
+    wrapEl = document.createElement('div');
+    wrapEl.className = 'nav-avatar-wrap';
+    a.parentNode.insertBefore(wrapEl, a);
+    wrapEl.appendChild(a);
+
+    menuEl = document.createElement('div');
+    menuEl.className = 'nav-avatar-menu';
+    menuEl.innerHTML =
+      '<button data-act="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' + FitAILang.t('nav.upload_photo') + '</button>' +
+      '<button data-act="remove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' + FitAILang.t('nav.remove_photo') + '</button>' +
+      '<div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 6px;"></div>' +
+      '<button data-act="signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' + FitAILang.t('nav.signout') + '</button>';
+    wrapEl.appendChild(menuEl);
+
+    fileEl = document.createElement('input');
+    fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+    wrapEl.appendChild(fileEl);
+
+    a.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.toggle('open'); });
+    document.addEventListener('click', () => menuEl.classList.remove('open'));
+    menuEl.querySelector('[data-act=upload]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); fileEl.click(); });
+    menuEl.querySelector('[data-act=remove]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); removePhoto(); });
+    const _so = menuEl.querySelector('[data-act=signout]');
+    if (_so) _so.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); if (typeof signOut === 'function') signOut(); });
+    fileEl.addEventListener('change', onFile);
+    wired = true;
+  }
+
+  async function onFile(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !cfg.uid || !cfg.token) return;
+    if (!file.type.startsWith('image/')) { alert(FitAILang.t('av.err_image')); return; }
+    if (file.size > 5*1024*1024) { alert(FitAILang.t('av.err_too_large')); return; }
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const path = 'avatars/' + cfg.uid;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/' + AV_BUCKET + '/' + path, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':file.type, 'x-upsert':'true' },
+        body:file
+      });
+      if (!up.ok) throw new Error('Storage upload failed ('+up.status+')');
+      const publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + AV_BUCKET + '/' + path + '?t=' + Date.now();
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: publicUrl })
+      });
+      if (!pr.ok) throw new Error('Saving avatar failed ('+pr.status+')');
+      cfg.avatarUrl = publicUrl;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = publicUrl;
+      render();
+    } catch(err){
+      alert(err.message || FitAILang.t('av.err_upload'));
+    } finally {
+      if (a) a.classList.remove('loading');
+    }
+  }
+
+  async function removePhoto(){
+    if (!cfg.uid || !cfg.token) return;
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: null })
+      });
+      if (!pr.ok) throw new Error('Could not remove photo ('+pr.status+')');
+      cfg.avatarUrl = null;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = null;
+      render();
+    } catch(err){ alert(err.message || FitAILang.t('av.err_remove')); }
+    finally { if (a) a.classList.remove('loading'); }
+  }
+
+  function init(opts){
+    cfg.elId      = opts.elId || 'navAvatar';
+    cfg.uid       = opts.uid || null;
+    cfg.token     = opts.token || null;
+    cfg.name      = opts.name || '';
+    cfg.avatarUrl = opts.avatarUrl || null;
+    buildMenu();
+    render();
+  }
+  return { init, render };
+})();
+
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch(e) { return []; }
+}
+function setSaved(arr) { localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); }
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'signin.html'; return; }
+
+  const uid = session.user.id;
+  const headers = { apikey:SUPABASE_ANON, Authorization:`Bearer ${session.access_token}` };
+  const profResp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}&select=name,avatar_url`, { headers });
+  const profile = (await profResp.json())[0] || {};
+  const name = profile.name || 'User';
+  document.getElementById('navName').textContent = name;
+  FitAIAvatar.init({ uid, token: session.access_token, name, avatarUrl: profile.avatar_url });
+
+  renderPage();
+});
+
+function renderPage() {
+  const saved = getSaved();
+  const grid = document.getElementById('dishesGrid');
+  const emptyEl = document.getElementById('emptyState');
+  const countEl = document.getElementById('countLabel');
+  const clearBtn = document.getElementById('clearBtn');
+
+  if (!saved.length) {
+    countEl.textContent = FitAILang.t('saved.empty_title');
+    emptyEl.style.display = 'flex';
+    clearBtn.style.display = 'none';
+    grid.innerHTML = '';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  clearBtn.style.display = 'block';
+  countEl.textContent = saved.length + ' ' + (saved.length === 1 ? FitAILang.t('saved.count_one') : FitAILang.t('saved.count_many'));
+
+  grid.innerHTML = '';
+  saved.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'dish-card';
+
+    const imgEl = d.imgUrl
+      ? '<img class="dish-img" src="' + d.imgUrl + '" alt="' + d.name + '" onerror="this.style.display=\'none\'">'
+      : '<img class="dish-img" data-dish-name="' + encodeURIComponent(d.name) + '" alt="' + d.name + '" style="display:none" onerror="this.style.display=\'none\'"><div class="dish-img-placeholder">🍽️</div>';
+
+    card.innerHTML =
+      imgEl +
+      '<div class="dish-body">' +
+        '<div class="dish-name">' + d.name + '</div>' +
+        '<div class="dish-desc">' + (d.description || (d.ingredients||[]).join(', ')) + '</div>' +
+        '<div class="dish-footer">' +
+          '<div>' +
+            '<span class="dish-kcal">' + (d.kcal||'—') + '</span>' +
+            '<span class="dish-kcal-label"> ' + FitAILang.t('saved.kcal') + '</span>' +
+          '</div>' +
+          '<div class="dish-actions">' +
+            '<button class="dish-recipe-btn">' + FitAILang.t('saved.recipe_btn') + '</button>' +
+            '<button class="dish-remove-btn" title="Remove">×</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    card.querySelector('.dish-recipe-btn').onclick = function() { openRecipe(d.name, d.ingredients||[]); };
+    card.querySelector('.dish-remove-btn').onclick = function() { removeDish(i); };
+    grid.appendChild(card);
+  });
+
+  loadDishImages();
+}
+
+// Load a relevant food photo per saved dish (same Unsplash + 24h localStorage cache as the rest of the app)
+async function loadDishImages() {
+  const imgs = document.querySelectorAll('img.dish-img[data-dish-name]');
+  for (const img of imgs) {
+    try {
+      const keyword  = decodeURIComponent(img.dataset.dishName);
+      const cacheKey = 'fitai_img_dish_' + keyword.toLowerCase().replace(/\s+/g,'_').slice(0,40);
+      const apply = (url) => {
+        img.onload = () => {
+          img.style.display = 'block';
+          const ph = img.nextElementSibling;
+          if (ph && ph.classList.contains('dish-img-placeholder')) ph.style.display = 'none';
+        };
+        img.src = url;
+      };
+
+      // Check cache first — avoid burning API quota on reload
+      const cachedUrl = localStorage.getItem(cacheKey);
+      const cachedTs  = parseInt(localStorage.getItem(cacheKey + '_ts') || '0');
+      if (cachedUrl && Date.now() - cachedTs < 86400000) { apply(cachedUrl); continue; }
+
+      const resp = await fetch(
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword+' food dish')}&orientation=landscape&client_id=Rk9KvTZhsOJNw-ajfLSQfoLxkyjNsxTyMF2Rl_7VZJ8`,
+        { headers:{ 'Accept-Version':'v1' } }
+      );
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const url = data.urls?.small || data.urls?.regular;
+      if (url) {
+        apply(url);
+        // Cache for 24 hours
+        localStorage.setItem(cacheKey, url);
+        localStorage.setItem(cacheKey + '_ts', Date.now().toString());
+      }
+    } catch(e) { console.error(e); }
+  }
+}
+
+function removeDish(idx) {
+  const saved = getSaved();
+  saved.splice(idx, 1);
+  setSaved(saved);
+  renderPage();
+}
+
+function clearAll() {
+  if (!confirm(FitAILang.t('saved.confirm_clear'))) return;
+  setSaved([]);
+  renderPage();
+}
+
+// ── RECIPE ──
+async function openRecipe(mealName, foods) {
+  document.getElementById('recipeTitle').textContent = mealName;
+  document.getElementById('recipeBody').innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;">' +
+    '<div class="recipe-spinner"></div>' +
+    '<span style="color:var(--muted)">' + FitAILang.t('saved.getting_recipe') + '</span></div>';
+  document.getElementById('recipeOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const r = await fetch(RECIPE_WEBHOOK, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ meal: mealName, foods, lang: localStorage.getItem('fitai_lang') || 'en' })
+    });
+    const data = await r.json();
+    document.getElementById('recipeBody').innerHTML = formatRecipe(data.recipe || data.text || FitAILang.t('saved.recipe_unavailable'));
+  } catch(e) {
+    document.getElementById('recipeBody').innerHTML = '<p style="color:var(--red)">' + FitAILang.t('saved.err_recipe') + '</p>';
+  }
+}
+
+function formatRecipe(text) {
+  return text.split('\n').filter(l => l.trim()).map(l => {
+    const clean = l.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>');
+    if (l.match(/^\*\*[A-Z]/) || l.match(/^#{1,3}\s/))
+      return '<div style="font-family:\'Oswald\',sans-serif;font-size:16px;color:var(--green);margin:16px 0 8px;text-transform:uppercase;">' + clean.replace(/^#+\s/,'').replace(/\*\*/g,'') + '</div>';
+    if (l.match(/^\d+\./)) return '<div style="padding:5px 0;color:var(--text);">' + clean + '</div>';
+    if (l.match(/^[-•*]/)) return '<div style="padding:4px 0 4px 8px;color:var(--muted);border-left:2px solid var(--border);margin-left:4px;">' + clean.replace(/^[-•*]\s*/,'') + '</div>';
+    return '<p style="margin-bottom:8px;color:var(--muted);">' + clean + '</p>';
+  }).join('');
+}
+
+function closeRecipe() {
+  document.getElementById('recipeOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('recipeOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('recipeOverlay')) closeRecipe();
+});
+</script>
+</body>
+</html>

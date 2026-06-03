@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — FitAI</title>
+<meta name="description" content="Sign in to your FitAI account.">
+<meta property="og:title" content="Sign In — FitAI">
+<meta property="og:description" content="Sign in to your FitAI account.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/signin.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sign In — FitAI">
+<meta name="twitter:description" content="Sign in to your FitAI account.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#080C14; --surface:#0F1623; --elevated:#161E2E; --border:#1E293B;
+  --blue:#2563EB; --blue-h:#1D4ED8; --green:#10B981; --amber:#F59E0B; --red:#EF4444;
+  --text:#F8FAFC; --muted:#94A3B8; --dimmed:#475569;
+}
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  overflow:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* BG VIDEO */
+.bg-video-wrap {
+  position:fixed; inset:0; z-index:0; overflow:hidden;
+}
+.bg-video-wrap video {
+  width:100%; height:100%; object-fit:cover; opacity:0.25;
+}
+.bg-video-wrap::after {
+  content:'';
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse at center, rgba(8,12,20,0.3) 0%, rgba(8,12,20,0.85) 100%);
+}
+
+/* TRAINERS */
+.trainer-left, .trainer-right {
+  position:fixed; bottom:0; z-index:1;
+  height:88vh; max-height:780px; opacity:0;
+  animation: trainerIn 1s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+.trainer-left  { left:-20px; }
+.trainer-right { right:-20px; }
+.trainer-left img, .trainer-right img {
+  height:100%; width:auto; object-fit:contain; object-position:bottom;
+}
+.trainer-left::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to right, rgba(8,12,20,0.6) 0%, transparent 50%);
+}
+.trainer-right::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to left, rgba(8,12,20,0.6) 0%, transparent 50%);
+}
+@keyframes trainerIn {
+  from { opacity:0; transform:translateY(30px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* CENTER CONTENT */
+.center {
+  position:relative; z-index:2;
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:40px 24px;
+}
+
+/* Logo */
+.signin-logo {
+  margin-bottom:32px;
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+.signin-logo img { height:52px; filter:brightness(1.1); }
+
+/* Card */
+.signin-card {
+  background:rgba(15,22,35,0.85);
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  padding:36px 40px;
+  width:100%; max-width:420px;
+  backdrop-filter:blur(20px);
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+
+.signin-tag {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; letter-spacing:3px; text-transform:uppercase;
+  color:var(--blue); margin-bottom:16px; display:block;
+}
+.signin-title {
+  font-family:'Oswald',sans-serif;
+  font-size:36px; font-weight:700; text-transform:uppercase;
+  color:#fff; line-height:1; margin-bottom:6px;
+}
+.signin-sub {
+  font-size:14px; color:var(--muted); margin-bottom:28px; line-height:1.5;
+}
+
+/* Fields */
+.field-wrap { margin-bottom:16px; }
+.field-label {
+  font-size:11px; color:var(--muted); font-weight:600;
+  letter-spacing:1.5px; text-transform:uppercase;
+  display:block; margin-bottom:6px; font-family:'Outfit',sans-serif;
+}
+.field-input {
+  background:rgba(8,12,20,0.7);
+  border:1.5px solid var(--border);
+  border-radius:10px; padding:14px 16px;
+  color:var(--text); font-family:'Outfit',sans-serif;
+  font-size:15px; outline:none; width:100%;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.field-input:focus {
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+}
+.field-input.error {
+  border-color:#EF4444;
+  box-shadow:0 0 0 3px rgba(239,68,68,0.1);
+}
+.field-input::placeholder { color:var(--dimmed); }
+
+/* Error */
+.error-msg {
+  display:none;
+  background:rgba(239,68,68,0.1);
+  border:1px solid rgba(239,68,68,0.3);
+  border-radius:8px; padding:10px 14px;
+  font-size:13px; color:#FCA5A5;
+  margin-bottom:16px; line-height:1.4;
+}
+.error-msg.show { display:block; }
+
+/* Success */
+.success-msg {
+  display:none;
+  background:rgba(16,185,129,0.1);
+  border:1px solid rgba(16,185,129,0.3);
+  border-radius:8px; padding:10px 14px;
+  font-size:13px; color:#6EE7B7;
+  margin-bottom:16px; line-height:1.4;
+}
+.success-msg.show { display:block; }
+
+/* Buttons */
+.btn-primary {
+  width:100%; padding:15px;
+  background:var(--blue); color:#fff; border:none;
+  border-radius:10px; font-family:'Oswald',sans-serif;
+  font-size:17px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; cursor:pointer;
+  transition:all 0.22s; margin-bottom:12px;
+}
+.btn-primary:hover:not(:disabled) {
+  background:var(--blue-h);
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(37,99,235,0.3);
+}
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.btn-ghost {
+  width:100%; padding:13px;
+  background:none; border:1.5px solid var(--border);
+  color:var(--muted); border-radius:10px;
+  font-family:'Outfit',sans-serif; font-size:14px;
+  cursor:pointer; transition:all 0.2s;
+}
+.btn-ghost:hover { border-color:var(--muted); color:var(--text); }
+
+/* Divider */
+.divider {
+  display:flex; align-items:center; gap:12px;
+  color:var(--dimmed); font-size:12px;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:2px; text-transform:uppercase;
+  margin:20px 0;
+}
+.divider::before, .divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* Switch mode */
+.switch-text {
+  text-align:center; font-size:13px; color:var(--muted); margin-top:20px;
+}
+.switch-link {
+  color:var(--blue); cursor:pointer; text-decoration:underline;
+  transition:color 0.2s;
+}
+.switch-link:hover { color:#60A5FA; }
+
+/* Back link */
+.back-link {
+  position:fixed; top:24px; left:48px; z-index:10;
+  display:flex; align-items:center; gap:8px;
+  font-size:13px; color:var(--muted); cursor:pointer;
+  transition:color 0.2s; text-decoration:none;
+  animation: fadeUp 0.5s ease both;
+}
+.back-link:hover { color:var(--text); }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+@media(max-width:600px) {
+  .trainer-left, .trainer-right { height:45vh; opacity:0.5; }
+  .signin-card { padding:28px 24px; }
+  .back-link { left:20px; top:16px; }
+}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- BG VIDEO -->
+<div class="bg-video-wrap">
+  <video autoplay muted loop playsinline>
+    <source src="https://builtwithai.pro/fitai/media/quest-bg.mp4" type="video/mp4">
+  </video>
+</div>
+
+<!-- TRAINERS -->
+<div class="trainer-left">
+  <img src="https://builtwithai.pro/fitai/media/man.png" alt="Alex">
+</div>
+<div class="trainer-right">
+  <img src="https://builtwithai.pro/fitai/media/woman1.png" alt="Kira">
+</div>
+
+<!-- BACK -->
+<a href="index.html" class="back-link" data-i18n="common.back">← Back</a>
+
+<!-- CENTER -->
+<div class="center">
+  <div class="signin-logo">
+    <img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI">
+  </div>
+
+  <div class="signin-card">
+    <span class="signin-tag" id="cardTag" data-i18n="si.signin_tag">Welcome back</span>
+    <div class="signin-title" id="cardTitle" data-i18n="si.signin_title">Sign In</div>
+    <div class="signin-sub" id="cardSub" data-i18n="si.signin_sub">Enter your credentials to access your personal plan</div>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="success-msg" id="successMsg"></div>
+
+    <!-- EMAIL -->
+    <div class="field-wrap">
+      <label class="field-label" data-i18n="si.email_label">Email</label>
+      <input type="email" class="field-input" id="emailInput" placeholder="alex@email.com" autocomplete="email">
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="field-wrap" id="passwordWrap">
+      <label class="field-label" data-i18n="si.password_label">Password</label>
+      <input type="password" class="field-input" id="passwordInput" placeholder="Your password" data-i18n-ph="si.password_ph" autocomplete="current-password">
+    </div>
+
+    <!-- CONFIRM PASSWORD (signup only) -->
+    <div class="field-wrap" id="confirmWrap" style="display:none;">
+      <label class="field-label" data-i18n="si.confirm_label">Confirm Password</label>
+      <input type="password" class="field-input" id="confirmInput" placeholder="Repeat password" data-i18n-ph="si.confirm_ph" autocomplete="new-password">
+    </div>
+
+    <button class="btn-primary" id="mainBtn" onclick="handleSubmit()" data-i18n="si.signin_btn">SIGN IN</button>
+
+    <!-- Forgot password (signin mode) -->
+    <div id="forgotWrap" style="text-align:center; margin-bottom:8px;">
+      <span class="switch-link" onclick="switchMode('reset')" style="font-size:13px;" data-i18n="si.forgot">Forgot password?</span>
+    </div>
+
+    <div class="switch-text" id="switchText">
+      <span data-i18n="si.signin_switch_text">Don't have an account?</span>
+      <span class="switch-link" onclick="window.location.href='register.html'" data-i18n="si.signin_switch_link">Create one</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let mode = 'signin'; // 'signin' | 'signup' | 'reset'
+
+// Check if already logged in
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'dashboard.html';
+});
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('successMsg').classList.remove('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('successMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  document.getElementById('errorMsg').classList.remove('show');
+}
+function clearMessages() {
+  document.getElementById('errorMsg').classList.remove('show');
+  document.getElementById('successMsg').classList.remove('show');
+}
+
+function switchMode(newMode) {
+  mode = newMode;
+  clearMessages();
+  const tag   = document.getElementById('cardTag');
+  const title = document.getElementById('cardTitle');
+  const sub   = document.getElementById('cardSub');
+  const btn   = document.getElementById('mainBtn');
+  const sw    = document.getElementById('switchText');
+  const conf  = document.getElementById('confirmWrap');
+  const forgot = document.getElementById('forgotWrap');
+
+  if (mode === 'signin') {
+    tag.textContent   = FitAILang.t('si.signin_tag');
+    title.textContent = FitAILang.t('si.signin_title');
+    sub.textContent   = FitAILang.t('si.signin_sub');
+    btn.textContent   = FitAILang.t('si.signin_btn');
+    conf.style.display = 'none';
+    forgot.style.display = 'block';
+    sw.innerHTML = FitAILang.t('si.signin_switch_text') + ' <span class="switch-link" onclick="switchMode(\'signup\')">' + FitAILang.t('si.signin_switch_link') + '</span>';
+  } else if (mode === 'signup') {
+    tag.textContent   = FitAILang.t('si.signup_tag');
+    title.textContent = FitAILang.t('si.signup_title');
+    sub.textContent   = FitAILang.t('si.signup_sub');
+    btn.textContent   = FitAILang.t('si.signup_btn');
+    conf.style.display = 'block';
+    forgot.style.display = 'none';
+    sw.innerHTML = FitAILang.t('si.signup_switch_text') + ' <span class="switch-link" onclick="switchMode(\'signin\')">' + FitAILang.t('si.signup_switch_link') + '</span>';
+  } else if (mode === 'reset') {
+    tag.textContent   = FitAILang.t('si.reset_tag');
+    title.textContent = FitAILang.t('si.reset_title');
+    sub.textContent   = FitAILang.t('si.reset_sub');
+    btn.textContent   = FitAILang.t('si.reset_btn');
+    conf.style.display = 'none';
+    forgot.style.display = 'none';
+    sw.innerHTML = FitAILang.t('si.reset_switch_text') + ' <span class="switch-link" onclick="switchMode(\'signin\')">' + FitAILang.t('si.reset_switch_link') + '</span>';
+  }
+}
+
+function markError(id) {
+  const el = document.getElementById(id);
+  el.classList.add('error');
+  el.addEventListener('input', () => el.classList.remove('error'), { once: true });
+}
+
+async function handleSubmit() {
+  const emailEl   = document.getElementById('emailInput');
+  const passEl    = document.getElementById('passwordInput');
+  const confEl    = document.getElementById('confirmInput');
+  const btn       = document.getElementById('mainBtn');
+  const email     = emailEl.value.trim();
+  const password  = passEl.value;
+  const confirm   = confEl.value;
+
+  clearMessages();
+  // Clear previous error highlights
+  [emailEl, passEl, confEl].forEach(el => el.classList.remove('error'));
+
+  // Validate
+  if (!email || !email.includes('@')) {
+    showError(FitAILang.t('si.err_email'));
+    markError('emailInput');
+    return;
+  }
+
+  if (mode !== 'reset' && !password) {
+    showError(FitAILang.t('si.err_password'));
+    markError('passwordInput');
+    return;
+  }
+
+  if (mode === 'signup') {
+    if (password.length < 6) {
+      showError(FitAILang.t('si.err_pass_short'));
+      markError('passwordInput');
+      return;
+    }
+    if (password !== confirm) {
+      showError(FitAILang.t('si.err_match'));
+      markError('confirmInput');
+      return;
+    }
+  }
+
+  btn.disabled = true;
+  btn.textContent = FitAILang.t('si.wait');
+
+  try {
+    if (mode === 'signin') {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      // Honour the post-login intent: onboarding, a specific page (e.g. pricing.html), else dashboard
+      const intent = sessionStorage.getItem('fitai_after_signin');
+      sessionStorage.removeItem('fitai_after_signin');
+      if (intent === 'onboarding') window.location.href = 'onboarding.html';
+      else if (intent && /^[a-z0-9_-]+\.html$/i.test(intent)) window.location.href = intent;
+      else window.location.href = 'dashboard.html';
+
+    } else if (mode === 'signup') {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      // New user → go straight to onboarding
+      window.location.href = 'onboarding.html';
+
+    } else if (mode === 'reset') {
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/signin.html'
+      });
+      if (error) throw error;
+      showSuccess(FitAILang.t('si.reset_sent'));
+    }
+  } catch (err) {
+    let msg = FitAILang.t('si.err_generic');
+    if (err.message?.includes('Invalid login credentials')) {
+      msg = FitAILang.t('si.err_invalid');
+      markError('emailInput');
+      markError('passwordInput');
+    } else if (err.message?.includes('already registered')) {
+      msg = FitAILang.t('si.err_exists');
+      markError('emailInput');
+    } else if (err.message?.includes('Email not confirmed')) {
+      msg = FitAILang.t('si.err_unconfirmed');
+    } else if (err.message) {
+      msg = err.message;
+    }
+    showError(msg);
+  } finally {
+    btn.disabled = false;
+    switchMode(mode);
+  }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSubmit();
+});
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

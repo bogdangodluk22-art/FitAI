@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account — FitAI</title>
+<meta name="description" content="Join FitAI and get your personalized AI fitness plan in minutes.">
+<meta property="og:title" content="Create Account — FitAI">
+<meta property="og:description" content="Join FitAI and get your personalized AI fitness plan in minutes.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/register.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Create Account — FitAI">
+<meta name="twitter:description" content="Join FitAI and get your personalized AI fitness plan in minutes.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#080C14; --surface:#0F1623; --elevated:#161E2E; --border:#1E293B;
+  --blue:#2563EB; --blue-h:#1D4ED8; --green:#10B981; --amber:#F59E0B; --red:#EF4444;
+  --text:#F8FAFC; --muted:#94A3B8; --dimmed:#475569;
+}
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+/* VIDEO BG */
+.reg-video-bg { position:fixed; inset:0; z-index:0; overflow:hidden; }
+.reg-video-bg video { width:100%; height:100%; object-fit:cover; opacity:0.3; }
+.reg-video-bg::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(8,12,20,0.4) 0%, rgba(8,12,20,0.7) 60%, rgba(8,12,20,0.97) 100%);
+}
+
+/* TRAINERS */
+.reg-trainer { position:fixed; bottom:0; z-index:1; height:92vh; max-height:820px; }
+.reg-trainer img { height:100%; width:auto; object-fit:contain; object-position:bottom; }
+.reg-trainer-left  { left:-10px; }
+.reg-trainer-right { right:-10px; }
+.reg-trainer-left::after  { content:''; position:absolute; inset:0; background:linear-gradient(to right, rgba(8,12,20,0.7) 0%, transparent 60%); }
+.reg-trainer-right::after { content:''; position:absolute; inset:0; background:linear-gradient(to left, rgba(8,12,20,0.7) 0%, transparent 60%); }
+
+/* BACK */
+.back-link {
+  position:fixed; top:24px; left:48px; z-index:10;
+  font-size:13px; color:var(--muted); cursor:pointer;
+  transition:color 0.2s; text-decoration:none;
+  display:flex; align-items:center; gap:6px;
+}
+.back-link:hover { color:var(--text); }
+
+/* LOGO */
+.reg-logo { position:fixed; top:0; left:50%; transform:translateX(-50%); z-index:1000; padding-top:16px; }
+.reg-logo img { height:96px; filter:brightness(1.1); }
+
+/* CENTER CONTENT */
+.reg-center {
+  position:relative; z-index:2;
+  min-height:100vh; display:flex;
+  align-items:center; justify-content:center;
+  padding:130px 24px 60px;
+}
+
+/* CARD */
+.reg-card {
+  background:rgba(15,22,35,0.88);
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  padding:36px 40px;
+  width:100%; max-width:560px;
+  backdrop-filter:blur(20px);
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.reg-tag { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--blue); margin-bottom:12px; display:block; }
+.reg-title { font-family:'Oswald',sans-serif; font-size:36px; font-weight:700; text-transform:uppercase; color:#fff; line-height:1; margin-bottom:6px; }
+.reg-sub { font-size:14px; color:var(--muted); margin-bottom:28px; line-height:1.5; }
+
+/* ERROR / SUCCESS */
+.msg-box { display:none; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:16px; line-height:1.4; }
+.msg-box.show { display:block; }
+.msg-box.error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#FCA5A5; }
+.msg-box.success { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#6EE7B7; }
+
+/* FIELDS */
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+.field-wrap { margin-bottom:16px; }
+.field-label { font-size:11px; color:var(--muted); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; display:block; margin-bottom:6px; }
+.field-input {
+  background:rgba(8,12,20,0.7); border:1.5px solid var(--border);
+  border-radius:10px; padding:14px 16px;
+  color:var(--text); font-family:'Outfit',sans-serif;
+  font-size:15px; outline:none; width:100%;
+  transition:border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance:none;
+}
+.field-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,0.12); }
+.field-input.error { border-color:#EF4444; box-shadow:0 0 0 3px rgba(239,68,68,0.1); }
+.field-input::placeholder { color:var(--dimmed); }
+
+/* GENDER CARDS */
+.gender-label-row { font-size:11px; color:var(--muted); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; display:block; margin-bottom:10px; }
+.gender-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.gender-card {
+  position:relative; border-radius:14px; overflow:hidden;
+  height:200px; cursor:pointer;
+  border:2px solid transparent;
+  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.gender-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.4); }
+.gender-card.selected { border-color:var(--blue); box-shadow:0 0 0 1px var(--blue), 0 12px 32px rgba(37,99,235,0.2); }
+.gender-card-bg {
+  position:absolute; inset:0;
+  background-size:cover; background-position:center 10%;
+  filter:brightness(0.6);
+  transition:filter 0.25s, transform 0.35s;
+}
+.gender-card:hover .gender-card-bg { filter:brightness(0.75); transform:scale(1.04); }
+.gender-card.selected .gender-card-bg { filter:brightness(0.78); }
+.gender-card-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(8,12,20,0.88) 0%, rgba(8,12,20,0.1) 60%); }
+.gender-card-check {
+  position:absolute; top:12px; right:12px;
+  width:26px; height:26px; border-radius:50%;
+  border:1.5px solid rgba(248,250,252,0.3);
+  background:rgba(8,12,20,0.5); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:transparent; z-index:3; transition:all 0.2s;
+}
+.gender-card.selected .gender-card-check { background:var(--blue); border-color:var(--blue); color:#fff; }
+.gender-card-name { position:absolute; bottom:14px; left:16px; font-family:'Oswald',sans-serif; font-size:22px; font-weight:700; text-transform:uppercase; color:#fff; z-index:3; }
+
+/* DIVIDER */
+.divider {
+  display:flex; align-items:center; gap:12px;
+  color:var(--dimmed); font-size:11px;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:2px; text-transform:uppercase;
+  margin:8px 0 20px;
+}
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* CTA */
+.btn-primary {
+  width:100%; padding:16px;
+  background:var(--blue); color:#fff; border:none;
+  border-radius:10px; font-family:'Oswald',sans-serif;
+  font-size:18px; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; cursor:pointer;
+  transition:all 0.22s; margin-bottom:16px;
+}
+.btn-primary:hover:not(:disabled) { background:var(--blue-h); transform:translateY(-1px); box-shadow:0 8px 24px rgba(37,99,235,0.3); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.signin-link { text-align:center; font-size:13px; color:var(--muted); }
+.signin-link a { color:var(--blue); text-decoration:underline; cursor:pointer; transition:color 0.2s; }
+.signin-link a:hover { color:#60A5FA; }
+
+.terms-note { text-align:center; font-size:11px; color:var(--dimmed); margin-top:12px; line-height:1.5; }
+
+@media(max-width:768px) {
+  .reg-trainer { height:50vh; opacity:0.4; }
+  .reg-card { padding:28px 20px; }
+  .back-link { left:20px; top:16px; }
+  .reg-logo img { height:64px; }
+  .reg-center { padding:96px 20px 48px; }
+}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<div class="reg-video-bg">
+  <video autoplay muted loop playsinline>
+    <source src="https://builtwithai.pro/fitai/media/quest-bg.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="reg-trainer reg-trainer-left">
+  <img src="https://builtwithai.pro/fitai/media/man.png" alt="Alex">
+</div>
+<div class="reg-trainer reg-trainer-right">
+  <img src="https://builtwithai.pro/fitai/media/woman1.png" alt="Kira">
+</div>
+
+<a href="index.html" class="back-link" data-i18n="common.back">← Back</a>
+
+<div class="reg-logo">
+  <img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI">
+</div>
+
+<div class="reg-center">
+  <div class="reg-card">
+    <span class="reg-tag" data-i18n="reg.tag">New here?</span>
+    <div class="reg-title" data-i18n="reg.title">Create Account</div>
+    <div class="reg-sub" data-i18n="reg.sub">Fill in your details and get your 100% personalized AI fitness plan</div>
+
+    <div class="msg-box error" id="errorMsg"></div>
+    <div class="msg-box success" id="successMsg"></div>
+
+    <!-- Name + Age -->
+    <div class="field-row">
+      <div>
+        <label class="field-label" data-i18n="reg.name_label">Your Name</label>
+        <input type="text" class="field-input" id="regName" placeholder="Alex" autocomplete="given-name">
+      </div>
+      <div>
+        <label class="field-label" data-i18n="reg.age_label">Age</label>
+        <input type="number" class="field-input" id="regAge" placeholder="28" min="14" max="99">
+      </div>
+    </div>
+
+    <!-- Gender -->
+    <label class="gender-label-row" data-i18n="reg.gender_label">Gender</label>
+    <div class="gender-grid">
+      <div class="gender-card" id="gc-male" onclick="selectGender('male', this)">
+        <div class="gender-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/man-bg.png');"></div>
+        <div class="gender-card-overlay"></div>
+        <div class="gender-card-check">✓</div>
+        <div class="gender-card-name" data-i18n="reg.male">Male</div>
+      </div>
+      <div class="gender-card" id="gc-female" onclick="selectGender('female', this)">
+        <div class="gender-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/woman-bg.png');"></div>
+        <div class="gender-card-overlay"></div>
+        <div class="gender-card-check">✓</div>
+        <div class="gender-card-name" data-i18n="reg.female">Female</div>
+      </div>
+    </div>
+
+    <!-- Account divider -->
+    <div class="divider" data-i18n="reg.divider">Create your account</div>
+
+    <!-- Email -->
+    <div class="field-wrap">
+      <label class="field-label" data-i18n="reg.email_label">Email</label>
+      <input type="email" class="field-input" id="regEmail" placeholder="alex@email.com" autocomplete="email">
+    </div>
+
+    <!-- Password -->
+    <div class="field-wrap">
+      <label class="field-label" data-i18n="reg.password_label">Password</label>
+      <input type="password" class="field-input" id="regPassword" placeholder="8+ characters" data-i18n-ph="reg.password_ph" autocomplete="new-password">
+    </div>
+
+    <!-- Confirm password -->
+    <div class="field-wrap">
+      <label class="field-label" data-i18n="reg.confirm_label">Confirm Password</label>
+      <input type="password" class="field-input" id="regConfirm" placeholder="Repeat password" data-i18n-ph="reg.confirm_ph" autocomplete="new-password">
+    </div>
+
+    <button class="btn-primary" id="regBtn" onclick="handleRegister()" data-i18n="reg.submit">CREATE ACCOUNT</button>
+
+    <div class="signin-link">
+      <span data-i18n="reg.have_account">Already have an account?</span> <a data-i18n="reg.signin_link" onclick="window.location.href='signin.html'">Sign in</a>
+    </div>
+    <div class="terms-note" data-i18n="reg.terms">By continuing you agree to FitAI's Terms of Service and Privacy Policy.</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── Referral: capture ?ref (covers landing directly on register?ref=CODE) ──
+try {
+  var _ref = new URLSearchParams(location.search).get('ref');
+  if (_ref) localStorage.setItem('fitai_ref', _ref.trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12));
+} catch(e){ console.error(e); }
+const N8N_REFERRAL = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-referral-qualify';
+
+let selectedGender = null;
+
+// Already logged in → dashboard
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = 'dashboard.html';
+});
+
+function selectGender(val, el) {
+  selectedGender = val;
+  document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function markError(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('error');
+  el.addEventListener('input', () => el.classList.remove('error'), { once: true });
+  el.addEventListener('change', () => el.classList.remove('error'), { once: true });
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('successMsg').classList.remove('show');
+}
+
+async function handleRegister() {
+  const name    = document.getElementById('regName').value.trim();
+  const age     = parseInt(document.getElementById('regAge').value) || null;
+  const email   = document.getElementById('regEmail').value.trim();
+  const pass    = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regConfirm').value;
+  const btn     = document.getElementById('regBtn');
+
+  // Clear errors
+  document.getElementById('errorMsg').classList.remove('show');
+  ['regName','regAge','regEmail','regPassword','regConfirm'].forEach(id => {
+    document.getElementById(id)?.classList.remove('error');
+  });
+
+  // Validate
+  if (!name) { showError(FitAILang.t('reg.err_name')); markError('regName'); return; }
+  if (!email || !email.includes('@')) { showError(FitAILang.t('reg.err_email')); markError('regEmail'); return; }
+  if (!pass || pass.length < 6) { showError(FitAILang.t('reg.err_pass')); markError('regPassword'); return; }
+  if (pass !== confirm) { showError(FitAILang.t('reg.err_match')); markError('regConfirm'); return; }
+
+  btn.disabled = true;
+  btn.textContent = FitAILang.t('reg.creating');
+
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if (error) throw error;
+
+    const userId = data.user?.id;
+    const token  = data.session?.access_token || SUPABASE_ANON;
+
+    // Save name, age, gender to profile
+    if (userId) {
+      await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, age, gender: selectedGender })
+      });
+    }
+
+    // Fire referral signup (non-blocking) — grants the friend +14d Premium
+    // and writes the pending referral via the n8n service_role engine.
+    const refCode = localStorage.getItem('fitai_ref');
+    if (userId && refCode) {
+      try {
+        await fetch(N8N_REFERRAL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event: 'signup', referee_id: userId, code: refCode, referee_name: name })
+        });
+      } catch (e) { console.error(e); }
+      localStorage.removeItem('fitai_ref');
+    }
+
+    // Go to onboarding quiz
+    window.location.href = 'onboarding.html';
+
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = FitAILang.t('reg.submit');
+
+    if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
+      showError(FitAILang.t('reg.err_exists'));
+      markError('regEmail');
+    } else {
+      showError(err.message || FitAILang.t('reg.err_generic'));
+    }
+  }
+}
+
+// Enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleRegister();
+});
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

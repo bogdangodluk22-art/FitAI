@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercise Library — FitAI</title>
+<meta name="description" content="Browse 87 exercises with video demonstrations from your AI trainer.">
+<meta property="og:title" content="Exercise Library — FitAI">
+<meta property="og:description" content="Browse 87 exercises with video demonstrations from your AI trainer.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/library.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Exercise Library — FitAI">
+<meta name="twitter:description" content="Browse 87 exercises with video demonstrations from your AI trainer.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:#080C14; --surface:#0F1623; --elevated:#161E2E;
+  --border:#1E293B; --blue:#2563EB; --blue-h:#1D4ED8;
+  --green:#10B981; --amber:#F59E0B; --red:#EF4444;
+  --text:#F8FAFC; --muted:#94A3B8; --dimmed:#475569;
+  --page-pad:120px;
+}
+
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'Outfit',sans-serif;
+  min-height:100vh; overflow-x:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 48px; height:64px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,12,20,0.94); backdrop-filter:blur(20px);
+}
+.nav-logo img { height:68px; width:auto; filter:brightness(1.1); transform:scale(1.5); transform-origin:left center; }
+.nav-center { display:flex; align-items:center; gap:4px; }
+.nav-link {
+  background:none; border:none; color:var(--dimmed);
+  font-family:'Outfit',sans-serif; font-size:13px; font-weight:500;
+  padding:8px 14px; border-radius:8px; cursor:pointer;
+  transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center;
+}
+.nav-link:hover { color:var(--text); background:rgba(255,255,255,0.04); }
+.nav-link.active { color:var(--text); background:rgba(37,99,235,0.1); }
+.nav-right { display:flex; align-items:center; gap:16px; }
+.nav-user { display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); }
+.nav-avatar {
+  width:34px; height:34px; border-radius:50%; background:var(--blue);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Oswald',sans-serif; font-size:15px; color:#fff; font-weight:700;
+}
+/* ── Nav avatar: photo / gradient-initial + dropdown menu (shared) ── */
+.nav-avatar{cursor:pointer;overflow:hidden;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:50%;}
+.nav-avatar.loading{opacity:0.55;pointer-events:none;}
+.nav-avatar-wrap{position:relative;display:inline-flex;}
+.nav-avatar-menu{position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:#0F1623;border:1px solid rgba(255,255,255,0.10);border-radius:12px;padding:6px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.7);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;z-index:600;}
+.nav-avatar-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.nav-avatar-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#F8FAFC;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.nav-avatar-menu button:hover{background:rgba(255,255,255,0.06);}
+.nav-avatar-menu button svg{width:15px;height:15px;flex-shrink:0;opacity:0.85;}
+.nav-avatar-menu button.danger{color:#F87171;}
+.nav-btn {
+  background:none; border:1.5px solid var(--border); color:var(--muted);
+  padding:7px 16px; border-radius:8px; font-family:'Outfit',sans-serif;
+  font-size:13px; cursor:pointer; transition:all 0.2s;
+}
+.nav-btn:hover { border-color:var(--muted); color:var(--text); }
+
+/* ── PAGE ── */
+.page { position:relative; z-index:1; padding-top:64px; }
+
+/* ── QUIZ OVERLAY ── */
+.quiz-overlay {
+  position:fixed; inset:0; z-index:100;
+  background:var(--bg); display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:80px 48px 60px;
+  animation:fadeIn 0.3s ease;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.quiz-overlay.hidden { display:none; }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes stepIn {
+  from { opacity:0; transform:translateY(28px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes stepOut {
+  from { opacity:1; transform:translateY(0); }
+  to   { opacity:0; transform:translateY(-20px); }
+}
+
+.quiz-step { display:none; width:100%; max-width:1100px; animation:stepIn 0.45s cubic-bezier(0.16,1,0.3,1) forwards; }
+.quiz-step.active { display:block; }
+.quiz-step.exit { animation:stepOut 0.3s ease-in forwards; pointer-events:none; }
+
+.quiz-tag {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--blue); letter-spacing:2px; text-transform:uppercase; margin-bottom:14px;
+}
+.quiz-title {
+  font-family:'Oswald',sans-serif; font-weight:700;
+  font-size:clamp(44px,6vw,72px); line-height:1;
+  color:var(--text); margin-bottom:10px; text-transform:uppercase;
+}
+.quiz-sub { font-size:15px; color:var(--muted); margin-bottom:40px; line-height:1.6; }
+
+/* ── LOCATION CARDS ── */
+.loc-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.loc-card {
+  position:relative; border-radius:20px; overflow:hidden;
+  height:420px; cursor:pointer;
+  border:2px solid transparent;
+  transition:transform 0.32s cubic-bezier(0.16,1,0.3,1), border-color 0.25s, box-shadow 0.32s;
+}
+.loc-card:hover { transform:translateY(-6px) scale(1.015); box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+.loc-card.selected {
+  border-color:var(--blue);
+  box-shadow:0 0 0 1px var(--blue), 0 24px 60px rgba(37,99,235,0.25);
+}
+.loc-card-bg {
+  position:absolute; inset:0;
+  background-size:cover; background-position:center;
+  filter:brightness(0.65);
+  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1), filter 0.25s;
+}
+.loc-card:hover .loc-card-bg { transform:scale(1.06); filter:brightness(0.82); }
+.loc-card.selected .loc-card-bg { filter:brightness(0.88); }
+.loc-card-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(8,12,20,0.05) 0%, rgba(8,12,20,0.15) 40%, rgba(8,12,20,0.75) 70%, rgba(8,12,20,0.96) 100%);
+}
+.loc-card-num {
+  position:absolute; top:16px; left:20px;
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  font-weight:600; letter-spacing:3px; color:rgba(248,250,252,0.45);
+  text-transform:uppercase; z-index:3;
+}
+.loc-card-check {
+  position:absolute; top:14px; right:14px; z-index:4;
+  width:28px; height:28px; border-radius:50%;
+  border:1.5px solid rgba(248,250,252,0.3);
+  background:rgba(8,12,20,0.4); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s;
+}
+.loc-card-check svg { width:14px; height:14px; stroke:transparent; transition:stroke 0.2s; }
+.loc-card.selected .loc-card-check { background:var(--blue); border-color:var(--blue); }
+.loc-card.selected .loc-card-check svg { stroke:#fff; }
+.loc-card-body {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:24px 24px 22px; z-index:3;
+}
+.loc-card-icon { font-size:28px; margin-bottom:10px; display:block; }
+.loc-card-title {
+  font-family:'Oswald',sans-serif; font-size:32px; font-weight:700;
+  line-height:1.08; color:var(--text); letter-spacing:0.5px;
+  margin-bottom:6px; text-transform:uppercase;
+}
+.loc-card-desc { font-size:13px; color:rgba(248,250,252,0.6); font-family:'Outfit',sans-serif; line-height:1.4; }
+
+/* ── MUSCLE CARDS (step 2) ── */
+.muscle-row-wrap { position:relative; }
+.muscle-scroll-btn {
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; border-radius:50%; z-index:10;
+  border:1.5px solid var(--border); background:rgba(8,12,20,0.85);
+  backdrop-filter:blur(8px); color:var(--text); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0;
+}
+.muscle-scroll-btn:hover { border-color:var(--blue); background:rgba(37,99,235,0.15); }
+.muscle-scroll-btn.left { left:-22px; }
+.muscle-scroll-btn.right { right:-22px; }
+.muscle-scroll-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+.muscle-row {
+  display:flex; gap:14px;
+  overflow-x:auto; padding-bottom:8px;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+}
+.muscle-row::-webkit-scrollbar { display:none; }
+
+.muscle-card {
+  position:relative; border-radius:16px; overflow:hidden;
+  width:200px; min-width:200px; height:260px;
+  cursor:pointer;
+  border:2px solid transparent;
+  flex-shrink:0;
+  transition:transform 0.28s cubic-bezier(0.16,1,0.3,1), border-color 0.22s, box-shadow 0.28s;
+}
+.muscle-card:hover { transform:translateY(-5px) scale(1.01); box-shadow:0 20px 48px rgba(0,0,0,0.45); }
+.muscle-card.selected {
+  border-color:var(--blue);
+  box-shadow:0 0 0 1px var(--blue), 0 20px 48px rgba(37,99,235,0.22);
+}
+.muscle-card-bg {
+  position:absolute; inset:0;
+  background-size:cover; background-position:center top;
+  filter:brightness(0.6);
+  transition:transform 0.45s cubic-bezier(0.16,1,0.3,1), filter 0.22s;
+}
+.muscle-card:hover .muscle-card-bg { transform:scale(1.07); filter:brightness(0.78); }
+.muscle-card.selected .muscle-card-bg { filter:brightness(0.85); }
+.muscle-card-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(8,12,20,0.0) 0%, rgba(8,12,20,0.6) 60%, rgba(8,12,20,0.95) 100%);
+}
+.muscle-card-check {
+  position:absolute; top:10px; right:10px; z-index:4;
+  width:24px; height:24px; border-radius:50%;
+  border:1.5px solid rgba(248,250,252,0.3);
+  background:rgba(8,12,20,0.4); backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s;
+}
+.muscle-card-check svg { width:11px; height:11px; stroke:transparent; transition:stroke 0.2s; }
+.muscle-card.selected .muscle-card-check { background:var(--blue); border-color:var(--blue); }
+.muscle-card.selected .muscle-card-check svg { stroke:#fff; }
+.muscle-card-body {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:16px 16px 14px; z-index:3;
+}
+.muscle-card-title {
+  font-family:'Oswald',sans-serif; font-size:22px; font-weight:700;
+  text-transform:uppercase; color:var(--text); line-height:1;
+}
+
+/* ── QUIZ BOTTOM ── */
+.quiz-bottom {
+  position:fixed; bottom:0; left:0; right:0; z-index:110;
+  display:flex; align-items:center; justify-content:flex-end;
+  gap:12px; padding:20px 48px;
+  background:linear-gradient(to top, rgba(8,12,20,0.98) 0%, transparent 100%);
+}
+.quiz-overlay.hidden + .quiz-bottom { display:none; }
+.btn-back {
+  background:none; border:1.5px solid var(--border); color:var(--muted);
+  padding:11px 24px; border-radius:10px; font-family:'Outfit',sans-serif;
+  font-size:14px; cursor:pointer; transition:all 0.2s;
+}
+.btn-back:hover { border-color:var(--muted); color:var(--text); }
+.btn-continue {
+  background:var(--blue); color:#fff; border:none;
+  padding:12px 32px; border-radius:10px; font-family:'Oswald',sans-serif;
+  font-size:17px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  cursor:pointer; transition:all 0.22s; opacity:0.4; pointer-events:none;
+}
+.btn-continue.ready { opacity:1; pointer-events:auto; }
+.btn-continue.ready:hover { background:var(--blue-h); transform:translateY(-1px); box-shadow:0 8px 24px rgba(37,99,235,0.3); }
+
+/* ── ACTIVE FILTERS BAR ── */
+.filters-bar {
+  padding:20px var(--page-pad) 0;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.filter-tag {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:6px 14px;
+  font-size:13px; color:var(--muted); font-family:'Outfit',sans-serif;
+}
+.filter-tag strong { color:var(--text); }
+.filter-change {
+  background:none; border:1px solid var(--border); color:var(--blue);
+  border-radius:20px; padding:6px 14px; font-size:12px; font-family:'Outfit',sans-serif;
+  cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px;
+  letter-spacing:0.5px;
+}
+.filter-change:hover { border-color:var(--blue); background:rgba(37,99,235,0.08); }
+.filter-count {
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dimmed);
+  margin-left:auto;
+}
+
+/* ── LIBRARY HEADER ── */
+.library-header {
+  padding:32px var(--page-pad) 24px;
+  display:flex; align-items:flex-end; justify-content:space-between;
+}
+.library-title-tag {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--blue); letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+}
+.library-title {
+  font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,5vw,60px);
+  line-height:1; color:var(--text);
+}
+.library-title span { color:var(--text); }
+/* UA: Bebas Neue has no Cyrillic glyphs — swap the hero title to Oswald (already loaded, has Cyrillic) */
+html[lang="ua"] .library-title {
+  font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0;
+}
+
+/* ── EXERCISE GRID ── */
+.ex-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+  gap:16px;
+  padding:0 var(--page-pad) 80px;
+}
+
+.ex-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  cursor:pointer;
+  transition:transform 0.25s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.25s;
+  animation:cardIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+.ex-card:hover { transform:translateY(-4px); border-color:rgba(37,99,235,0.4); box-shadow:0 16px 40px rgba(0,0,0,0.3); }
+
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.ex-card-media {
+  position:relative; width:100%; height:180px;
+  background:#0a0f1c; overflow:hidden;
+}
+.ex-card-media video {
+  width:100%; height:100%; object-fit:cover; display:block;
+  opacity:0; transition:opacity 0.3s;
+}
+.ex-card-media video.loaded { opacity:1; }
+.ex-card-placeholder {
+  position:absolute; inset:0; display:flex;
+  align-items:center; justify-content:center;
+  background:linear-gradient(135deg, #0d1420 0%, #111827 100%);
+}
+.ex-card-placeholder-icon { display:none; }
+.ex-card-play {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(8,12,20,0.3);
+  opacity:0; transition:opacity 0.2s;
+}
+.ex-card:hover .ex-card-play { opacity:1; }
+.ex-card-play-btn {
+  width:44px; height:44px; border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.6);
+  background:rgba(8,12,20,0.5); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+}
+.ex-card-play-btn svg { width:16px; height:16px; fill:var(--text); margin-left:2px; }
+
+.ex-card-coming {
+  position:absolute; bottom:10px; left:10px;
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  color:var(--dimmed); letter-spacing:1.5px; text-transform:uppercase;
+  background:rgba(8,12,20,0.7); padding:4px 8px; border-radius:4px;
+  pointer-events:none;
+}
+
+.ex-card-body { padding:18px 18px 16px; }
+.ex-card-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.ex-card-tag {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:1.5px; text-transform:uppercase;
+  padding:3px 8px; border-radius:4px;
+}
+.ex-card-tag.loc { background:rgba(37,99,235,0.12); color:var(--blue); }
+.ex-card-tag.muscle { background:rgba(16,185,129,0.1); color:var(--green); }
+.ex-card-tag.level-beginner { background:rgba(16,185,129,0.1); color:var(--green); }
+.ex-card-tag.level-intermediate { background:rgba(245,158,11,0.1); color:var(--amber); }
+.ex-card-tag.level-advanced { background:rgba(239,68,68,0.1); color:var(--red); }
+
+.ex-card-name {
+  font-family:'Oswald',sans-serif; font-size:22px; font-weight:700;
+  text-transform:uppercase; color:var(--text); line-height:1.1; margin-bottom:6px;
+}
+.ex-card-equip {
+  font-size:12px; color:var(--dimmed); font-family:'Outfit',sans-serif;
+}
+
+/* ── EMPTY STATE ── */
+.ex-empty {
+  grid-column:1/-1; text-align:center; padding:80px 20px;
+}
+.ex-empty-icon { font-size:48px; margin-bottom:16px; opacity:0.3; }
+.ex-empty-text { font-size:16px; color:var(--dimmed); }
+
+/* ── MODAL ── */
+.ex-modal-overlay {
+  position:fixed; inset:0; z-index:300;
+  background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; opacity:0; pointer-events:none;
+  transition:opacity 0.25s;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.ex-modal-overlay.open { opacity:1; pointer-events:auto; }
+.ex-modal {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:24px; overflow:hidden; width:100%; max-width:800px;
+  display:grid; grid-template-columns:1fr 1fr;
+  transform:scale(0.95) translateY(16px);
+  transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  max-height:90vh;
+}
+.ex-modal-overlay.open .ex-modal { transform:scale(1) translateY(0); }
+
+.ex-modal-media {
+  position:relative; background:#0a0f1c; overflow:hidden;
+  min-height:400px;
+}
+.ex-modal-video {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  background:#0a0f1c; opacity:0; transition:opacity 0.35s ease;
+}
+.ex-modal-video.show { opacity:1; }
+.ex-modal-placeholder {
+  position:absolute; inset:0; display:flex;
+  align-items:center; justify-content:center; font-size:60px; opacity:0.2;
+}
+.ex-modal-coming {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px;
+  background:var(--elevated);
+}
+.ex-modal-coming-icon { font-size:40px; opacity:0.4; }
+.ex-modal-coming-text {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--dimmed);
+}
+
+/* Trainer toggle inside modal */
+.modal-trainer-toggle {
+  position:absolute; top:14px; left:14px; right:auto; z-index:5;
+  display:flex; gap:4px; background:rgba(8,12,20,0.7);
+  border-radius:8px; padding:4px; backdrop-filter:blur(8px);
+  border:1px solid var(--border);
+}
+.trainer-toggle-btn {
+  background:none; border:none; color:var(--muted);
+  font-family:'Outfit',sans-serif; font-size:11px; font-weight:600;
+  padding:5px 10px; border-radius:5px; cursor:pointer; transition:all 0.2s;
+}
+.trainer-toggle-btn.active { background:var(--blue); color:#fff; }
+
+.ex-modal-body { padding:32px 28px; overflow-y:auto; }
+.ex-modal-tag {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--blue); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;
+}
+.ex-modal-name {
+  font-family:'Oswald',sans-serif; font-size:36px; font-weight:700;
+  text-transform:uppercase; color:var(--text); line-height:1.05; margin-bottom:16px;
+}
+.ex-modal-tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+
+.ex-modal-desc {
+  font-size:14px; color:var(--muted); line-height:1.7; margin-bottom:24px;
+}
+
+.ex-modal-stats { display:flex; gap:12px; margin-bottom:24px; }
+.ex-modal-stat {
+  background:var(--elevated); border:1px solid var(--border);
+  border-radius:10px; padding:12px 16px; flex:1; text-align:center;
+}
+.ex-modal-stat-val {
+  font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--text); line-height:1;
+}
+.ex-modal-stat-val.blue { color:var(--blue); }
+.ex-modal-stat-label {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--dimmed); margin-top:4px;
+}
+
+.ex-modal-close {
+  position:absolute; top:16px; right:16px; z-index:10;
+  width:36px; height:36px; border-radius:50%;
+  border:1.5px solid var(--border); background:rgba(8,12,20,0.7);
+  color:var(--muted); font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; backdrop-filter:blur(8px);
+}
+.ex-modal-close:hover { border-color:var(--text); color:var(--text); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px) { :root { --page-pad:32px; } }
+@media(max-width:768px) {
+  :root { --page-pad:20px; }
+  nav { padding:0 20px; }
+  .loc-cards { grid-template-columns:1fr; gap:12px; }
+  .loc-card { height:200px; }
+  .quiz-overlay { padding:80px 20px 80px; }
+  .ex-grid { grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); }
+  .ex-modal { grid-template-columns:1fr; max-height:none; margin:auto; }
+  .ex-modal-media { min-height:240px; }
+  .quiz-bottom { padding:16px 20px; }
+  .nav-center { display:none; }
+  .nav-user { flex-direction:row-reverse; }
+  .nav-btn { display:none; }
+}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><a href="dashboard.html"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a></div>
+  <div class="nav-center">
+    <a href="dashboard.html" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+    <a href="library.html" class="nav-link active" data-i18n="nav.library">Library</a>
+    <a href="referral.html" class="nav-link" data-i18n="nav.invite">🎁 Invite</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">B</div>
+      <span id="navName">...</span>
+    </div>
+    <button class="nav-btn" onclick="signOut()" data-i18n="nav.signout">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════
+     QUIZ OVERLAY
+════════════════════════════════ -->
+<div class="quiz-overlay" id="quizOverlay">
+
+  <!-- STEP 1: Location -->
+  <div class="quiz-step active" id="step1">
+    <div class="quiz-tag" data-i18n="lib.q1_tag">Step 1 of 2 · Exercise Library</div>
+    <div class="quiz-title" data-i18n-html="lib.q1_title">Where do you<br><span style="color:var(--blue)">train?</span></div>
+    <div class="quiz-sub" data-i18n="lib.q1_sub">Choose your training environment. We'll show you the right exercises.</div>
+
+    <div class="loc-cards">
+      <div class="loc-card" id="loc-gym" onclick="selectLocation('gym', this)">
+        <div class="loc-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/location-gym.jpg')"></div>
+        <div class="loc-card-overlay"></div>
+        <div class="loc-card-num" data-i18n="lib.opt1">Option 01</div>
+        <div class="loc-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="loc-card-body">
+          <div class="loc-card-title" data-i18n="place.gym">Gym</div>
+          <div class="loc-card-desc" data-i18n="lib.gym_desc">Full equipment access — barbells, machines, cables</div>
+        </div>
+      </div>
+
+      <div class="loc-card" id="loc-home" onclick="selectLocation('home', this)">
+        <div class="loc-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/location-home.jpg')"></div>
+        <div class="loc-card-overlay"></div>
+        <div class="loc-card-num" data-i18n="lib.opt2">Option 02</div>
+        <div class="loc-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="loc-card-body">
+          <div class="loc-card-title" data-i18n="place.home">Home</div>
+          <div class="loc-card-desc" data-i18n="lib.home_desc">Bodyweight and minimal equipment — train anywhere</div>
+        </div>
+      </div>
+
+      <div class="loc-card" id="loc-outdoor" onclick="selectLocation('outdoor', this)">
+        <div class="loc-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/location-outdoor.jpg')"></div>
+        <div class="loc-card-overlay"></div>
+        <div class="loc-card-num" data-i18n="lib.opt3">Option 03</div>
+        <div class="loc-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="loc-card-body">
+          <div class="loc-card-title" data-i18n="place.outdoor">Outdoor</div>
+          <div class="loc-card-desc" data-i18n="lib.outdoor_desc">Park bars, open air — calisthenics and cardio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Muscle Groups -->
+  <div class="quiz-step" id="step2">
+    <div class="quiz-tag" data-i18n="lib.q2_tag">Step 2 of 2 · Exercise Library</div>
+    <div class="quiz-title" data-i18n-html="lib.q2_title">Which muscles<br><span style="color:var(--blue)">today?</span></div>
+    <div class="quiz-sub" data-i18n="lib.q2_sub">Select one or more. We'll filter the perfect exercises for you.</div>
+
+    <div class="muscle-row-wrap">
+      <button class="muscle-scroll-btn left" onclick="scrollMuscles(-1)">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="muscle-row" id="muscleRow">
+      <div class="muscle-card" data-muscle="chest" onclick="toggleMuscle('chest', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-chest.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_chest">Chest</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="back" onclick="toggleMuscle('back', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-back.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_back">Back</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="legs" onclick="toggleMuscle('legs', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-legs.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_legs">Legs</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="shoulders" onclick="toggleMuscle('shoulders', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-shoulders.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_shoulders">Shoulders</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="arms" onclick="toggleMuscle('arms', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-arms.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_arms">Arms</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="core" onclick="toggleMuscle('core', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-core.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_core">Core</div>
+        </div>
+      </div>
+
+      <div class="muscle-card" data-muscle="fullbody" onclick="toggleMuscle('fullbody', this)">
+        <div class="muscle-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/library/muscle-fullbody.jpg')"></div>
+        <div class="muscle-card-overlay"></div>
+        <div class="muscle-card-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="muscle-card-body">
+          <div class="muscle-card-title" data-i18n="lib.m_fullbody">Full Body</div>
+        </div>
+      </div>
+    </div>
+      <button class="muscle-scroll-btn right" onclick="scrollMuscles(1)">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div><!-- /muscle-row-wrap -->
+  </div>
+</div>
+
+<!-- QUIZ BOTTOM BUTTONS -->
+<div class="quiz-bottom" id="quizBottom">
+  <button class="btn-back" id="btnBack" onclick="quizBack()" style="display:none" data-i18n="common.back">← Back</button>
+  <button class="btn-continue" id="btnContinue" onclick="quizNext()" data-i18n="btn.continue">Continue →</button>
+</div>
+
+<!-- ════════════════════════════════
+     LIBRARY PAGE (hidden until quiz done)
+════════════════════════════════ -->
+<div class="page" id="libraryPage" style="display:none">
+
+  <!-- Active Filters Bar -->
+  <div class="filters-bar" id="filtersBar">
+    <div class="filter-tag"><span>📍</span><strong id="filterLocLabel">Gym</strong></div>
+    <div class="filter-tag"><span>💪</span><strong id="filterMuscleLabel">All muscles</strong></div>
+    <button class="filter-change" onclick="changeFilters()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      <span data-i18n="lib.change_filters">Change filters</span>
+    </button>
+    <span class="filter-count" id="filterCount">0 exercises</span>
+  </div>
+
+  <!-- Library Header -->
+  <div class="library-header">
+    <div>
+      <div class="library-title-tag" data-i18n="lib.header_tag">Exercise Library</div>
+      <div class="library-title"><span data-i18n="lib.your">YOUR</span> <span id="libTitleLocation">GYM</span><br><span data-i18n="lib.exercises_word">EXERCISES</span></div>
+    </div>
+  </div>
+
+  <!-- Exercise Grid -->
+  <div class="ex-grid" id="exGrid"></div>
+</div>
+
+<!-- ════════════════════════════════
+     EXERCISE MODAL
+════════════════════════════════ -->
+<div class="ex-modal-overlay" id="exModal" onclick="closeModal(event)">
+  <div class="ex-modal">
+    <div class="ex-modal-media" id="modalMedia">
+      <div class="ex-modal-coming" id="modalComing">
+        <div class="ex-modal-coming-icon">🎬</div>
+        <div class="ex-modal-coming-text" data-i18n="lib.video_soon">Video coming soon</div>
+      </div>
+      <!-- two stacked buffers so switching exercises crossfades instead of black-flashing -->
+      <video class="ex-modal-video" id="modalVideoA" muted playsinline loop></video>
+      <video class="ex-modal-video" id="modalVideoB" muted playsinline loop></video>
+      <div class="modal-trainer-toggle" id="modalTrainerToggle">
+        <button class="trainer-toggle-btn" id="toggleMale" onclick="switchModalTrainer('male')">Alex</button>
+        <button class="trainer-toggle-btn" id="toggleFemale" onclick="switchModalTrainer('female')">Kira</button>
+      </div>
+    </div>
+    <div class="ex-modal-body">
+      <div class="ex-modal-tag" id="modalTag">GYM · CHEST</div>
+      <div class="ex-modal-name" id="modalName">Exercise Name</div>
+      <div class="ex-modal-tags" id="modalTags"></div>
+      <div class="ex-modal-stats" id="modalStats">
+        <div class="ex-modal-stat">
+          <div class="ex-modal-stat-val blue" id="modalSets">3</div>
+          <div class="ex-modal-stat-label" data-i18n="lib.sets">Sets</div>
+        </div>
+        <div class="ex-modal-stat">
+          <div class="ex-modal-stat-val" id="modalReps">10-12</div>
+          <div class="ex-modal-stat-label" data-i18n="lib.reps">Reps</div>
+        </div>
+        <div class="ex-modal-stat">
+          <div class="ex-modal-stat-val" id="modalRest">60s</div>
+          <div class="ex-modal-stat-label" data-i18n="lib.rest">Rest</div>
+        </div>
+      </div>
+      <div class="ex-modal-desc" id="modalDesc" data-i18n="lib.loading_desc">Loading exercise details...</div>
+      <button class="ex-modal-close" onclick="closeModalBtn()">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════════════════════════
+//  NAV AVATAR — photo upload + gradient-initial fallback (shared block)
+//  Storage: fitai-users/avatars/{user_id} → profiles.avatar_url
+// ════════════════════════════════════════════════════════════════
+const FitAIAvatar = (() => {
+  const AV_BUCKET = 'fitai-users';
+  const GRADIENTS = [
+    'linear-gradient(135deg,#2563EB,#7C3AED)',
+    'linear-gradient(135deg,#10B981,#0EA5E9)',
+    'linear-gradient(135deg,#F59E0B,#EF4444)',
+    'linear-gradient(135deg,#EC4899,#8B5CF6)',
+    'linear-gradient(135deg,#06B6D4,#3B82F6)',
+    'linear-gradient(135deg,#8B5CF6,#EC4899)',
+    'linear-gradient(135deg,#22C55E,#15803D)',
+    'linear-gradient(135deg,#F43F5E,#FB923C)'
+  ];
+  const cfg = { elId:'navAvatar', uid:null, token:null, name:'', avatarUrl:null };
+  let menuEl = null, fileEl = null, wrapEl = null, wired = false;
+
+  const el = () => document.getElementById(cfg.elId);
+  const letterFor = n => { const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; };
+  function gradientFor(seed){
+    const s = (seed||'?').toString().toUpperCase();
+    let h = 0; for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return GRADIENTS[h % GRADIENTS.length];
+  }
+
+  function render(){
+    const a = el(); if (!a) return;
+    if (cfg.avatarUrl){
+      a.style.background = 'none';
+      const grad = gradientFor(cfg.name || cfg.uid), ltr = letterFor(cfg.name);
+      a.innerHTML = '<img src="'+cfg.avatarUrl+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';">';
+    } else {
+      a.style.background = gradientFor(cfg.name || cfg.uid);
+      a.textContent = letterFor(cfg.name);
+    }
+    if (menuEl){
+      const rm = menuEl.querySelector('[data-act=remove]');
+      if (rm) rm.style.display = cfg.avatarUrl ? '' : 'none';
+    }
+  }
+
+  function buildMenu(){
+    const a = el(); if (!a || wired) return;
+    wrapEl = document.createElement('div');
+    wrapEl.className = 'nav-avatar-wrap';
+    a.parentNode.insertBefore(wrapEl, a);
+    wrapEl.appendChild(a);
+
+    menuEl = document.createElement('div');
+    menuEl.className = 'nav-avatar-menu';
+    menuEl.innerHTML =
+      '<button data-act="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span data-i18n="nav.upload_photo">Upload photo</span></button>' +
+      '<button data-act="remove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span data-i18n="nav.remove_photo">Remove photo</span></button>' +
+      '<div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 6px;"></div>' +
+      '<button data-act="signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span data-i18n="nav.signout">Sign Out</span></button>';
+    wrapEl.appendChild(menuEl);
+
+    fileEl = document.createElement('input');
+    fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+    wrapEl.appendChild(fileEl);
+
+    a.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.toggle('open'); });
+    document.addEventListener('click', () => menuEl.classList.remove('open'));
+    menuEl.querySelector('[data-act=upload]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); fileEl.click(); });
+    menuEl.querySelector('[data-act=remove]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); removePhoto(); });
+    const _so = menuEl.querySelector('[data-act=signout]');
+    if (_so) _so.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); if (typeof signOut === 'function') signOut(); });
+    fileEl.addEventListener('change', onFile);
+    wired = true;
+    if (window.FitAILang) FitAILang.apply();
+  }
+
+  async function onFile(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !cfg.uid || !cfg.token) return;
+    if (!file.type.startsWith('image/')) { alert(FitAILang.t('av.err_image')); return; }
+    if (file.size > 5*1024*1024) { alert(FitAILang.t('av.err_too_large')); return; }
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const path = 'avatars/' + cfg.uid;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/' + AV_BUCKET + '/' + path, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':file.type, 'x-upsert':'true' },
+        body:file
+      });
+      if (!up.ok) throw new Error('Storage upload failed ('+up.status+')');
+      const publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + AV_BUCKET + '/' + path + '?t=' + Date.now();
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: publicUrl })
+      });
+      if (!pr.ok) throw new Error('Saving avatar failed ('+pr.status+')');
+      cfg.avatarUrl = publicUrl;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = publicUrl;
+      render();
+    } catch(err){
+      alert(err.message || FitAILang.t('av.err_upload'));
+    } finally {
+      if (a) a.classList.remove('loading');
+    }
+  }
+
+  async function removePhoto(){
+    if (!cfg.uid || !cfg.token) return;
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: null })
+      });
+      if (!pr.ok) throw new Error('Could not remove photo ('+pr.status+')');
+      cfg.avatarUrl = null;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = null;
+      render();
+    } catch(err){ alert(err.message || FitAILang.t('av.err_remove')); }
+    finally { if (a) a.classList.remove('loading'); }
+  }
+
+  function init(opts){
+    cfg.elId      = opts.elId || 'navAvatar';
+    cfg.uid       = opts.uid || null;
+    cfg.token     = opts.token || null;
+    cfg.name      = opts.name || '';
+    cfg.avatarUrl = opts.avatarUrl || null;
+    buildMenu();
+    render();
+  }
+  return { init, render };
+})();
+
+const VIDEO_BASE = 'https://builtwithai.pro/fitai/media/videos/';
+let currentTrainer = 'male';
+let selectedLocation = null;
+let selectedMuscles  = [];
+let currentStep = 1;
+let currentExercise = null;
+let modalTrainer = 'male';
+let currentFiltered = [];        // exercises in the current grid (for preloading neighbours)
+let modalActiveBuffer = 'A';     // which crossfade <video> buffer is currently shown
+
+// ════════════════════════════════════════════════════════════════
+//  VIDEO PERFORMANCE — in-memory cache, background preload, lazy thumbs (Problem 2)
+// ════════════════════════════════════════════════════════════════
+const libVideoCache = new Map();   // remote url → blob object URL (this session) — instant revisits
+const libInFlight    = new Set();
+function clipUrl(slug, trainer){ return slug ? `${VIDEO_BASE}${slug}-${trainer || currentTrainer}.mp4` : null; }
+function cachedClip(url){ return url && libVideoCache.has(url) ? libVideoCache.get(url) : null; }
+
+// Fetch a clip to a blob URL and cache it. Fire-and-forget; never throws, never blocks UI.
+async function libPreload(url){
+  if (!url || libVideoCache.has(url) || libInFlight.has(url)) return;
+  libInFlight.add(url);
+  try {
+    const resp = await fetch(url);
+    if (resp.ok) libVideoCache.set(url, URL.createObjectURL(await resp.blob()));
+  } catch(e){ /* offline / 404 — leave uncached, falls back to remote */ }
+  finally { libInFlight.delete(url); }
+}
+
+// Female ("Kira") clips aren't all uploaded yet → on a missing -female.mp4, retry the -male.mp4 once.
+function libVideoTryFallback(vid){
+  if (!vid) return false;
+  const src = vid.getAttribute('src') || vid.currentSrc || '';
+  if (src.indexOf('-female.mp4') !== -1 && vid.dataset.fb !== '1'){
+    vid.dataset.fb = '1';
+    vid.setAttribute('src', src.replace('-female.mp4', '-male.mp4'));
+    vid.load(); const p = vid.play(); if (p && p.catch) p.catch(()=>{});
+    return true;
+  }
+  return false;
+}
+
+// After an exercise is opened, preload the next 2-3 clips so sequential browsing is instant.
+function preloadNeighbours(slug){
+  const idx = currentFiltered.findIndex(e => e.slug === slug);
+  if (idx < 0) return;
+  for (let j = idx + 1; j <= idx + 3 && j < currentFiltered.length; j++){
+    const s = currentFiltered[j].slug;
+    libPreload(clipUrl(s, modalTrainer));
+    if (modalTrainer !== 'male') libPreload(clipUrl(s, 'male'));  // guaranteed fallback target
+  }
+}
+
+// Lazy-load grid thumbnails — only fetch a card's clip once it scrolls (nearly) into view, so the
+// first paint isn't blocked by every clip downloading at once.
+const thumbObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        const vid = en.target;
+        obs.unobserve(vid);
+        if (!vid.getAttribute('src') && vid.dataset.src){
+          vid.src = cachedClip(vid.dataset.src) || vid.dataset.src;
+          vid.load();
+        }
+      });
+    }, { rootMargin: '300px 0px' })
+  : null;
+
+// ── EXERCISE DATABASE ──────────────────────────────────────────────────────
+const EXERCISES = [
+  // GYM — CHEST
+  { name:'Bench Press',             slug:'bench-press',          loc:'gym', muscles:['chest'],     level:'Beginner',     equipment:'Barbell',       sets:3, reps:'8-10', rest:'90s', desc:'Compound chest movement. Lie flat, grip slightly wider than shoulder-width. Lower bar to mid-chest, press explosively. Keep shoulder blades retracted.' },
+  { name:'Incline Dumbbell Press',  slug:'incline-dumbbell-press',loc:'gym',muscles:['chest'],     level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'10-12',rest:'60s', desc:'Upper chest focus at 30-45° incline. Controls range of motion better than barbell. Great for building the clavicular head of pectoralis major.' },
+  { name:'Decline Bench Press',     slug:'decline-bench-press',  loc:'gym', muscles:['chest'],     level:'Intermediate', equipment:'Barbell',       sets:3, reps:'8-10', rest:'90s', desc:'Targets the lower pectorals. Feet secured, bar path to lower chest. Less shoulder strain than flat press — good for full chest development.' },
+  { name:'Cable Flyes',             slug:'cable-flyes',          loc:'gym', muscles:['chest'],     level:'Intermediate', equipment:'Cable Machine', sets:3, reps:'12-15',rest:'60s', desc:'Constant tension throughout the movement. Keep slight elbow bend, squeeze at midline. Excellent chest isolation for hypertrophy.' },
+  { name:'Chest Dips',              slug:'chest-dips',           loc:'gym', muscles:['chest','arms'],level:'Intermediate',equipment:'Dip Bar',      sets:3, reps:'10-15',rest:'60s', desc:'Bodyweight compound for chest and triceps. Lean forward slightly for chest focus. Control the descent to protect shoulders.' },
+  { name:'Pec Deck Machine',        slug:'pec-deck',             loc:'gym', muscles:['chest'],     level:'Beginner',     equipment:'Machine',       sets:3, reps:'12-15',rest:'60s', desc:'Strict chest isolation. Maintains constant tension. Ideal for pre-exhaustion or finisher sets — great for beginners to feel the chest.' },
+  // GYM — BACK
+  { name:'Barbell Row',             slug:'barbell-row',          loc:'gym', muscles:['back'],      level:'Intermediate', equipment:'Barbell',       sets:4, reps:'8-10', rest:'90s', desc:'Primary back thickness builder. Hinge at hips, pull bar to lower abs. Squeeze shoulder blades together at top. Builds width and density.' },
+  { name:'Pull-ups',                slug:'pull-ups',             loc:'gym', muscles:['back','arms'],level:'Intermediate', equipment:'Pull-up Bar',   sets:4, reps:'6-10', rest:'90s', desc:'King of back exercises. Full range of motion from dead hang. Develops lat width, rear delts, and grip. Control the negative.' },
+  { name:'Lat Pulldown',            slug:'lat-pulldown',         loc:'gym', muscles:['back'],      level:'Beginner',     equipment:'Cable Machine', sets:4, reps:'10-12',rest:'60s', desc:'Pulldown variation for lat development. Lean slightly back, pull to upper chest. Great for building the V-taper. Machine allows load progression.' },
+  { name:'Seated Cable Row',        slug:'seated-cable-row',     loc:'gym', muscles:['back'],      level:'Beginner',     equipment:'Cable Machine', sets:3, reps:'10-12',rest:'60s', desc:'Mid-back and lat thickness. Pull elbows back past torso, squeeze hard. Cable keeps tension constant. Drive with elbows not hands.' },
+  { name:'T-Bar Row',               slug:'t-bar-row',            loc:'gym', muscles:['back'],      level:'Intermediate', equipment:'T-Bar',         sets:4, reps:'8-10', rest:'90s', desc:'One of the best back mass builders. Neutral grip reduces bicep dominance. Allows heavy loading with great range of motion.' },
+  { name:'Face Pulls',              slug:'face-pulls',           loc:'gym', muscles:['back','shoulders'],level:'Beginner',equipment:'Cable Machine',sets:3, reps:'15-20',rest:'45s', desc:'Rear delt and rotator cuff health. Pull to face level with external rotation. Critical for shoulder balance and longevity. Often neglected.' },
+  { name:'Single-Arm Dumbbell Row', slug:'single-arm-row',       loc:'gym', muscles:['back'],      level:'Beginner',     equipment:'Dumbbell',      sets:3, reps:'10-12',rest:'60s', desc:'Unilateral back movement. Eliminates imbalances. Brace on bench, row from full stretch to hip. Squeeze at the top.' },
+  { name:'Deadlift',                slug:'deadlift',             loc:'gym', muscles:['back','legs'],level:'Intermediate', equipment:'Barbell',       sets:4, reps:'5-6',  rest:'120s',desc:'The king of all lifts. Full posterior chain engagement. Hip hinge, bar over mid-foot, neutral spine. Builds total body strength and muscle.' },
+  // GYM — SHOULDERS
+  { name:'Overhead Press',          slug:'overhead-press',       loc:'gym', muscles:['shoulders'], level:'Intermediate', equipment:'Barbell',       sets:4, reps:'6-8',  rest:'90s', desc:'Primary shoulder mass builder. Press from shoulders to lockout. Builds anterior deltoid and triceps. Full range of motion is key.' },
+  { name:'Dumbbell Lateral Raises', slug:'lateral-raises',       loc:'gym', muscles:['shoulders'], level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'12-15',rest:'45s', desc:'Medial delt isolation. Raise to shoulder height, slight forward angle. High reps work well. Build the boulder shoulder look.' },
+  { name:'Front Raises',            slug:'front-raises',         loc:'gym', muscles:['shoulders'], level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'12-15',rest:'45s', desc:'Anterior deltoid isolation. Raise to eye level, controlled descent. Complement with lateral raises for balanced shoulders.' },
+  { name:'Rear Delt Flyes',         slug:'rear-delt-flyes',      loc:'gym', muscles:['shoulders','back'],level:'Beginner',equipment:'Dumbbells',   sets:3, reps:'15-20',rest:'45s', desc:'Posterior deltoid focus. Bent-over or on incline bench. Critical for posture and shoulder health. Often underdeveloped.' },
+  { name:'Arnold Press',            slug:'arnold-press',         loc:'gym', muscles:['shoulders'], level:'Intermediate', equipment:'Dumbbells',     sets:3, reps:'10-12',rest:'60s', desc:'Full shoulder rotation through range. Combines front and lateral delt work. Named after Arnold Schwarzenegger. Complex but effective.' },
+  { name:'Upright Row',             slug:'upright-row',          loc:'gym', muscles:['shoulders','back'],level:'Intermediate',equipment:'Barbell',  sets:3, reps:'10-12',rest:'60s', desc:'Trap and lateral delt builder. Pull bar to chin level. Wide grip reduces shoulder impingement. Build upper back thickness.' },
+  // GYM — LEGS
+  { name:'Squats',                  slug:'squats',               loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Barbell',       sets:4, reps:'8-10', rest:'90s', desc:'The king of leg exercises. Quad, glute, and hamstring activation. Sit back and down, drive through heels. Build lower body mass.' },
+  { name:'Leg Press',               slug:'leg-press',            loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Machine',       sets:4, reps:'10-12',rest:'90s', desc:'Quad-dominant compound leg movement. Foot position adjusts emphasis. Allows very heavy loads safely. Excellent volume builder.' },
+  { name:'Romanian Deadlift',       slug:'romanian-deadlift',    loc:'gym', muscles:['legs'],      level:'Intermediate', equipment:'Barbell',       sets:3, reps:'10-12',rest:'90s', desc:'Hip hinge for hamstrings and glutes. Soft knee bend, bar stays close to legs. Feel the stretch at the bottom. Excellent posterior chain builder.' },
+  { name:'Leg Curls',               slug:'leg-curls',            loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Machine',       sets:3, reps:'12-15',rest:'60s', desc:'Hamstring isolation. Control the curl fully, squeeze at top, slow negative. Machine variation allows isolation without lower back stress.' },
+  { name:'Leg Extensions',          slug:'leg-extensions',       loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Machine',       sets:3, reps:'12-15',rest:'60s', desc:'Quad isolation. Full extension at top, controlled return. Best for finishing quads after compound work. Builds the teardrop.' },
+  { name:'Calf Raises',             slug:'calf-raises',          loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Machine',       sets:4, reps:'15-20',rest:'45s', desc:'Gastrocnemius and soleus development. Full range — deep stretch to complete plantar flexion. Calves respond to high volume and frequency.' },
+  { name:'Hip Thrust',              slug:'hip-thrust',           loc:'gym', muscles:['legs'],      level:'Intermediate', equipment:'Barbell',       sets:4, reps:'10-12',rest:'90s', desc:'Best glute builder. Shoulders on bench, drive hips up with barbell. Squeeze glutes hard at top. Unmatched for glute activation.' },
+  { name:'Lunges',                  slug:'lunges',               loc:'gym', muscles:['legs'],      level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'10-12',rest:'60s', desc:'Unilateral leg exercise. Builds balance and coordination. Step forward, knee tracks over foot. Excellent for quad and glute development.' },
+  { name:'Hack Squat',              slug:'hack-squat',           loc:'gym', muscles:['legs'],      level:'Intermediate', equipment:'Machine',       sets:4, reps:'10-12',rest:'90s', desc:'Machine squat for quad emphasis. Safer than barbell squat for many. Allows deep range of motion with heavy load. Build quad mass.' },
+  // GYM — ARMS
+  { name:'Barbell Curl',            slug:'barbell-curl',         loc:'gym', muscles:['arms'],      level:'Beginner',     equipment:'Barbell',       sets:3, reps:'10-12',rest:'60s', desc:'Foundational bicep mass builder. Supinated grip, full range of motion. Don\'t swing — control the movement. Build peak and thickness.' },
+  { name:'Hammer Curl',             slug:'hammer-curl',          loc:'gym', muscles:['arms'],      level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'10-12',rest:'60s', desc:'Neutral grip targets brachialis and brachioradialis. Builds arm thickness and forearm strength. Great complement to supinated curls.' },
+  { name:'Preacher Curl',           slug:'preacher-curl',        loc:'gym', muscles:['arms'],      level:'Beginner',     equipment:'Preacher Bench',sets:3, reps:'10-12',rest:'60s', desc:'Isolates the bicep by eliminating momentum. Great for building the peak. Full stretch at the bottom is key. Control the negative.' },
+  { name:'Tricep Pushdown',         slug:'tricep-pushdown',      loc:'gym', muscles:['arms'],      level:'Beginner',     equipment:'Cable Machine', sets:3, reps:'12-15',rest:'60s', desc:'Lateral and medial tricep head. Keep elbows pinned to sides. Full extension at bottom, squeeze hard. Cable keeps constant tension.' },
+  { name:'Skull Crushers',          slug:'skull-crushers',       loc:'gym', muscles:['arms'],      level:'Intermediate', equipment:'Barbell',       sets:3, reps:'10-12',rest:'60s', desc:'Elbow flexion for long and lateral tricep heads. Control bar to forehead level. Excellent for building overall tricep mass.' },
+  { name:'Overhead Tricep Ext.',    slug:'overhead-tricep',      loc:'gym', muscles:['arms'],      level:'Beginner',     equipment:'Dumbbell',      sets:3, reps:'12-15',rest:'60s', desc:'Long head tricep emphasis. Overhead position gives full stretch. Dumbbell or cable. Critical for full tricep development.' },
+  { name:'Dips',                    slug:'dips',                 loc:'gym', muscles:['arms','chest'],level:'Intermediate',equipment:'Dip Bar',      sets:3, reps:'10-15',rest:'60s', desc:'Compound tricep and chest movement. Upright torso for tricep focus. Control descent to protect elbows. Great mass builder.' },
+  // GYM — CORE
+  { name:'Plank',                   slug:'plank',                loc:'gym', muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'60s',  rest:'60s', desc:'Core stability foundation. Maintain neutral spine, squeeze glutes and abs. Don\'t let hips sag or rise. Build endurance progressively.' },
+  { name:'Cable Crunches',          slug:'cable-crunches',       loc:'gym', muscles:['core'],      level:'Beginner',     equipment:'Cable Machine', sets:3, reps:'15-20',rest:'60s', desc:'Weighted ab flexion. Kneel, pull cable overhead, crunch. Keep tension on abs throughout. Allows progressive overload for abs.' },
+  { name:'Hanging Leg Raises',      slug:'hanging-leg-raises',   loc:'gym', muscles:['core'],      level:'Intermediate', equipment:'Pull-up Bar',   sets:3, reps:'12-15',rest:'60s', desc:'Hip flexor and lower ab strength. Hang from bar, raise legs to parallel or higher. Control the descent. Builds functional core strength.' },
+  { name:'Ab Wheel Rollout',        slug:'ab-wheel',             loc:'gym', muscles:['core'],      level:'Advanced',     equipment:'Ab Wheel',      sets:3, reps:'8-12',  rest:'90s', desc:'Elite core exercise. Full lat, abs, and stabilizer engagement. Roll out to near-flat, pull back. Don\'t rush progression.' },
+  { name:'Russian Twists',          slug:'russian-twists',       loc:'gym', muscles:['core'],      level:'Beginner',     equipment:'Weight Plate',  sets:3, reps:'20',    rest:'45s', desc:'Rotational core strength. Sit at 45°, rotate with weight. Builds obliques and rotational power. Control the movement speed.' },
+  // HOME — CHEST & TRICEPS
+  { name:'Push-ups',                slug:'push-ups',             loc:'home',muscles:['chest','arms'],level:'Beginner',  equipment:'None',          sets:3, reps:'15-20',rest:'60s', desc:'Classic bodyweight chest exercise. Hands slightly wider than shoulders. Full range of motion. Infinite progressions available.' },
+  { name:'Wide Push-ups',           slug:'wide-push-ups',        loc:'home',muscles:['chest'],     level:'Beginner',     equipment:'None',          sets:3, reps:'12-15',rest:'60s', desc:'Wider hand placement shifts emphasis to outer chest. Great for building width. Ensure full range of motion and control.' },
+  { name:'Diamond Push-ups',        slug:'diamond-push-ups',     loc:'home',muscles:['arms','chest'],level:'Intermediate',equipment:'None',         sets:3, reps:'10-15',rest:'60s', desc:'Hands form a diamond shape — intense tricep activation. Also hits inner chest. Control the movement carefully to protect elbows.' },
+  { name:'Pike Push-ups',           slug:'pike-push-ups',        loc:'home',muscles:['shoulders'], level:'Intermediate', equipment:'None',          sets:3, reps:'10-12',rest:'60s', desc:'Shoulder-dominant push-up. Hips high, lower head toward floor. Excellent overhead press substitute for home training.' },
+  { name:'Decline Push-ups',        slug:'decline-push-ups',     loc:'home',muscles:['chest'],     level:'Intermediate', equipment:'Chair',         sets:3, reps:'12-15',rest:'60s', desc:'Feet elevated shifts load to upper chest and shoulders. Increases difficulty significantly. Great for upper chest development.' },
+  // HOME — BACK & BICEPS
+  { name:'Inverted Row',            slug:'inverted-row',         loc:'home',muscles:['back'],      level:'Beginner',     equipment:'Table',         sets:3, reps:'10-15',rest:'60s', desc:'Horizontal pull using a sturdy table. Lie under, grip edge, pull chest to table. Excellent bodyweight back builder.' },
+  { name:'Superman',                slug:'superman',             loc:'home',muscles:['back'],      level:'Beginner',     equipment:'None',          sets:3, reps:'15-20',rest:'45s', desc:'Lower back and posterior chain activation. Lie face down, raise arms and legs simultaneously. Builds spinal erectors.' },
+  { name:'Good Mornings',           slug:'good-mornings',        loc:'home',muscles:['back','legs'],level:'Beginner',    equipment:'None',          sets:3, reps:'15-20',rest:'45s', desc:'Hip hinge for hamstrings and lower back. Hinge from hips with soft knees, feel the stretch. Build hip hinge mechanics.' },
+  { name:'Dumbbell Row',            slug:'dumbbell-row-home',    loc:'home',muscles:['back'],      level:'Beginner',     equipment:'Dumbbells',     sets:3, reps:'10-12',rest:'60s', desc:'Classic dumbbell back exercise. Brace against a surface, row from full stretch to hip. Squeeze shoulder blade at top.' },
+  // HOME — LEGS
+  { name:'Bodyweight Squats',       slug:'bw-squats',            loc:'home',muscles:['legs'],      level:'Beginner',     equipment:'None',          sets:4, reps:'20-25',rest:'60s', desc:'Foundation of all lower body training. Develop squat mechanics before adding load. Full depth, heels down, chest up.' },
+  { name:'Jump Squats',             slug:'jump-squats',          loc:'home',muscles:['legs'],      level:'Intermediate', equipment:'None',          sets:4, reps:'15-20',rest:'60s', desc:'Explosive lower body power. Squat down, explode upward, soft landing. Builds athleticism and burns serious calories.' },
+  { name:'Reverse Lunges',          slug:'reverse-lunges',       loc:'home',muscles:['legs'],      level:'Beginner',     equipment:'None',          sets:3, reps:'12-15',rest:'60s', desc:'Step backward into lunge — easier on knees than forward lunge. Great for quad and glute development. Control the descent.' },
+  { name:'Glute Bridge',            slug:'glute-bridge',         loc:'home',muscles:['legs'],      level:'Beginner',     equipment:'None',          sets:4, reps:'20',    rest:'45s', desc:'Excellent glute activation without equipment. Drive hips up, squeeze hard at top. Add resistance with a weight or band.' },
+  { name:'Wall Sit',                slug:'wall-sit',             loc:'home',muscles:['legs'],      level:'Beginner',     equipment:'Wall',          sets:3, reps:'45-60s',rest:'60s', desc:'Isometric quad endurance exercise. Back flat against wall, thighs parallel to floor. Build quad endurance and mental toughness.' },
+  { name:'Step-ups',                slug:'step-ups',             loc:'home',muscles:['legs'],      level:'Beginner',     equipment:'Chair',         sets:3, reps:'15-20',rest:'60s', desc:'Unilateral leg exercise using any elevated surface. Drive through the heel, squeeze glute at top. Excellent for leg development.' },
+  // HOME — CORE
+  { name:'Crunches',                slug:'crunches',             loc:'home',muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'20-25',rest:'45s', desc:'Basic ab flexion exercise. Hands behind head, curl shoulders toward knees. Don\'t pull on neck. Focus on the contraction.' },
+  { name:'Bicycle Crunches',        slug:'bicycle-crunches',     loc:'home',muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'20',    rest:'45s', desc:'Rotational ab exercise. Alternate elbow to opposite knee in cycling motion. Builds obliques and full core strength.' },
+  { name:'Mountain Climbers',       slug:'mountain-climbers',    loc:'home',muscles:['core','legs'],level:'Beginner',    equipment:'None',          sets:3, reps:'30-40', rest:'45s', desc:'Dynamic core exercise. Push-up position, drive knees to chest alternately. Builds core endurance and cardiovascular fitness.' },
+  { name:'Leg Raises',              slug:'leg-raises-home',      loc:'home',muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'15-20',rest:'45s', desc:'Lower ab emphasis. Lie flat, raise legs to 90°, lower slowly. Keep lower back pressed to floor. Builds lower ab strength.' },
+  { name:'Dead Bug',                slug:'dead-bug',             loc:'home',muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'10-12',rest:'45s', desc:'Anti-rotation core stability. Opposite arm and leg extend while keeping lower back flat. Excellent for functional core strength.' },
+  { name:'Side Plank',              slug:'side-plank',           loc:'home',muscles:['core'],      level:'Beginner',     equipment:'None',          sets:3, reps:'30-45s',rest:'45s', desc:'Lateral core stability. Stack feet, raise hips, maintain straight line. Builds obliques and hip abductors. Progress with raises.' },
+  // OUTDOOR — PULL
+  { name:'Pull-ups',                slug:'pull-ups-outdoor',     loc:'outdoor',muscles:['back','arms'],level:'Intermediate',equipment:'Pull-up Bar', sets:4, reps:'6-10', rest:'90s', desc:'King of calisthenics upper body. Full hang to chin over bar. Builds lat width, rear delts, and grip strength. Control every rep.' },
+  { name:'Chin-ups',                slug:'chin-ups',             loc:'outdoor',muscles:['back','arms'],level:'Intermediate',equipment:'Pull-up Bar', sets:4, reps:'6-10', rest:'90s', desc:'Supinated grip — more bicep activation than pull-up. Slightly easier for beginners. Great for back and arm mass.' },
+  { name:'Wide-Grip Pull-ups',      slug:'wide-pull-ups',        loc:'outdoor',muscles:['back'],   level:'Advanced',     equipment:'Pull-up Bar',   sets:4, reps:'5-8',  rest:'90s', desc:'Greater lat emphasis with wider grip. Reduces bicep involvement. Builds the wide back V-taper. Challenging but rewarding.' },
+  { name:'Commando Pull-ups',       slug:'commando-pull-ups',    loc:'outdoor',muscles:['back','arms'],level:'Advanced',  equipment:'Pull-up Bar',   sets:3, reps:'6-8',  rest:'90s', desc:'Alternating side-to-side pull-up. Hits back from multiple angles. Advanced movement requiring serious strength. Control is key.' },
+  { name:'Hanging Knee Raises',     slug:'hanging-knee-raises',  loc:'outdoor',muscles:['core'],   level:'Beginner',     equipment:'Pull-up Bar',   sets:3, reps:'15-20',rest:'60s', desc:'Core exercise from a bar hang. Pull knees to chest, control the descent. Progresses to straight leg raises. Builds real core strength.' },
+  { name:'Hanging Leg Raises',      slug:'hanging-leg-outdoor',  loc:'outdoor',muscles:['core'],   level:'Intermediate', equipment:'Pull-up Bar',   sets:3, reps:'10-15',rest:'60s', desc:'Advanced hanging core exercise. Straight legs to parallel or higher. Massive lower ab and hip flexor challenge.' },
+  // OUTDOOR — PUSH
+  { name:'Parallel Bar Dips',       slug:'bar-dips',             loc:'outdoor',muscles:['arms','chest'],level:'Intermediate',equipment:'Parallel Bars',sets:4,reps:'10-15',rest:'60s', desc:'One of the best tricep and chest compound movements. Upright torso for tricep focus, lean forward for chest. Control the descent.' },
+  { name:'Bench Dips',              slug:'bench-dips',           loc:'outdoor',muscles:['arms'],   level:'Beginner',     equipment:'Bench',         sets:3, reps:'15-20',rest:'60s', desc:'Tricep isolation using a bench or bar. Hands behind, lower body close. Great starter exercise before progressing to bar dips.' },
+  { name:'Push-ups (Outdoor)',      slug:'push-ups-outdoor',     loc:'outdoor',muscles:['chest','arms'],level:'Beginner', equipment:'None',          sets:4, reps:'20-25',rest:'60s', desc:'Outdoor push-up variations on different surfaces. Grass, concrete, elevated — each changes the stimulus. Classic never fails.' },
+  // OUTDOOR — LEGS & CARDIO
+  { name:'Jump Squats',             slug:'jump-squats-outdoor',  loc:'outdoor',muscles:['legs'],   level:'Intermediate', equipment:'None',          sets:4, reps:'15-20',rest:'60s', desc:'Explosive power builder. Perfect for outdoor training. High intensity, builds athleticism. Soft landing to protect joints.' },
+  { name:'Box Jumps',               slug:'box-jumps',            loc:'outdoor',muscles:['legs'],   level:'Intermediate', equipment:'Bench',         sets:4, reps:'10',    rest:'90s', desc:'Explosive plyometric. Jump onto a bench or step, land softly in squat position. Step down safely. Builds lower body power.' },
+  { name:'Walking Lunges',          slug:'walking-lunges',       loc:'outdoor',muscles:['legs'],   level:'Beginner',     equipment:'None',          sets:3, reps:'20',    rest:'60s', desc:'Dynamic lunge variation. Great for open outdoor spaces. Builds quad, glute, and balance simultaneously. Travel lunges in a park.' },
+  { name:'Sprint Intervals',        slug:'sprints',              loc:'outdoor',muscles:['legs','fullbody'],level:'Intermediate',equipment:'None',    sets:5, reps:'30s',  rest:'90s', desc:'High intensity cardio. Sprint all-out for 30 seconds, walk back. Builds explosive speed and burns fat efficiently.' },
+  { name:'Hill Sprints',            slug:'hill-sprints',         loc:'outdoor',muscles:['legs','fullbody'],level:'Advanced', equipment:'None',        sets:6, reps:'20s',  rest:'120s',desc:'Brutal conditioning. Sprint up a hill, walk down. Forces posterior chain engagement. Builds exceptional fitness fast.' },
+  { name:'Running',                 slug:'running',              loc:'outdoor',muscles:['legs','fullbody'],level:'Beginner', equipment:'None',         sets:1, reps:'20min',rest:'—',  desc:'Foundation of outdoor cardio. Builds cardiovascular base, burns calories, improves recovery. Adjust pace and distance to goal.' },
+  { name:'Jump Rope',               slug:'jump-rope',            loc:'outdoor',muscles:['fullbody'],level:'Beginner',     equipment:'Jump Rope',     sets:3, reps:'2min',  rest:'60s', desc:'Underrated cardio tool. Builds coordination, calf strength, and cardiovascular endurance. Lightweight, portable, deadly effective.' },
+];
+
+// Muscle group → which DB muscles match
+const MUSCLE_MAP = {
+  chest:     ['chest'],
+  back:      ['back'],
+  legs:      ['legs'],
+  shoulders: ['shoulders'],
+  arms:      ['arms'],
+  core:      ['core'],
+  fullbody:  ['fullbody','legs','back','chest','shoulders','arms','core'],
+};
+
+// ── QUIZ LOGIC ──────────────────────────────────────────────────────────────
+function selectLocation(loc, el) {
+  selectedLocation = loc;
+  document.querySelectorAll('.loc-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btnContinue').classList.add('ready');
+}
+
+function toggleMuscle(muscle, el) {
+  if (muscle === 'fullbody') {
+    // Full body = deselect everything else
+    const wasSelected = el.classList.contains('selected');
+    document.querySelectorAll('.muscle-card').forEach(c => c.classList.remove('selected'));
+    selectedMuscles = [];
+    if (!wasSelected) {
+      el.classList.add('selected');
+      selectedMuscles = ['fullbody'];
+    }
+  } else {
+    // Remove fullbody if selecting specific
+    const fbCard = document.querySelector('[data-muscle="fullbody"]');
+    if (fbCard) fbCard.classList.remove('selected');
+    selectedMuscles = selectedMuscles.filter(m => m !== 'fullbody');
+
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      selectedMuscles = selectedMuscles.filter(m => m !== muscle);
+    } else {
+      el.classList.add('selected');
+      selectedMuscles.push(muscle);
+    }
+  }
+  const cont = document.getElementById('btnContinue');
+  if (selectedMuscles.length > 0) cont.classList.add('ready');
+  else cont.classList.remove('ready');
+}
+
+function quizNext() {
+  if (currentStep === 1) {
+    if (!selectedLocation) return;
+    goToStep(2);
+  } else if (currentStep === 2) {
+    if (selectedMuscles.length === 0) return;
+    showLibrary();
+  }
+}
+
+function quizBack() {
+  if (currentStep === 2) goToStep(1);
+}
+
+function goToStep(n) {
+  const curr = document.getElementById(`step${currentStep}`);
+  curr.classList.add('exit');
+  setTimeout(() => {
+    curr.classList.remove('active','exit');
+    currentStep = n;
+    const next = document.getElementById(`step${n}`);
+    next.classList.add('active');
+    // Update buttons
+    document.getElementById('btnBack').style.display = n > 1 ? 'block' : 'none';
+    const cont = document.getElementById('btnContinue');
+    cont.textContent = n === 2 ? 'Show Exercises →' : 'Continue →';
+    if (n === 1) {
+      cont.classList.toggle('ready', !!selectedLocation);
+    } else {
+      cont.classList.toggle('ready', selectedMuscles.length > 0);
+    }
+  }, 300);
+}
+
+function showLibrary() {
+  // Save to localStorage
+  localStorage.setItem('lib_location', selectedLocation);
+  localStorage.setItem('lib_muscles', JSON.stringify(selectedMuscles));
+  // Hide quiz
+  document.getElementById('quizOverlay').classList.add('hidden');
+  document.getElementById('quizBottom').style.display = 'none';
+  document.getElementById('libraryPage').style.display = 'block';
+  renderLibrary();
+}
+
+function changeFilters() {
+  document.getElementById('libraryPage').style.display = 'none';
+  document.getElementById('quizOverlay').classList.remove('hidden');
+  document.getElementById('quizBottom').style.display = 'flex';
+  currentStep = 1;
+  document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active','exit'));
+  document.getElementById('step1').classList.add('active');
+  document.getElementById('btnBack').style.display = 'none';
+  document.getElementById('btnContinue').textContent = 'Continue →';
+  document.getElementById('btnContinue').classList.toggle('ready', !!selectedLocation);
+}
+
+// ── LIBRARY RENDER ──────────────────────────────────────────────────────────
+function renderLibrary() {
+  const locLabels = { gym:'Gym', home:'Home', outdoor:'Outdoor' };
+  const muscleLabels = selectedMuscles.map(m => m.charAt(0).toUpperCase()+m.slice(1)).join(', ');
+
+  document.getElementById('filterLocLabel').textContent = locLabels[selectedLocation];
+  document.getElementById('filterMuscleLabel').textContent = muscleLabels || 'All';
+  document.getElementById('libTitleLocation').textContent = locLabels[selectedLocation].toUpperCase();
+
+  // Filter exercises
+  const matchMuscles = selectedMuscles.includes('fullbody')
+    ? null // show all for this location
+    : selectedMuscles.flatMap(m => MUSCLE_MAP[m] || []);
+
+  const filtered = EXERCISES.filter(ex => {
+    if (ex.loc !== selectedLocation) return false;
+    if (!matchMuscles) return true;
+    return ex.muscles.some(m => matchMuscles.includes(m));
+  });
+
+  document.getElementById('filterCount').textContent = `${filtered.length} exercise${filtered.length !== 1 ? 's' : ''}`;
+  currentFiltered = filtered;   // remember for neighbour preloading
+
+  const grid = document.getElementById('exGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="ex-empty"><div class="ex-empty-icon">🏋️</div><div class="ex-empty-text">${FitAILang.t('lib.no_exercises')}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((ex, i) => {
+    const videoUrl = `${VIDEO_BASE}${ex.slug}-${currentTrainer}.mp4`;
+    const levelClass = `level-${ex.level.toLowerCase()}`;
+    const muscleTag = ex.muscles[0].charAt(0).toUpperCase()+ex.muscles[0].slice(1);
+    // data-src (not src) + preload="none": the thumbObserver assigns src only when the card nears
+    // the viewport, so opening the library no longer downloads every clip at once.
+    return `
+    <div class="ex-card" onclick="openModal('${ex.slug}')" style="animation-delay:${Math.min(i*0.04,0.4)}s">
+      <div class="ex-card-media">
+        <div class="ex-card-placeholder" id="ph-${ex.slug}"><div class="ex-card-placeholder-icon">⬛</div></div>
+        <video class="ex-card-vid" data-src="${videoUrl}" muted playsinline preload="none"
+          onloadeddata="this.classList.add('loaded'); document.getElementById('ph-${ex.slug}').style.display='none'; document.getElementById('coming-${ex.slug}').style.display='none';"
+          onerror="if(!libVideoTryFallback(this)){this.style.display='none'; document.getElementById('ph-${ex.slug}').style.display='flex';}"></video>
+        <div class="ex-card-play"><div class="ex-card-play-btn"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div></div>
+        <div class="ex-card-coming" id="coming-${ex.slug}">Video coming soon</div>
+      </div>
+      <div class="ex-card-body">
+        <div class="ex-card-tags">
+          <span class="ex-card-tag loc">${ex.loc.charAt(0).toUpperCase()+ex.loc.slice(1)}</span>
+          <span class="ex-card-tag muscle">${muscleTag}</span>
+          <span class="ex-card-tag ${levelClass}">${ex.level}</span>
+        </div>
+        <div class="ex-card-name">${ex.name}</div>
+        <div class="ex-card-equip">${ex.equipment}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Lazy-load each thumbnail when it nears the viewport; hover plays it (loading on demand if needed)
+  grid.querySelectorAll('.ex-card').forEach(card => {
+    const vid = card.querySelector('.ex-card-vid');
+    if (!vid) return;
+    if (thumbObserver) thumbObserver.observe(vid);
+    else if (vid.dataset.src) { vid.src = cachedClip(vid.dataset.src) || vid.dataset.src; }  // no IO support
+    const ensureLoaded = () => {
+      if (!vid.getAttribute('src') && vid.dataset.src) {
+        vid.src = cachedClip(vid.dataset.src) || vid.dataset.src;
+        vid.load();
+      }
+    };
+    card.addEventListener('mouseenter', () => {
+      ensureLoaded();
+      if (vid.classList.contains('loaded') || vid.readyState >= 2) vid.play().catch(()=>{});
+    });
+    card.addEventListener('mouseleave', () => { vid.pause(); vid.currentTime = 0; });
+  });
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────────────
+function openModal(slug) {
+  const ex = EXERCISES.find(e => e.slug === slug);
+  if (!ex) return;
+  currentExercise = ex;
+  modalTrainer = currentTrainer;
+
+  const overlay = document.getElementById('exModal');
+  document.getElementById('modalTag').textContent = `${ex.loc.toUpperCase()} · ${ex.muscles[0].toUpperCase()}`;
+  document.getElementById('modalName').textContent = ex.name;
+  document.getElementById('modalDesc').textContent = ex.desc;
+  document.getElementById('modalSets').textContent = ex.sets;
+  document.getElementById('modalReps').textContent = ex.reps;
+  document.getElementById('modalRest').textContent = ex.rest;
+
+  // Tags
+  const levelClass = `level-${ex.level.toLowerCase()}`;
+  document.getElementById('modalTags').innerHTML = `
+    <span class="ex-card-tag ${levelClass}">${ex.level}</span>
+    <span class="ex-card-tag muscle">${ex.equipment}</span>
+  `;
+
+  // Trainer toggle
+  document.getElementById('toggleMale').classList.toggle('active', modalTrainer === 'male');
+  document.getElementById('toggleFemale').classList.toggle('active', modalTrainer === 'female');
+
+  loadModalVideo(ex.slug, modalTrainer);
+  preloadNeighbours(ex.slug);     // warm the next few clips for instant sequential browsing
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Crossfade between two stacked <video> buffers so switching exercises/trainers never black-flashes.
+function loadModalVideo(slug, trainer) {
+  const coming = document.getElementById('modalComing');
+  const url    = clipUrl(slug, trainer);
+  const cur    = document.getElementById(modalActiveBuffer === 'A' ? 'modalVideoA' : 'modalVideoB');
+  const next   = document.getElementById(modalActiveBuffer === 'A' ? 'modalVideoB' : 'modalVideoA');
+
+  coming.style.display = 'none';
+  next.dataset.fb = '';   // fresh clip → allow one female→male retry
+  next.onloadeddata = () => {
+    coming.style.display = 'none';
+    next.classList.add('show');
+    cur.classList.remove('show');
+    next.play().catch(()=>{});
+    setTimeout(() => { if (!cur.classList.contains('show')) cur.pause(); }, 400);  // stop the faded-out buffer
+    modalActiveBuffer = (modalActiveBuffer === 'A') ? 'B' : 'A';
+  };
+  next.onerror = () => {
+    if (libVideoTryFallback(next)) return;       // -female missing → male clip is loading instead
+    next.classList.remove('show'); cur.classList.remove('show');
+    cur.pause(); next.pause();
+    coming.style.display = 'flex';               // genuinely unavailable
+  };
+  next.src = cachedClip(url) || url;
+  next.load();
+  next.play().catch(()=>{});
+}
+
+function switchModalTrainer(trainer) {
+  modalTrainer = trainer;
+  document.getElementById('toggleMale').classList.toggle('active', trainer === 'male');
+  document.getElementById('toggleFemale').classList.toggle('active', trainer === 'female');
+  if (currentExercise) { loadModalVideo(currentExercise.slug, trainer); preloadNeighbours(currentExercise.slug); }
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('exModal')) closeModalBtn();
+}
+function closeModalBtn() {
+  document.getElementById('exModal').classList.remove('open');
+  document.getElementById('modalVideoA').pause();
+  document.getElementById('modalVideoB').pause();
+  document.body.style.overflow = '';
+}
+
+// ── MUSCLE ROW SCROLL ──────────────────────────────────────────────────────
+function scrollMuscles(dir) {
+  const row = document.getElementById('muscleRow');
+  row.scrollBy({ left: dir * 440, behavior: 'smooth' });
+}
+
+// ── AUTH & INIT ────────────────────────────────────────────────────────────
+async function signOut() {
+  await sb.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+
+  const uid = session.user.id;
+  const headers = { apikey:SUPABASE_ANON, Authorization:`Bearer ${session.access_token}` };
+  const profResp = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}&select=name,trainer,gender,avatar_url`, { headers });
+  const profile  = (await profResp.json())[0] || {};
+
+  const name = profile.name || session.user.email?.split('@')[0] || 'User';
+  document.getElementById('navName').textContent = name;
+  FitAIAvatar.init({ uid, token: session.access_token, name, avatarUrl: profile.avatar_url });
+
+  // Trainer based on profile gender / trainer choice
+  currentTrainer = profile.trainer || (profile.gender === 'female' ? 'female' : 'male');
+  modalTrainer = currentTrainer;
+
+  // Check localStorage for saved filters
+  const savedLoc     = localStorage.getItem('lib_location');
+  const savedMuscles = JSON.parse(localStorage.getItem('lib_muscles') || '[]');
+
+  if (savedLoc && savedMuscles.length > 0) {
+    selectedLocation = savedLoc;
+    selectedMuscles  = savedMuscles;
+    // Pre-select cards
+    const locCard = document.getElementById(`loc-${savedLoc}`);
+    if (locCard) locCard.classList.add('selected');
+    savedMuscles.forEach(m => {
+      const mc = document.querySelector(`[data-muscle="${m}"]`);
+      if (mc) mc.classList.add('selected');
+    });
+    showLibrary();
+  }
+  // else quiz shows automatically
+});
+</script>
+</body>
+</html>

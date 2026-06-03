@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitAI — Your Personal AI Fitness Coach</title>
+<meta name="description" content="Get a fully personalized training and nutrition plan powered by AI. Built for real results.">
+<meta property="og:title" content="FitAI — Your Personal AI Fitness Coach">
+<meta property="og:description" content="Get a fully personalized training and nutrition plan powered by AI. Built for real results.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FitAI — Your Personal AI Fitness Coach">
+<meta name="twitter:description" content="Get a fully personalized training and nutrition plan powered by AI. Built for real results.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #05070D;
+    --surface: #0B0F18;
+    --elevated: #121826;
+    --green: #10B981;
+    --text: #F7FAFC;
+    --muted: #8B95A7;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    /* signature brand blue — premium deep blue, not generic bright blue */
+    --blue: #1E6FD9;
+    --blue-hover: #2563EB;
+    --blue-glow: rgba(30,111,217,0.45);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: rgba(30,111,217,0.35); color: #fff; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 56px;
+    background: rgba(5,7,13,0);
+    transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled {
+    background: rgba(5,7,13,0.72);
+    backdrop-filter: blur(20px) saturate(140%);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: visible;
+  }
+  .nav-logo img {
+    height: 80px;
+    width: auto;
+    filter: brightness(1.1);
+    /* Scale up visually without pushing nav height */
+    transform: scale(1.6);
+    transform-origin: left center;
+    margin-right: 40px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lang-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
+  }
+  .lang-toggle button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .lang-toggle button:hover { color: var(--text); }
+  .lang-toggle button.active {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+
+  .btn-signin {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-signin:hover { border-color: var(--border-strong); color: var(--text); }
+
+  .btn-signup {
+    position: relative;
+    background: linear-gradient(180deg, #2A7CE6 0%, #1E6FD9 100%);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 18px -6px var(--blue-glow);
+  }
+  .btn-signup:hover {
+    background: linear-gradient(180deg, #3A8AF0 0%, #2563EB 100%);
+    border-color: rgba(255,255,255,0.28);
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 12px 34px -8px rgba(37,99,235,0.7);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 700px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* BG VIDEO */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+  .hero-bg video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.45;
+  }
+  .hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to bottom, rgba(8,12,20,0.35) 0%, rgba(8,12,20,0.15) 40%, rgba(8,12,20,0.7) 80%, rgba(8,12,20,1) 100%),
+      linear-gradient(to right, rgba(8,12,20,0.8) 0%, transparent 30%, transparent 70%, rgba(8,12,20,0.8) 100%);
+  }
+
+  /* TRAINER PHOTOS */
+  .trainer {
+    position: absolute;
+    bottom: 0;
+    z-index: 2;
+    height: 92vh;
+    max-height: 860px;
+    transition: transform 1s cubic-bezier(0.16,1,0.3,1), opacity 0.8s ease;
+  }
+  .trainer img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    object-position: bottom;
+    display: block;
+  }
+
+  .trainer-left {
+    left: -20px;
+    transform-origin: left bottom;
+  }
+  .trainer-right {
+    right: -20px;
+    transform-origin: right bottom;
+  }
+
+  /* fade out on scroll */
+  .trainer.hide-left { transform: translateX(-110%) !important; opacity: 0 !important; }
+  .trainer.hide-right { transform: translateX(110%) !important; opacity: 0 !important; }
+
+  /* inner shadow on trainers to blend into bg */
+  .trainer-left::after,
+  .trainer-right::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .trainer-left::after {
+    background: linear-gradient(to right, rgba(8,12,20,0.4) 0%, transparent 40%);
+  }
+  .trainer-right::after {
+    background: linear-gradient(to left, rgba(8,12,20,0.4) 0%, transparent 40%);
+  }
+
+  /* CENTER CONTENT */
+  .hero-center {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 0 24px;
+    animation: fadeUp 1s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    line-height: 0.92;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.35s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+
+  .hero-title .line-left {
+    display: block;
+    font-size: clamp(92px, 13vw, 168px);
+    color: var(--text);
+    letter-spacing: 2px;
+  }
+  .hero-title .line-right {
+    display: block;
+    font-size: clamp(92px, 13vw, 168px);
+    color: var(--blue);
+    letter-spacing: 2px;
+  }
+
+  /* Two-column layout like Lando Norris */
+  .hero-cols {
+    display: flex;
+    gap: 56px;
+    justify-content: center;
+    margin-bottom: 44px;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+
+  .hero-col {
+    max-width: 300px;
+    text-align: left;
+  }
+  .hero-col-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: italic;
+    font-size: clamp(66px, 8.6vw, 118px);
+    line-height: 0.94;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  html[lang="ua"] .hero-col-title {
+    font-size: clamp(52px, 6.8vw, 94px);
+  }
+  html[lang="ua"] .section-title,
+  html[lang="ua"] .prob-headline,
+  html[lang="ua"] .how-title,
+  html[lang="ua"] .cta-h,
+  html[lang="ua"] .problem-cta,
+  html[lang="ua"] .prob-eyebrow,
+  html[lang="ua"] .prob-card-num,
+  html[lang="ua"] .step-name,
+  html[lang="ua"] .prob-card-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: normal;
+  }
+  .hero-col-title.white {
+    max-width: 4ch; /* force "YOUR" and "AI" onto separate lines always */
+  }
+  .hero-col-title.blue  { color: var(--blue); text-shadow: 0 0 44px rgba(30,111,217,0.38); }
+
+  .hero-col-sub {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 240px;
+  }
+
+  .col-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    margin: 8px 0;
+  }
+
+  /* CTAs */
+  .hero-ctas {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+
+  .cta-primary {
+    position: relative;
+    background: linear-gradient(180deg, #2A7CE6 0%, #1E6FD9 100%);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.16);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 15px 34px;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 34px -10px var(--blue-glow);
+    animation: glowPulse 3.4s 2s ease-in-out infinite;
+  }
+  .cta-primary:hover {
+    background: linear-gradient(180deg, #3A8AF0 0%, #2563EB 100%);
+    border-color: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 18px 50px -12px rgba(37,99,235,0.75);
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 30px -12px rgba(30,111,217,0.4); }
+    50%       { box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 40px -8px rgba(30,111,217,0.62); }
+  }
+
+  .cta-ghost {
+    background: transparent;
+    color: #CBD5E1;
+    border: 1px solid var(--border);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 15px 30px;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cta-ghost:hover { color: var(--text); border-color: rgba(37,99,235,0.55); box-shadow: 0 0 0 1px rgba(37,99,235,0.15); }
+
+  /* STATS BAR */
+  .hero-stats {
+    display: flex;
+    gap: 0;
+    justify-content: center;
+    margin-top: 88px;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  .stat-item {
+    padding: 0 44px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 54px;
+    color: var(--text);
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .stat-num span { color: var(--blue); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 8px;
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    animation: fadeIn 1s 1.4s forwards;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, transparent, var(--blue));
+    animation: scrollAnim 2s 1.4s infinite;
+  }
+  @keyframes scrollAnim {
+    0%   { transform: scaleY(0); transform-origin: top; opacity: 0; }
+    50%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+    100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ── PROBLEM SECTION ── */
+  /* ── PROBLEM SECTION ── */
+  .section-problem {
+    background: var(--bg);
+    padding: 200px 80px 160px;
+  }
+
+  /* TOP PART — 2 columns like Levels */
+  .problem-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    max-width: 1200px;
+    margin: 0 auto 110px;
+    align-items: start;
+  }
+
+  /* LEFT — big headline + description */
+  .problem-left {}
+  .prob-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--green);
+    text-transform: uppercase; margin-bottom: 20px; display: block;
+  }
+  .prob-headline {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 5.5vw, 80px);
+    line-height: .95; letter-spacing: .5px;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+  .prob-headline span { color: #EF4444; }
+  html[lang="ua"] .prob-headline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(36px, 4vw, 58px);
+    letter-spacing: 0px;
+  }
+  .prob-lead {
+    font-size: 17px; color: var(--muted); line-height: 1.75;
+    max-width: 480px; margin-bottom: 32px;
+  }
+  .prob-source-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--blue);
+    border-bottom: 1px solid rgba(30,111,217,.35);
+    padding-bottom: 2px; text-decoration: none;
+    transition: border-color .2s;
+  }
+  .prob-source-link:hover { border-color: var(--blue); }
+
+  /* RIGHT — research card like Levels */
+  .problem-right {}
+  .prob-research-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+  }
+  .prob-research-label {
+    font-size: 10px; letter-spacing: 3px; color: var(--muted);
+    text-transform: uppercase; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .prob-research-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .prob-research-quote {
+    font-size: 18px; color: var(--text); line-height: 1.65;
+    margin-bottom: 24px; font-weight: 400;
+  }
+  .prob-research-quote strong { color: #EF4444; font-weight: 600; }
+  .prob-research-source {
+    display: flex; align-items: center; gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .prob-src-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--elevated); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .prob-src-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .prob-src-text a { color: var(--blue); text-decoration: none; }
+  .prob-src-text a:hover { text-decoration: underline; }
+
+  /* Second research snippet */
+  .prob-research-card2 {
+    background: rgba(30,111,217,.06);
+    border: 1px solid rgba(30,111,217,.16);
+    border-radius: 16px; padding: 24px; margin-top: 16px;
+  }
+  .prob-research-card2 p {
+    font-size: 14px; color: var(--muted); line-height: 1.6;
+  }
+  .prob-research-card2 p strong { color: var(--text); }
+
+  /* BOTTOM — 3 stat cards — Levels-style dark */
+  .problem-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto 96px;
+  }
+  .prob-card {
+    background: rgba(255,255,255,.015);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 60px 44px 52px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .35s cubic-bezier(.16,1,.3,1), border-color .35s, background .35s;
+  }
+  .prob-card:hover { transform: translateY(-6px); border-color: rgba(30,111,217,.3); background: rgba(255,255,255,.03); box-shadow: 0 24px 56px -28px rgba(30,111,217,.45); }
+  /* Subtle inner glow top-left */
+  .prob-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 0% 0%, rgba(30,111,217,.10) 0%, transparent 55%);
+    pointer-events: none;
+  }
+  .prob-card.red-glow::before {
+    background: radial-gradient(ellipse at 0% 0%, rgba(239,68,68,.06) 0%, transparent 55%);
+  }
+  /* Icon */
+  .prob-card-icon {
+    position: absolute;
+    top: 40px; right: 40px;
+    z-index: 2;
+    opacity: .4;
+    transition: opacity .3s;
+  }
+  .prob-card:hover .prob-card-icon { opacity: .7; }
+  .prob-card-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(88px, 9vw, 132px);
+    line-height: .92; color: #FFFFFF;
+    margin-bottom: 18px; letter-spacing: -1px;
+    position: relative; z-index: 1;
+  }
+  html[lang="ua"] .prob-card-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: clamp(60px, 6vw, 88px);
+    letter-spacing: 0px;
+  }
+  .prob-card-num.accent { color: #F87171; }
+  .prob-card-title {
+    font-size: 16px; font-weight: 500;
+    color: #E2E8F0; margin-bottom: 12px;
+    letter-spacing: .2px;
+    position: relative; z-index: 1;
+  }
+  .prob-card-desc {
+    font-size: 14px; color: var(--muted); line-height: 1.7;
+    position: relative; z-index: 1;
+  }
+  .prob-card-counter {
+    margin-top: 28px; padding: 10px 14px;
+    background: rgba(30,111,217,.10);
+    border: 1px solid rgba(30,111,217,.22);
+    border-radius: 9px; font-size: 12px;
+    color: #7FB2F2; font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+    opacity: 0; transform: translateY(6px);
+    transition: opacity .3s, transform .3s;
+    position: relative; z-index: 1;
+  }
+  .prob-card:hover .prob-card-counter { opacity: 1; transform: translateY(0); }
+  .prob-counter-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #7FB2F2; flex-shrink: 0;
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:.3}50%{opacity:1} }
+
+  /* CTA line */
+  .problem-cta {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 4vw, 52px);
+    color: var(--blue); text-align: center;
+    max-width: 1200px; margin: 0 auto;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .6s, transform .6s;
+    letter-spacing: 1px;
+    text-shadow: 0 0 50px rgba(30,111,217,0.42);
+  }
+  .problem-cta.visible { opacity: 1; transform: translateY(0); }
+  html[lang="ua"] .problem-cta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(20px, 2.5vw, 34px);
+    letter-spacing: 0;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 6vw, 72px);
+    color: var(--text); margin-bottom: 64px; letter-spacing: 1px;
+  }
+  .section-title span { color: var(--blue); }
+  html[lang="ua"] .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(30px, 4vw, 52px);
+    letter-spacing: 0;
+  }
+
+  /* ── HOW IT WORKS ── */
+  /* ── HOW IT WORKS NEW ── */
+  .section-how {
+    padding: 180px 0;
+    background: var(--surface);
+    min-height: 1200px;
+  }
+  .how-header {
+    text-align: center;
+    margin-bottom: 80px;
+    padding: 0 48px;
+  }
+  .how-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--green);
+    text-transform: uppercase; margin-bottom: 14px; display: block;
+  }
+  .how-layout {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 0;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 48px;
+    align-items: start;
+  }
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    padding-right: 60px;
+    overflow: hidden;
+    height: 680px; /* enough for one open card, clips any overflow during transition */
+  }
+  .step-item {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .step-item:first-child { border-top: 1px solid var(--border); }
+  .step-header {
+    display: flex; align-items: center; gap: 20px;
+    padding: 28px 0;
+  }
+  .step-item.active .step-header { padding-bottom: 0; }
+  .step-num-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px; letter-spacing: 3px;
+    color: var(--muted); min-width: 28px;
+    transition: color .3s;
+  }
+  .step-item.active .step-num-label { color: var(--blue); }
+  .step-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px,3.5vw,42px);
+    color: var(--muted); flex: 1;
+    transition: color .3s;
+  }
+  .step-item.active .step-name { color: var(--text); }
+  .step-chevron { font-size: 20px; color: var(--border); transition: transform .3s, color .3s; }
+  .step-item.active .step-chevron { transform: rotate(90deg); color: var(--blue); }
+  .step-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .5s cubic-bezier(.16,1,.3,1);
+    padding-left: 48px;
+  }
+  .step-item.active .step-body { max-height: 500px; }
+  .step-photo {
+    width: 100%; height: 220px;
+    border-radius: 16px; overflow: hidden;
+    margin-top: 16px; margin-bottom: 16px;
+    position: relative;
+  }
+  .step-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(.85);
+    transition: transform .6s ease, filter .4s;
+  }
+  .step-item.active .step-photo img { transform: scale(1.03); filter: brightness(.95); }
+  .step-photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(8,12,20,.7) 0%, transparent 60%);
+  }
+  .step-photo-tag {
+    position: absolute; bottom: 12px; left: 14px;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(5,7,13,.75); backdrop-filter: blur(8px);
+    border: 1px solid rgba(30,111,217,.35); border-radius: 8px;
+    padding: 5px 10px; font-size: 10px; color: var(--blue); letter-spacing: 1px;
+  }
+  .step-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); animation: dotPulse 1.2s infinite; }
+  .step-body-desc {
+    font-size: 15px; color: var(--muted); line-height: 1.7;
+    max-width: 520px; padding-bottom: 8px;
+  }
+  .step-progress { height: 2px; background: var(--border); margin: 16px 0 24px; border-radius: 2px; overflow: hidden; }
+  .step-progress-fill { height: 100%; width: 0%; background: var(--blue); border-radius: 2px; }
+  .step-dots-row { display: flex; gap: 6px; padding-bottom: 24px; }
+  .sdot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--border); transition: all .3s; cursor: pointer;
+  }
+  .sdot.active { width: 20px; border-radius: 3px; background: var(--blue); }
+
+  /* Phone mockup */
+  .phone-sticky {
+    position: sticky; top: calc(50vh - 320px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .phone-wrap {
+    width: 400px;
+    position: relative;
+  }
+  /* Phone image = TOP LAYER — acts as a mask frame */
+  .phone-img {
+    width: 100%;
+    display: block;
+    position: relative;
+    z-index: 10;
+    pointer-events: none;
+    filter: drop-shadow(0 40px 80px rgba(0,0,0,.9));
+  }
+  /* Screen content = UNDERNEATH phone image
+     Calibrated from Figma: screen 710×1509 inside 1076×1628
+     left/right = (1076-710)/2/1076 = 17%
+     top = ~3.6%, bottom = ~3.7%
+  */
+  .phone-screen {
+    position: absolute;
+    top: 3.6%;
+    left: 17%;
+    right: 17%;
+    bottom: 3.7%;
+    border-radius: 12%;
+    overflow: hidden;
+    background: var(--surface);
+    z-index: 1;
+  }
+  .phone-status {
+    height: 48px; display: flex; align-items: flex-end;
+    justify-content: space-between; padding: 0 20px 8px;
+    font-size: 13px; color: var(--muted); flex-shrink: 0;
+  }
+  .phone-slides { position: relative; height: calc(100% - 48px); overflow: hidden; }
+  .phone-slide {
+    position: absolute; inset: 0; padding: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .4s, transform .4s; pointer-events: none;
+  }
+  .phone-slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .ps-label { font-size: 11px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
+  .ps-title { font-size: 18px; font-weight: 600; color: var(--text); }
+  .ps-photo-area {
+    flex: 1; border-radius: 16px; overflow: hidden;
+    border: 1px dashed var(--border); position: relative;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;
+  }
+  .ps-photo-area img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .6; }
+  .ps-scan-overlay {
+    position: absolute; inset: 0; border: 2px solid transparent; border-radius: 16px;
+    animation: scanBorder 2s ease-in-out infinite; z-index: 2;
+  }
+  @keyframes scanBorder { 0%,100%{border-color:rgba(30,111,217,0)}50%{border-color:rgba(30,111,217,.65)} }
+  .ps-cam-icon { font-size: 32px; opacity: .5; position: relative; z-index: 2; }
+  .ps-cam-text { font-size: 12px; color: var(--muted); position: relative; z-index: 2; }
+  .ps-btn {
+    background: var(--blue); border: none; color: #fff;
+    font-family: 'Outfit',sans-serif; font-size: 14px; font-weight: 600;
+    padding: 12px; border-radius: 12px; cursor: pointer; width: 100%;
+    box-shadow: 0 6px 18px -8px var(--blue-glow);
+  }
+  .ps-info {
+    background: var(--elevated); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px; font-size: 12px; color: var(--muted);
+  }
+  .ps-info-label { color: var(--green); margin-bottom: 4px; font-size: 10px; letter-spacing: 1px; }
+  .ps-plan-card { background: var(--elevated); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .ps-plan-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .ps-plan-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .ps-plan-item:last-child { border: none; }
+  .ps-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+  .ps-dot.g { background: var(--green); }
+  .ps-plan-text { font-size: 12px; color: var(--muted); }
+  .ps-plan-val { font-size: 12px; color: var(--blue); margin-left: auto; }
+  .ps-macros { display: flex; gap: 6px; margin-top: 8px; }
+  .ps-macro { flex: 1; background: var(--bg); border-radius: 8px; padding: 8px; text-align: center; }
+  .ps-macro-num { font-family: 'Bebas Neue',sans-serif; font-size: 20px; color: var(--text); }
+  .ps-macro-label { font-size: 10px; color: var(--muted); }
+  .ps-ring-wrap { display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 8px; }
+  .ps-prog-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ps-prog-label { font-size: 11px; color: var(--muted); min-width: 48px; }
+  .ps-prog-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .ps-prog-bar { height: 100%; border-radius: 2px; }
+  .phone-glow {
+    position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%);
+    width: 170px; height: 60px;
+    background: radial-gradient(ellipse,rgba(30,111,217,.45) 0%,transparent 70%);
+  }
+  @keyframes dotPulse { 0%,100%{opacity:.3}50%{opacity:1;transform:scale(1.3)} }
+
+  /* ── CTA SECTION ── */
+  .section-cta {
+    background: var(--bg);
+    border-top: none;
+    position: relative;
+    overflow: hidden;
+    min-height: 720px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Smooth top transition from HOW IT WORKS */
+  .section-cta::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, var(--surface) 0%, transparent 100%);
+    z-index: 3;
+    pointer-events: none;
+  }
+  /* Center vignette so the big headline reads clearly over the photo */
+  .section-cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: radial-gradient(ellipse 80% 60% at center, rgba(8,12,20,0.6) 0%, rgba(8,12,20,0.28) 42%, transparent 72%);
+    pointer-events: none;
+  }
+
+  /* Two photos — each covers half the section */
+  .cta-photo {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    overflow: hidden;
+  }
+  .cta-photo-left { left: 0; }
+  .cta-photo-right { right: 0; }
+  .cta-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    filter: brightness(.5);
+    transition: transform 8s ease, filter .4s;
+  }
+  .cta-photo:hover img { filter: brightness(.6); }
+
+  /* Gradient — left photo fades right, right photo fades left, meeting in center */
+  .cta-photo-left::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(8,12,20,.1) 30%, rgba(8,12,20,.6) 100%);
+  }
+  .cta-photo-right::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to left, rgba(8,12,20,.1) 30%, rgba(8,12,20,.6) 100%);
+  }
+
+  /* Badge on each photo */
+  .cta-photo-badge {
+    position: absolute;
+    bottom: 32px;
+    z-index: 2;
+    background: rgba(8,12,20,.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .cta-photo-left .cta-photo-badge { left: 20px; }
+  .cta-photo-right .cta-photo-badge { right: 20px; }
+
+  /* Center content */
+  .cta-center {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 140px 24px;
+    max-width: 600px;
+  }
+  .cta-center::before { display: none; }
+
+  /* Section label — pinned to the very top, white, spaced uppercase */
+  .cta-label {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 4;
+    padding-top: 54px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 2px 20px rgba(0,0,0,.85);
+  }
+  .cta-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(64px, 8vw, 110px);
+    line-height: 0.92;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 32px rgba(0,0,0,.9), 0 2px 8px rgba(0,0,0,.7);
+  }
+  html[lang="ua"] .cta-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-style: normal;
+    font-size: clamp(40px, 5vw, 68px);
+    letter-spacing: 0px;
+  }
+  html[lang="ua"] .cta-center {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-sub {
+    font-size: 16px;
+    color: #E2E8F0;
+    margin-bottom: 40px;
+    max-width: 420px;
+    margin-left: auto; margin-right: auto;
+    line-height: 1.7;
+    text-shadow: 0 2px 16px rgba(0,0,0,.9);
+  }
+  .cta-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+  }
+
+  /* SCROLL OBSERVE */
+  .observe { }
+
+  /* ════════════════════ MOBILE ════════════════════ */
+  @media (max-width: 768px) {
+    /* NAV — closer in scale to the dashboard navbar, logo bumped most aggressively */
+    nav { padding: 10px 16px; }
+    .nav-logo img { height: 64px; transform: scale(1.35); transform-origin: left center; margin-right: 20px; }
+    .nav-right { gap: 10px; }
+    .btn-signin, .btn-signup { padding: 9px 17px; font-size: 13px; }
+    .lang-toggle button { padding: 7px 11px; font-size: 11px; }
+
+    /* HERO — mobile: man on the LEFT, text on the RIGHT (he looks at the text) */
+    .hero { height: auto; min-height: 100vh; padding: 0; display: block; position: relative; }
+
+    .trainer-right { display: none; }                 /* woman hidden on mobile */
+    .trainer-left {
+      display: block;
+      left: -14%; right: auto; bottom: 0;
+      transform: none;
+      height: 76vh; max-height: none;
+      z-index: 6; opacity: 1; transition: none;   /* photo ABOVE the text layer */
+      pointer-events: none;                        /* let taps reach the text/CTAs behind */
+    }
+    .trainer-left img { height: 100%; width: auto; object-position: bottom center; }
+    .trainer-left::after { display: none; }
+    .trainer.hide-left { transform: none !important; opacity: 1 !important; } /* don't slide out on mobile */
+
+    .hero-center {
+      position: relative; z-index: auto;          /* no stacking context, so CTAs can layer above the photo */
+      animation: none;                            /* fadeUp's lingering transform would create a stacking context and trap the CTAs */
+      display: flex; flex-direction: column;
+      align-items: flex-end;            /* content to the right */
+      min-height: 100vh;
+      padding: 100px 20px 40px;
+      text-align: right;
+    }
+    .hero-label { margin-bottom: 16px; visibility: hidden; }  /* hide eyebrow on mobile, keep its space so nothing shifts */
+    .hero-cols { flex-direction: column; gap: 2px; margin: 0 0 auto; align-items: flex-end; position: relative; z-index: 2; }  /* text behind photo (z6), above bg */
+    .hero-col { max-width: 100%; text-align: right; }
+    .hero-col-sub { display: none; }
+    .col-divider { display: none; }
+    .hero-col-title { font-size: clamp(50px, 15vw, 78px); line-height: 0.9; margin-bottom: 0; }
+    .hero-col-title.white { max-width: none; }   /* full width so it right-aligns cleanly */
+    html[lang="ua"] .hero-col-title { font-size: clamp(40px, 12vw, 64px); }
+
+    .hero-ctas {
+      flex-direction: column; align-items: stretch;
+      gap: 10px; width: 100%; max-width: 300px; margin: 24px 0 0 auto;
+      position: relative; z-index: 7;   /* CTAs IN FRONT of the Alex photo (z6) */
+    }
+    .hero-stats { display: none; }
+    .scroll-indicator { display: none; }
+
+    /* PROBLEM */
+    .section-problem { padding: 96px 20px 72px; }
+    .problem-top { grid-template-columns: 1fr; gap: 36px; margin-bottom: 64px; }
+    .problem-cards { grid-template-columns: 1fr; gap: 16px; margin-bottom: 64px; }
+    .prob-card { padding: 36px 26px 32px; border-radius: 20px; }
+
+    /* HOW IT WORKS */
+    .section-how { padding: 96px 0; min-height: 0; }
+    .how-header { margin-bottom: 48px; padding: 0 20px; }
+    .how-layout { grid-template-columns: 1fr; padding: 0 20px; gap: 40px; }
+    .steps-list { padding-right: 0; height: auto; }
+    .phone-wrap { width: min(330px, 82vw); margin: 0 auto; }
+
+    /* CTA — single full-width photo (excited.png) with centered text over it */
+    .section-cta { min-height: 640px; }                /* TRAIN SMARTER stays vertically centered */
+    .cta-photo-left { display: none; }                 /* hide the second photo */
+    .cta-photo-right { left: 0; right: 0; width: 100%; }/* excited.png fills the width */
+    .cta-photo-right img { object-position: center; }
+    .cta-photo-right::after { background: linear-gradient(to top, rgba(8,12,20,0.9) 0%, rgba(8,12,20,0.45) 55%, rgba(8,12,20,0.6) 100%); }
+    .cta-center { padding: 88px 20px; text-align: center; }
+    .cta-label { padding-top: 40px; font-size: 11px; letter-spacing: 4px; }   /* top-pinned section label */
+    .cta-title { font-size: clamp(46px, 13vw, 72px); }
+    .cta-sub { font-size: 15px; }
+    .cta-btns { flex-wrap: wrap; justify-content: center; }
+  }
+  @media (max-width: 480px) {
+    nav { padding: 8px 12px; }
+    .nav-logo img { height: 54px; transform: scale(1.18); margin-right: 12px; }
+    .nav-right { gap: 8px; }
+    .btn-signin, .btn-signup { padding: 8px 13px; font-size: 12.5px; }
+    .lang-toggle button { padding: 6px 9px; font-size: 10.5px; }
+    .hero-title .line-left, .hero-title .line-right { font-size: clamp(42px, 16vw, 62px); }
+    .hero-ctas { flex-direction: column; align-items: stretch; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; }
+    .hero-ctas .cta-primary, .hero-ctas .cta-ghost { width: 100%; justify-content: center; }
+    .cta-btns { flex-direction: column; align-items: stretch; }
+  }
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI">
+  </div>
+  <div class="nav-right">
+    <div class="lang-toggle">
+      <button data-lang-btn="en" onclick="FitAILang.set('en')">EN</button>
+      <button data-lang-btn="ua" onclick="FitAILang.set('ua')">UA</button>
+    </div>
+    <button class="btn-signin" data-i18n="signin" onclick="window.location.href='signin.html'">Sign In</button>
+    <button class="btn-signup" data-i18n="signup" onclick="window.location.href='register.html'">Get Started</button>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+
+  <!-- BG VIDEO -->
+  <div class="hero-bg">
+    <video autoplay muted loop playsinline poster="https://builtwithai.pro/fitai/media/bg.jpg">
+      <source src="https://builtwithai.pro/fitai/media/bg-video.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- TRAINER LEFT (man) -->
+  <div class="trainer trainer-left" id="trainerLeft">
+    <img src="https://builtwithai.pro/fitai/media/man.png" alt="AI Trainer">
+  </div>
+
+  <!-- TRAINER RIGHT (woman) -->
+  <div class="trainer trainer-right" id="trainerRight">
+    <img src="https://builtwithai.pro/fitai/media/woman1.png" alt="AI Trainer">
+  </div>
+
+  <!-- CENTER CONTENT — Lando Norris layout -->
+  <div class="hero-center">
+    <div class="hero-label" data-i18n="hero_label">Real Results. Not Promises.</div>
+
+    <div class="hero-cols">
+      <!-- LEFT column -->
+      <div class="hero-col">
+        <div class="hero-col-title white" data-i18n-html="hero_col1_title">YOUR<br>AI</div>
+        <p class="hero-col-sub" data-i18n="hero_col1_sub">Upload a photo. Get a personalized training plan in seconds.</p>
+      </div>
+
+      <div class="col-divider"></div>
+
+      <!-- RIGHT column -->
+      <div class="hero-col">
+        <div class="hero-col-title blue" data-i18n-html="hero_col2_title">FITNESS<br>COACH</div>
+        <p class="hero-col-sub" data-i18n="hero_col2_sub">AI that knows your body, your goal, and your progress. Every day.</p>
+      </div>
+    </div>
+
+    <div class="hero-ctas">
+      <button class="cta-primary" data-i18n="cta_start" onclick="window.location.href='register.html'">Start for Free →</button>
+      <button class="cta-ghost" data-i18n="cta_how" onclick="document.getElementById('how-section').scrollIntoView({behavior:'smooth'})">See how it works</button>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">2<span>min</span></div>
+        <div class="stat-label" data-i18n="stat1">To Get Your Plan</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">5<span>sec</span></div>
+        <div class="stat-label" data-i18n="stat2">Analysis Time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">98<span>%</span></div>
+        <div class="stat-label" data-i18n="stat3">AI Accuracy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ── PROBLEM SECTION ── -->
+<section class="section-problem">
+
+  <!-- TOP: 2-column Levels layout -->
+  <div class="problem-top">
+
+    <!-- LEFT: headline + lead -->
+    <div class="problem-left">
+      <span class="prob-eyebrow" data-i18n="prob_eyebrow">The reality</span>
+      <h2 class="prob-headline" data-i18n-html="prob_headline">Fitness industry<br>is <span>broken.</span><br>For most people.</h2>
+      <p class="prob-lead" data-i18n="prob_lead">Millions of people want to change their body and health — but the system is designed to be expensive, slow, and unsustainable. A personal trainer costs hundreds per month. A nutritionist charges $120 per visit. And generic plans fail 73% of people within weeks.</p>
+      <a class="prob-source-link" href="https://sportrxiv.org/index.php/server/preprint/view/709" target="_blank">
+        Read the research → SportRxiv, 2026
+      </a>
+    </div>
+
+    <!-- RIGHT: research cards -->
+    <div class="problem-right">
+      <div class="prob-research-card">
+        <div class="prob-research-label" data-i18n="prob_research_label">Research & Evidence</div>
+        <p class="prob-research-quote" data-i18n-html="prob_research_quote">A 2026 study found that <strong>only 18% of beginners</strong> remained active after 6 months — with the median dropout point at just 14 weeks. The primary cause: generic programs with no personalization and no adaptive feedback.</p>
+        <div class="prob-research-source">
+          <div class="prob-src-icon">📄</div>
+          <div class="prob-src-text" data-i18n-html="prob_src_text">SportRxiv preprint · 522,994 users · Jan 2026<br><a href="https://sportrxiv.org/index.php/server/preprint/view/709" target="_blank">Read the full study →</a></div>
+        </div>
+      </div>
+
+      <div class="prob-research-card2" data-i18n-html="prob_card2_block"><p><strong>The fitness coaching market</strong> is valued at $40B globally — yet the vast majority of people still can't access personalized, affordable guidance. AI changes that equation entirely.</p></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM: 3 stat cards -->
+  <div class="problem-cards">
+
+    <div class="prob-card">
+      <div class="prob-card-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="13" stroke="#1E6FD9" stroke-width="1.8"/>
+          <path d="M18 10v8l5 3" stroke="#1E6FD9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="prob-card-num" data-count="2" data-suffix="H">0H</div>
+      <div class="prob-card-title" data-i18n="prob_card1_title">Just to get an appointment</div>
+      <p class="prob-card-desc" data-i18n="prob_card1_desc">Average wait time to see a nutritionist or personal trainer. And that's before paying anything.</p>
+      <div class="prob-card-counter"><div class="prob-counter-dot"></div><span data-i18n="prob_card1_counter"> FitAI: ready in 30 seconds</span></div>
+    </div>
+
+    <div class="prob-card red-glow">
+      <div class="prob-card-icon" style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:300;color:#F87171;line-height:1;opacity:.55;">$</div>
+      <div class="prob-card-num accent" data-count="120" data-prefix="$">$0</div>
+      <div class="prob-card-title" data-i18n="prob_card2_title">Per single consultation</div>
+      <p class="prob-card-desc" data-i18n="prob_card2_desc">Every question costs money. Every visit, every adjustment. The advice stops the moment you stop paying.</p>
+      <div class="prob-card-counter"><div class="prob-counter-dot"></div><span data-i18n="prob_card2_counter"> FitAI: $9/місяць. Безліміт.</span></div>
+    </div>
+
+    <div class="prob-card red-glow">
+      <div class="prob-card-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 10l8 8 6-4 10 12" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M26 26h4v-4" stroke="#F87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="prob-card-num accent" data-count="73" data-suffix="%">0%</div>
+      <div class="prob-card-title" data-i18n="prob_card3_title">Quit within the first month</div>
+      <p class="prob-card-desc" data-i18n="prob_card3_desc">Generic plans don't adapt. When progress stalls, there's no one there to fix it. So people give up.</p>
+      <div class="prob-card-counter"><div class="prob-counter-dot"></div><span data-i18n="prob_card3_counter"> FitAI adapts your plan daily</span></div>
+    </div>
+
+  </div>
+
+  <p class="problem-cta observe" data-i18n="problem_cta">FITAI CHANGES ALL OF THIS.</p>
+
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="section-how" id="how-section">
+  <div class="how-header">
+    <span class="how-label" data-i18n="how_label">Simple by design</span>
+    <h2 class="section-title" data-i18n-html="how_title">HOW IT <span>WORKS</span></h2>
+  </div>
+
+  <div class="how-layout">
+    <!-- LEFT: STEPS -->
+    <div class="steps-list">
+
+      <!-- 01 -->
+      <div class="step-item active" onclick="setStep(0)">
+        <div class="step-header">
+          <span class="step-num-label">01</span>
+          <span class="step-name" data-i18n="step1_title">Upload a Photo</span>
+          <span class="step-chevron">›</span>
+        </div>
+        <div class="step-body">
+          <div class="step-photo">
+            <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80" alt="Woman taking gym selfie">
+            <div class="step-photo-overlay"></div>
+            <div class="step-photo-tag"><div class="step-tag-dot"></div> AI ANALYZING BODY...</div>
+          </div>
+          <p class="step-body-desc" data-i18n="step1_desc">Take a photo of your meal or your body. Our AI analyzes it in seconds — body fat percentage, muscle mass, nutritional values, everything.</p>
+          <div class="step-progress"><div class="step-progress-fill"></div></div>
+          <div class="step-dots-row">
+            <div class="sdot active" onclick="event.stopPropagation();setStep(0)"></div>
+            <div class="sdot" onclick="event.stopPropagation();setStep(1)"></div>
+            <div class="sdot" onclick="event.stopPropagation();setStep(2)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="step-item" onclick="setStep(1)">
+        <div class="step-header">
+          <span class="step-num-label">02</span>
+          <span class="step-name" data-i18n="step2_title">Get Your Plan</span>
+          <span class="step-chevron">›</span>
+        </div>
+        <div class="step-body">
+          <div class="step-photo">
+            <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80" alt="Athlete checking fitness app">
+            <div class="step-photo-overlay"></div>
+            <div class="step-photo-tag"><div class="step-tag-dot"></div> AI BUILDING YOUR PLAN...</div>
+          </div>
+          <p class="step-body-desc" data-i18n="step2_desc">Based on your body analysis and goals, AI builds a 7-day personalized training + nutrition plan. No templates — built just for you, right now.</p>
+          <div class="step-progress"><div class="step-progress-fill"></div></div>
+          <div class="step-dots-row">
+            <div class="sdot" onclick="event.stopPropagation();setStep(0)"></div>
+            <div class="sdot active" onclick="event.stopPropagation();setStep(1)"></div>
+            <div class="sdot" onclick="event.stopPropagation();setStep(2)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 -->
+      <div class="step-item" onclick="setStep(2)">
+        <div class="step-header">
+          <span class="step-num-label">03</span>
+          <span class="step-name" data-i18n="step3_title">See Results</span>
+          <span class="step-chevron">›</span>
+        </div>
+        <div class="step-body">
+          <div class="step-photo">
+            <img src="https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=800&q=80" alt="Athletic woman showing progress">
+            <div class="step-photo-overlay"></div>
+            <div class="step-photo-tag"><div class="step-tag-dot"></div> PROGRESS TRACKED</div>
+          </div>
+          <p class="step-body-desc" data-i18n="step3_desc">Track daily. Compare monthly. AI adjusts your plan based on real progress. Upload a new photo and see exactly what changed.</p>
+          <div class="step-progress"><div class="step-progress-fill"></div></div>
+          <div class="step-dots-row">
+            <div class="sdot" onclick="event.stopPropagation();setStep(0)"></div>
+            <div class="sdot" onclick="event.stopPropagation();setStep(1)"></div>
+            <div class="sdot active" onclick="event.stopPropagation();setStep(2)"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: PHONE -->
+    <div class="phone-sticky">
+      <div class="phone-wrap">
+        <!-- Real phone image on top -->
+        <img class="phone-img" src="https://builtwithai.pro/fitai/media/phone.png" alt="iPhone">
+        <!-- Screen content underneath -->
+        <div class="phone-screen">
+          <div class="phone-status">
+            <span>9:41</span>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x="0" y="2" width="3" height="8" rx="1" fill="#94A3B8"/><rect x="4" y="1" width="3" height="9" rx="1" fill="#94A3B8"/><rect x="8" y="0" width="3" height="10" rx="1" fill="#94A3B8"/><rect x="12" y="3" width="2" height="4" rx="1" fill="#94A3B8" opacity=".4"/></svg>
+          </div>
+          <div class="phone-slides">
+
+            <!-- Slide 0 -->
+            <div class="phone-slide active" id="pslide-0">
+              <div class="ps-label">Step 01</div>
+              <div class="ps-title">Scan your body</div>
+              <div class="ps-photo-area">
+                <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=70" alt="">
+                <div class="ps-scan-overlay"></div>
+                <div class="ps-cam-icon">📸</div>
+                <div class="ps-cam-text">Tap to take photo</div>
+                <svg style="position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);z-index:3" viewBox="0 0 200 160" fill="none">
+                  <path d="M0,25 L0,0 L25,0" stroke="#1E6FD9" stroke-width="2" opacity=".8"/>
+                  <path d="M175,0 L200,0 L200,25" stroke="#1E6FD9" stroke-width="2" opacity=".8"/>
+                  <path d="M0,135 L0,160 L25,160" stroke="#1E6FD9" stroke-width="2" opacity=".8"/>
+                  <path d="M175,160 L200,160 L200,135" stroke="#1E6FD9" stroke-width="2" opacity=".8"/>
+                </svg>
+              </div>
+              <div class="ps-info"><div class="ps-info-label">AI DETECTED</div>Body type · BMI · Fat % · Muscle mass</div>
+              <button class="ps-btn">Analyze Photo →</button>
+            </div>
+
+            <!-- Slide 1 -->
+            <div class="phone-slide" id="pslide-1">
+              <div class="ps-label">Step 02</div>
+              <div class="ps-title">Your 7-day plan</div>
+              <div class="ps-plan-card">
+                <div class="ps-plan-title">Today — Day 1</div>
+                <div class="ps-plan-item"><div class="ps-dot"></div><span class="ps-plan-text">Push-ups × 3 sets</span><span class="ps-plan-val">15 reps</span></div>
+                <div class="ps-plan-item"><div class="ps-dot g"></div><span class="ps-plan-text">Squats × 4 sets</span><span class="ps-plan-val">20 reps</span></div>
+                <div class="ps-plan-item"><div class="ps-dot"></div><span class="ps-plan-text">Plank hold</span><span class="ps-plan-val">60 sec</span></div>
+              </div>
+              <div class="ps-plan-card">
+                <div class="ps-plan-title">Nutrition target</div>
+                <div class="ps-macros">
+                  <div class="ps-macro"><div class="ps-macro-num">2100</div><div class="ps-macro-label">KCAL</div></div>
+                  <div class="ps-macro"><div class="ps-macro-num" style="color:var(--blue)">170g</div><div class="ps-macro-label">PROTEIN</div></div>
+                  <div class="ps-macro"><div class="ps-macro-num" style="color:var(--green)">240g</div><div class="ps-macro-label">CARBS</div></div>
+                </div>
+              </div>
+              <div style="background:rgba(30,111,217,.1);border:1px solid rgba(30,111,217,.22);border-radius:8px;padding:8px;font-size:9px;color:var(--blue);display:flex;align-items:center;gap:5px">
+                <div style="width:5px;height:5px;border-radius:50%;background:var(--blue);animation:dotPulse 1s infinite;flex-shrink:0"></div>
+                AI tailored this for your body type
+              </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="phone-slide" id="pslide-2">
+              <div class="ps-label">Step 03</div>
+              <div class="ps-title">Your progress</div>
+              <div class="ps-ring-wrap">
+                <svg width="130" height="130" viewBox="0 0 110 110">
+                  <circle cx="55" cy="55" r="45" fill="none" stroke="var(--border)" stroke-width="8"/>
+                  <circle cx="55" cy="55" r="45" fill="none" stroke="var(--blue)" stroke-width="8"
+                    stroke-dasharray="283" stroke-dashoffset="70"
+                    stroke-linecap="round" transform="rotate(-90 55 55)"/>
+                  <text x="55" y="52" text-anchor="middle" font-family="Bebas Neue" font-size="20" fill="#F8FAFC">75%</text>
+                  <text x="55" y="65" text-anchor="middle" font-family="Outfit" font-size="8" fill="#94A3B8">WEEKLY GOAL</text>
+                </svg>
+              </div>
+              <div>
+                <div class="ps-prog-row"><span class="ps-prog-label">Weight</span><div class="ps-prog-track"><div class="ps-prog-bar" style="width:72%;background:var(--blue)"></div></div><span style="font-size:9px;color:var(--muted);min-width:24px;text-align:right">−8kg</span></div>
+                <div class="ps-prog-row"><span class="ps-prog-label">Muscle</span><div class="ps-prog-track"><div class="ps-prog-bar" style="width:58%;background:var(--green)"></div></div><span style="font-size:9px;color:var(--muted);min-width:24px;text-align:right">+12%</span></div>
+                <div class="ps-prog-row"><span class="ps-prog-label">Body fat</span><div class="ps-prog-track"><div class="ps-prog-bar" style="width:45%;background:#F59E0B"></div></div><span style="font-size:9px;color:var(--muted);min-width:24px;text-align:right">−5%</span></div>
+              </div>
+              <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:8px;font-size:9px;color:var(--green);text-align:center">
+                🔥 8-day streak · Keep it up!
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="phone-glow"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA BOTTOM ── -->
+<section class="section-cta">
+
+  <!-- Section label pinned to the very top -->
+  <span class="cta-label" data-i18n="cta_label">Your journey starts here</span>
+
+  <!-- LEFT photo: tired, old way -->
+  <div class="cta-photo cta-photo-left">
+    <img src="https://builtwithai.pro/fitai/media/tired.png" alt="Train Harder">
+  </div>
+
+  <!-- CENTER content -->
+  <div class="cta-center">
+    <h2 class="cta-title">
+      <span style="color:var(--text)" data-i18n="cta_h_white">TRAIN</span><br>
+      <span style="color:var(--blue)" data-i18n="cta_h_blue">SMARTER.</span>
+    </h2>
+    <p class="cta-sub" data-i18n="cta_sub">No trainer needed. No gym required. Just you, your phone, and AI that actually works.</p>
+    <div class="cta-btns">
+      <button class="cta-primary" data-i18n="cta_begin" onclick="window.location.href='register.html'">Start Your Journey →</button>
+    </div>
+  </div>
+
+  <!-- RIGHT photo: excited, FitAI way -->
+  <div class="cta-photo cta-photo-right">
+    <img src="https://builtwithai.pro/fitai/media/excited.png" alt="Train Smarter">
+  </div>
+
+</section>
+
+<script>
+// ── Referral capture: stash ?ref=CODE so it survives until signup ──
+(function(){
+  try {
+    var ref = new URLSearchParams(location.search).get('ref');
+    if (ref) localStorage.setItem('fitai_ref', ref.trim().toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12));
+  } catch(e){ console.error(e); }
+})();
+
+// HOW IT WORKS step switcher
+let currentStep = 0;
+let autoTimer = null;
+const STEP_DURATION = 4500;
+
+function setStep(idx) {
+  document.querySelectorAll('.step-item').forEach((el,i) => el.classList.toggle('active', i === idx));
+  document.querySelectorAll('.phone-slide').forEach((el,i) => el.classList.toggle('active', i === idx));
+  document.querySelectorAll('.step-dots-row').forEach(row => {
+    row.querySelectorAll('.sdot').forEach((d,i) => d.classList.toggle('active', i === idx));
+  });
+  document.querySelectorAll('.step-progress-fill').forEach(f => { f.style.transition='none'; f.style.width='0%'; });
+  const fill = document.querySelectorAll('.step-progress-fill')[idx];
+  if(fill) requestAnimationFrame(() => requestAnimationFrame(() => {
+    fill.style.transition = `width ${STEP_DURATION}ms linear`;
+    fill.style.width = '100%';
+  }));
+  currentStep = idx;
+  clearInterval(autoTimer);
+  autoTimer = setInterval(() => setStep((currentStep+1)%3), STEP_DURATION);
+}
+document.addEventListener('DOMContentLoaded', () => setStep(0));
+
+// i18n: copy + engine now live in shared i18n.js (loaded at end of page)
+
+// COUNT-UP
+const countObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const target = +el.dataset.count;
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const duration = 1600;
+    const start = performance.now();
+    const animate = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = prefix + Math.round(target * ease) + suffix;
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+    countObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => countObs.observe(el));
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+
+  // trainers slide out on scroll
+  const scrolled = window.scrollY > window.innerHeight * 0.35;
+  document.getElementById('trainerLeft').classList.toggle('hide-left', scrolled);
+  document.getElementById('trainerRight').classList.toggle('hide-right', scrolled);
+});
+
+// Intersection observer for .observe elements
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.2 });
+document.querySelectorAll('.observe').forEach(el => observer.observe(el));
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

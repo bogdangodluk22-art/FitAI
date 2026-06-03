@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Plan — FitAI</title>
+<meta name="description" content="Answer a few questions and get a 100% personalized training plan.">
+<meta property="og:title" content="Build Your Plan — FitAI">
+<meta property="og:description" content="Answer a few questions and get a 100% personalized training plan.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/onboarding.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Build Your Plan — FitAI">
+<meta name="twitter:description" content="Answer a few questions and get a 100% personalized training plan.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #080C14;
+  --surface: #0F1623;
+  --elevated: #161E2E;
+  --blue: #2563EB;
+  --blue-h: #1D4ED8;
+  --green: #10B981;
+  --amber: #F59E0B;
+  --red: #EF4444;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  --dimmed: #475569;
+  --border: #1E293B;
+  --border-active: #2563EB;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.ob-wrapper {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+}
+
+/* ── TOP BAR ── */
+.ob-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 48px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow: visible;
+  overflow: visible;
+}
+
+.ob-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.ob-logo span { color: var(--blue); }
+
+.ob-back {
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+}
+.ob-back:hover { color: var(--text); }
+
+.ob-lang {
+  display: flex;
+  gap: 4px;
+}
+.ob-lang button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ob-lang button.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+/* ── PROGRESS BAR ── */
+.ob-progress-wrap {
+  padding: 0 48px;
+  padding-top: 20px;
+  flex-shrink: 0;
+}
+.ob-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.ob-step-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.ob-step-fraction {
+  font-size: 12px;
+  color: var(--dimmed);
+  font-family: 'JetBrains Mono', monospace;
+}
+.ob-progress-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ob-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── STEP DOTS ── */
+.ob-step-dots {
+  display: flex;
+  gap: 6px;
+  padding: 14px 48px 0;
+  flex-shrink: 0;
+}
+.ob-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+}
+.ob-dot.done { background: var(--green); }
+.ob-dot.active { background: var(--blue); width: 20px; border-radius: 3px; }
+
+/* ── MAIN STAGE ── */
+.ob-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 48px 60px;
+}
+
+/* ── STEP CARD ── */
+.ob-step {
+  display: none;
+  max-width: 680px;
+  width: 100%;
+  animation: stepIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.ob-step.active { display: block; }
+.ob-step.exit {
+  animation: stepOut 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes stepOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-20px); }
+}
+
+.ob-step-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.ob-step-title {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: clamp(40px, 6vw, 64px);
+  line-height: 1;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.ob-step-sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin-bottom: 36px;
+  line-height: 1.6;
+}
+
+/* ── OPTION GRID ── */
+.ob-options {
+  display: grid;
+  gap: 12px;
+}
+.ob-options.cols-2 { grid-template-columns: 1fr 1fr; }
+.ob-options.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.ob-options.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.ob-option {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 20px 18px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+.ob-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--blue) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.22s;
+}
+.ob-option:hover {
+  border-color: rgba(37,99,235,0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.1);
+}
+.ob-option.selected {
+  border-color: var(--blue);
+  background: rgba(37,99,235,0.08);
+  box-shadow: 0 0 0 1px var(--blue), 0 8px 32px rgba(37,99,235,0.15);
+}
+.ob-option.selected::before { opacity: 0.04; }
+
+.ob-option-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  display: block;
+}
+.ob-option-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  display: block;
+  margin-bottom: 4px;
+}
+.ob-option-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* MULTI-SELECT CHECK */
+.ob-option .ob-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 11px;
+}
+.ob-option.selected .ob-check {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+/* ── TEXT INPUTS ── */
+.ob-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ob-fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.ob-field-wrap { display: flex; flex-direction: column; gap: 6px; }
+.ob-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.ob-input, .ob-select {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  -webkit-appearance: none;
+}
+.ob-input:focus, .ob-select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+.ob-input::placeholder { color: var(--dimmed); }
+.ob-select { cursor: pointer; }
+.ob-select option { background: var(--surface); }
+
+/* ── SPLIT SCREEN (Step 6) ── */
+.ob-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.ob-split-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-align: center;
+  position: relative;
+}
+.ob-split-card:hover {
+  border-color: rgba(37,99,235,0.5);
+  transform: translateY(-3px);
+}
+.ob-split-card.active {
+  border-color: var(--blue);
+  background: rgba(37,99,235,0.06);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+.ob-split-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  display: block;
+}
+.ob-split-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.ob-split-sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Photo upload area */
+.ob-upload-area {
+  margin-top: 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: none;
+}
+.ob-upload-area.show { display: block; }
+.ob-upload-area:hover { border-color: var(--blue); background: rgba(37,99,235,0.04); }
+.ob-upload-area p { font-size: 14px; color: var(--muted); margin-top: 8px; }
+.ob-upload-area small { font-size: 12px; color: var(--dimmed); }
+.ob-upload-preview {
+  max-width: 160px;
+  max-height: 300px;
+  border-radius: 10px;
+  margin: 0 auto 12px;
+  display: none;
+  object-fit: cover;
+}
+
+/* Manual params area */
+.ob-manual-fields {
+  margin-top: 20px;
+  display: none;
+}
+.ob-manual-fields.show { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── STEP 7 — Account creation ── */
+.ob-account-wrap { display: flex; flex-direction: column; gap: 14px; }
+.ob-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--dimmed);
+  font-size: 13px;
+  margin: 4px 0;
+}
+.ob-divider::before, .ob-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── NAV BUTTONS ── */
+.ob-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 36px;
+  gap: 12px;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 15px 36px;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--blue-h);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.3);
+}
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-primary.full { width: 100%; justify-content: center; }
+
+.btn-ghost {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+.btn-skip {
+  background: none;
+  border: none;
+  color: var(--dimmed);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-skip:hover { color: var(--muted); }
+
+/* ── GENERATING SCREEN ── */
+/* gen css moved below */
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .ob-topbar { padding: 16px 20px; }
+  .ob-progress-wrap, .ob-step-dots { padding-left: 20px; padding-right: 20px; }
+  .ob-stage { padding: 30px 20px 50px; }
+  .ob-step-title { font-size: 36px; font-weight: 700; }
+  .ob-options.cols-3, .ob-options.cols-4 { grid-template-columns: 1fr 1fr; }
+  .ob-options.cols-2 { grid-template-columns: 1fr 1fr; }
+  .ob-split { grid-template-columns: 1fr; }
+  .ob-fields-row { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════
+   STEP 1 — GOAL PHOTO CARDS
+══════════════════════════════════════ */
+.ob-stage.stage-goal {
+  padding-top: 20px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.goal-step-wrap {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.goal-header {
+  margin-bottom: 32px;
+}
+
+.goal-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* PHOTO CARD */
+.goal-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  height: 440px;
+  background: #0D1420;
+  border: 2px solid transparent;
+  transition: transform 0.32s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.25s,
+              box-shadow 0.32s;
+}
+.goal-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 26px 64px rgba(0,0,0,0.55), 0 0 38px rgba(37,99,235,0.18);
+}
+.goal-card.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue), 0 24px 60px rgba(37,99,235,0.25);
+}
+
+/* BG PHOTO */
+.goal-card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  filter: brightness(0.72);
+}
+.goal-card:hover .goal-card-bg {
+  transform: scale(1.06);
+  filter: brightness(0.92);
+}
+.goal-card.selected .goal-card-bg {
+  filter: brightness(0.9);
+}
+
+/* GRADIENT OVERLAY */
+.goal-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8,12,20,0.05) 0%,
+    rgba(8,12,20,0.15) 40%,
+    rgba(8,12,20,0.75) 70%,
+    rgba(8,12,20,0.95) 100%
+  );
+}
+
+/* NUMBER WATERMARK */
+.goal-card-num {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: rgba(248,250,252,0.45);
+  text-transform: uppercase;
+  z-index: 3;
+}
+
+/* INFOGRAPHIC LAYER — unique per card */
+.goal-card-infographic {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* BOTTOM TEXT */
+.goal-card-body {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 24px 24px 22px;
+  z-index: 5;
+}
+.goal-card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--text);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.goal-card-desc {
+  font-size: 13px;
+  color: rgba(248,250,252,0.6);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* PLUS BUTTON */
+.goal-card-plus {
+  position: absolute;
+  bottom: 22px;
+  right: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(248,250,252,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  transition: all 0.25s;
+  background: rgba(8,12,20,0.4);
+  backdrop-filter: blur(4px);
+}
+.goal-card-plus svg {
+  width: 16px; height: 16px;
+  stroke: rgba(248,250,252,0.7);
+  transition: stroke 0.2s, transform 0.3s;
+}
+.goal-card:hover .goal-card-plus {
+  border-color: rgba(248,250,252,0.6);
+  background: rgba(37,99,235,0.3);
+}
+.goal-card.selected .goal-card-plus {
+  background: var(--blue);
+  border-color: var(--blue);
+  transform: rotate(45deg);
+}
+.goal-card.selected .goal-card-plus svg {
+  stroke: #fff;
+}
+
+/* ── CARD 1: LOSE WEIGHT — calorie ring + trend ── */
+.infog-lose {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  width: 88px;
+  height: 88px;
+}
+.infog-lose-label {
+  position: absolute;
+  top: 130px;
+  right: 16px;
+  background: rgba(8,12,20,0.72);
+  border: 1px solid rgba(37,99,235,0.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  backdrop-filter: blur(8px);
+}
+.infog-lose-label span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--green);
+  line-height: 1;
+}
+.infog-lose-label small {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── CARD 2: GAIN MUSCLE — bars ── */
+.infog-gain {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100px;
+}
+.infog-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.infog-bar-label {
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: rgba(248,250,252,0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.infog-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.infog-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--green);
+  transform-origin: left;
+  animation: barGrow 1.6s cubic-bezier(0.16,1,0.3,1) forwards;
+  transform: scaleX(0);
+}
+@keyframes barGrow { to { transform: scaleX(1); } }
+.infog-bar-fill.b1 { animation-delay: 0.1s; background: var(--green); }
+.infog-bar-fill.b2 { animation-delay: 0.25s; background: var(--blue); }
+.infog-bar-fill.b3 { animation-delay: 0.4s; background: #a855f7; }
+
+.infog-gain-badge {
+  position: absolute;
+  top: 130px;
+  right: 16px;
+  background: rgba(8,12,20,0.72);
+  border: 1px solid rgba(16,185,129,0.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  backdrop-filter: blur(8px);
+}
+.infog-gain-badge span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--green);
+}
+.infog-gain-badge small {
+  font-size: 9px; color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* ── CARD 3: STAY FIT — score ring ── */
+.infog-fit {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  width: 80px;
+  height: 80px;
+}
+.infog-fit-score {
+  position: absolute;
+  top: 112px;
+  right: 16px;
+  background: rgba(8,12,20,0.72);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 8px;
+  padding: 7px 12px;
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+.infog-fit-score span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  color: var(--amber);
+}
+.infog-fit-score small {
+  font-size: 9px; color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* ── SVG RING ANIMATION ── */
+.ring-progress {
+  transform-origin: center;
+  transform: rotate(-90deg);
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: ringFill 1.6s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+@keyframes ringFill { to { stroke-dashoffset: 44; } }
+.ring-progress-gain {
+  transform-origin: center;
+  transform: rotate(-90deg);
+  stroke-dasharray: 188;
+  stroke-dashoffset: 188;
+  animation: ringFillGain 1.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+@keyframes ringFillGain { to { stroke-dashoffset: 28; } }
+.ring-progress-fit {
+  transform-origin: center;
+  transform: rotate(-90deg);
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: ringFillFit 1.6s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+@keyframes ringFillFit { to { stroke-dashoffset: 56; } }
+
+/* ── PREMIUM REFINEMENT — Step-1 goal floating stat widgets ── */
+.infog-lose-label, .infog-gain-badge, .infog-fit-score {
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(8,12,20,0.5));
+  border: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow: 0 10px 28px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12);
+  opacity: 0;
+  animation: infogRise 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.infog-lose-label { animation-delay: 0.35s; }
+.infog-fit-score  { animation-delay: 0.40s; }
+.infog-gain-badge { animation-delay: 0.45s; }
+@keyframes infogRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.infog-lose-label span, .infog-gain-badge span, .infog-fit-score span {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.infog-lose-label small, .infog-gain-badge small, .infog-fit-score small {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(248,250,252,0.55);
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+/* ── STEP 1 NAV POSITION ── */
+/* goal-nav moved below */
+
+@media (max-width: 900px) {
+  .goal-cards { grid-template-columns: 1fr; }
+  .goal-card { height: 260px; }
+}
+
+
+/* ══ STEP 2 & 3 — photo cards ══ */
+.goal-cards.cols-4 { grid-template-columns: repeat(2, 1fr); }
+.goal-cards.cols-4 .goal-card { height: 360px; }
+
+.infog-steps-badge {
+  position: absolute; top: 20px; right: 16px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(148,163,184,0.3);
+  border-radius: 10px; padding: 10px 14px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-steps-badge .val {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500; color: var(--muted); line-height: 1;
+}
+.infog-steps-badge small { font-size: 9px; color: var(--dimmed); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-steps-mod {
+  position: absolute; top: 20px; right: 16px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 10px; padding: 10px 14px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-steps-mod .val {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500; color: var(--green); line-height: 1;
+}
+.infog-steps-mod small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-hr { position: absolute; top: 16px; right: 14px; width: 76px; height: 76px; }
+.infog-hr-badge {
+  position: absolute; top: 104px; right: 14px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 8px; padding: 6px 10px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-hr-badge .val { display: block; font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #EF4444; }
+.infog-hr-badge small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-equipment {
+  position: absolute; top: 16px; right: 14px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(37,99,235,0.4);
+  border-radius: 8px; padding: 8px 12px; backdrop-filter: blur(8px);
+}
+.infog-equipment .val { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--blue); display: block; }
+.infog-equipment small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-home-badge {
+  position: absolute; top: 16px; right: 14px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 8px; padding: 8px 12px; backdrop-filter: blur(8px);
+}
+.infog-home-badge .val { font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--green); display: block; }
+.infog-home-badge small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-outdoor { position: absolute; top: 14px; right: 12px; width: 72px; height: 72px; }
+
+.infog-start-badge {
+  position: absolute; top: 16px; right: 14px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(245,158,11,0.35);
+  border-radius: 8px; padding: 8px 12px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-start-badge .val { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--amber); display: block; }
+.infog-start-badge small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.ring-hr {
+  transform-origin: center; transform: rotate(-90deg);
+  stroke-dasharray: 188; stroke-dashoffset: 188;
+  animation: ringHR 1.4s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+@keyframes ringHR { to { stroke-dashoffset: 56; } }
+
+.ring-outdoor {
+  transform-origin: center; transform: rotate(-90deg);
+  stroke-dasharray: 188; stroke-dashoffset: 188;
+  animation: ringOutdoor 1.6s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+@keyframes ringOutdoor { to { stroke-dashoffset: 28; } }
+
+/* goal-nav with gap */
+.goal-nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+
+
+/* ══ STEP 5 — FREQUENCY CARDS ══ */
+.freq-cards {
+  display:flex; gap:14px; flex-wrap:wrap;
+}
+.freq-card {
+  flex:1; min-width:80px; max-width:130px;
+  background:var(--surface); border:2px solid var(--border);
+  border-radius:16px; padding:20px 12px 16px;
+  text-align:center; cursor:pointer;
+  transition:all 0.22s cubic-bezier(0.16,1,0.3,1);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.freq-card:hover { border-color:rgba(37,99,235,0.4); transform:translateY(-3px); }
+.freq-card.selected {
+  border-color:var(--blue); background:rgba(37,99,235,0.08);
+  box-shadow:0 0 0 1px var(--blue), 0 8px 24px rgba(37,99,235,0.2);
+}
+.freq-num {
+  font-family:'Bebas Neue',sans-serif; font-size:44px;
+  color:var(--text); line-height:1;
+}
+.freq-card.selected .freq-num { color:var(--blue); }
+.freq-label {
+  font-size:11px; font-family:'JetBrains Mono',monospace;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);
+}
+.freq-card.selected .freq-label { color:var(--blue); }
+/* ══ STEP 4 — LEVEL infographics ══ */
+.infog-weeks-badge {
+  position: absolute; top: 20px; right: 16px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(148,163,184,0.25);
+  border-radius: 10px; padding: 10px 14px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-weeks-badge .val {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500; color: var(--muted); line-height: 1;
+}
+.infog-weeks-badge small { font-size: 9px; color: var(--dimmed); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-months-badge {
+  position: absolute; top: 20px; right: 16px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(37,99,235,0.35);
+  border-radius: 10px; padding: 10px 14px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-months-badge .val {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-size: 22px; font-weight: 500; color: var(--blue); line-height: 1;
+}
+.infog-months-badge small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.infog-years-ring { position: absolute; top: 16px; right: 14px; width: 80px; height: 80px; }
+.infog-years-badge {
+  position: absolute; top: 112px; right: 14px;
+  background: rgba(8,12,20,0.72); border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 8px; padding: 6px 10px; backdrop-filter: blur(8px); text-align: center;
+}
+.infog-years-badge .val { display: block; font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--amber); }
+.infog-years-badge small { font-size: 9px; color: var(--muted); font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+.ring-years {
+  transform-origin: center; transform: rotate(-90deg);
+  stroke-dasharray: 220; stroke-dashoffset: 220;
+  animation: ringYears 1.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+@keyframes ringYears { to { stroke-dashoffset: 22; } }
+
+
+/* ══ STEP 5 — DIET photo cards ══ */
+.diet-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.diet-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  height: 300px;
+  background: #0D1420;
+  border: 2px solid transparent;
+  transition: transform 0.28s cubic-bezier(0.16,1,0.3,1),
+              border-color 0.22s, box-shadow 0.28s;
+}
+.diet-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+}
+.diet-card.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue), 0 16px 40px rgba(37,99,235,0.2);
+}
+
+.diet-card-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center center;
+  filter: brightness(0.65);
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), filter 0.25s;
+}
+.diet-card:hover .diet-card-bg { transform: scale(1.05); filter: brightness(0.78); }
+.diet-card.selected .diet-card-bg { filter: brightness(0.82); }
+
+.diet-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8,12,20,0.05) 0%,
+    rgba(8,12,20,0.6) 60%,
+    rgba(8,12,20,0.92) 100%
+  );
+}
+
+/* Checkmark top-right */
+.diet-card-check {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(248,250,252,0.3);
+  background: rgba(8,12,20,0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5;
+  transition: all 0.22s;
+  font-size: 13px;
+  color: transparent;
+}
+.diet-card.selected .diet-card-check {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+/* Text bottom */
+.diet-card-body {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 16px 14px;
+  z-index: 4;
+}
+.diet-card-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.diet-card-desc {
+  font-size: 12px;
+  color: #F8FAFC;
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.3;
+}
+
+@media (max-width: 900px) {
+  .diet-cards { grid-template-columns: repeat(2, 1fr); }
+  .diet-card { height: 180px; }
+}
+
+
+/* ══════════════════════════════════════
+   STEP 6 — SPLIT SCREEN
+══════════════════════════════════════ */
+.split-wrap {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  height: 480px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* HALF PANEL */
+.split-half {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: flex 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.split-half-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center center;
+  filter: brightness(0.75);
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1), filter 0.3s;
+}
+.split-half:hover .split-half-bg { transform: scale(1.04); filter: brightness(0.72); }
+.split-half.active .split-half-bg { filter: brightness(0.78); }
+
+/* Gradient overlay */
+.split-half-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,12,20,0.92) 0%, rgba(8,12,20,0.3) 50%, rgba(8,12,20,0.1) 100%);
+  transition: opacity 0.3s;
+}
+.split-half.active .split-half-overlay {
+  background: linear-gradient(to top, rgba(8,12,20,0.88) 0%, rgba(8,12,20,0.2) 50%, rgba(8,12,20,0.05) 100%);
+}
+
+/* Active border */
+.split-half::after {
+  content: '';
+  position: absolute; inset: 0;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  pointer-events: none;
+}
+.split-half.active::after { border-color: var(--blue); }
+.split-half.active { box-shadow: inset 0 0 0 2px var(--blue); }
+
+/* Content inside half */
+.split-half-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px;
+  z-index: 3;
+}
+
+/* Top badge */
+.split-badge {
+  position: absolute;
+  top: 20px; left: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(248,250,252,0.5);
+  z-index: 3;
+}
+
+/* Title */
+.split-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.split-sub {
+  font-size: 13px;
+  color: rgba(248,250,252,0.6);
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+/* Upload area inside left panel */
+.split-upload-zone {
+  display: none;
+  margin-top: 16px;
+  border: 1.5px dashed rgba(37,99,235,0.6);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(8,12,20,0.5);
+  backdrop-filter: blur(4px);
+}
+.split-upload-zone:hover { border-color: var(--blue); background: rgba(37,99,235,0.1); }
+.split-upload-zone p { font-size: 13px; color: rgba(248,250,252,0.7); margin-top: 4px; }
+.split-upload-zone small { font-size: 11px; color: var(--dimmed); }
+.split-upload-preview {
+  width: 100%; max-height: 100px;
+  object-fit: cover; border-radius: 8px;
+  display: none; margin-bottom: 8px;
+}
+.split-half.active .split-upload-zone { display: block; }
+
+/* Manual fields inside right panel */
+.split-manual-fields {
+  display: none;
+  margin-top: 16px;
+  gap: 10px;
+  flex-direction: column;
+}
+.split-half.active .split-manual-fields { display: flex; }
+.split-manual-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.split-ob-label {
+  font-size: 11px; color: var(--muted); font-weight: 500;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  display: block; margin-bottom: 4px;
+}
+.split-ob-input, .split-ob-select {
+  background: rgba(8,12,20,0.65);
+  border: 1.5px solid rgba(30,41,59,0.8);
+  border-radius: 8px; padding: 10px 12px;
+  color: var(--text); font-family: 'Outfit', sans-serif;
+  font-size: 14px; outline: none; width: 100%;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.split-ob-input:focus, .split-ob-select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+.split-ob-input::placeholder { color: var(--dimmed); font-size: 13px; }
+.split-ob-select option { background: #0F1623; }
+
+/* OR divider */
+.split-or {
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: var(--bg);
+  z-index: 5;
+  position: relative;
+}
+.split-or-line {
+  flex: 1;
+  width: 1px;
+  background: var(--border);
+}
+.split-or-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--dimmed);
+  letter-spacing: 2px;
+  padding: 12px 0;
+  writing-mode: vertical-rl;
+}
+
+/* Step 6 nav */
+.split-nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Step 6 header */
+.split-header { margin-bottom: 24px; }
+
+@media (max-width: 768px) {
+  .split-wrap {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto 1fr;
+    height: auto;
+  }
+  .split-half { height: 260px; }
+  .split-or { width: 100%; height: 36px; flex-direction: row; }
+  .split-or-text { writing-mode: horizontal-tb; padding: 0 12px; }
+  .split-or-line { flex: 1; height: 1px; width: auto; }
+}
+
+
+/* ══════════════════════════════════════
+   STEP 6 — AI BODY SCAN (cinematic)
+   ══════════════════════════════════════ */
+.scan-stage { display: none; }
+.scan-stage.show { display: block; animation: scanFade .45s ease both; }
+@keyframes scanFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.scan-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+/* ── Photo card ── */
+.scan-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #05070D;
+  border: 1px solid rgba(30,111,217,0.35);
+  aspect-ratio: 3 / 4;
+  max-height: 540px;
+  box-shadow: 0 0 0 1px rgba(30,111,217,0.12), 0 34px 90px -34px rgba(30,111,217,0.55);
+  transition: border-color .5s, box-shadow .5s;
+}
+.scan-photo {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  filter: contrast(1.05) saturate(1.04) brightness(0.96);
+}
+.scan-card.scanning .scan-photo { animation: scanPulse 2.5s ease-in-out; }
+@keyframes scanPulse {
+  0%,100% { filter: contrast(1.05) saturate(1.04) brightness(0.96); }
+  50%     { filter: contrast(1.14) saturate(1.22) brightness(1.08); }
+}
+
+/* subtle tech grid overlay */
+.scan-card::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(30,111,217,0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30,111,217,0.10) 1px, transparent 1px);
+  background-size: 38px 38px;
+  opacity: 0; transition: opacity .4s;
+}
+.scan-card.scanning::before { opacity: 1; }
+
+/* corner reticle brackets */
+.scan-reticle { position: absolute; inset: 14px; z-index: 4; pointer-events: none; }
+.scan-reticle span {
+  position: absolute; width: 26px; height: 26px;
+  border: 2px solid rgba(30,111,217,0.85);
+  filter: drop-shadow(0 0 6px rgba(30,111,217,0.6));
+  opacity: 0; transition: opacity .4s;
+}
+.scan-card.scanning .scan-reticle span,
+.scan-card.done .scan-reticle span { opacity: 1; }
+.scan-reticle .tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.scan-reticle .tr { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.scan-reticle .bl { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.scan-reticle .br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.scan-card.done .scan-reticle span { border-color: rgba(16,185,129,0.85); filter: drop-shadow(0 0 6px rgba(16,185,129,0.55)); }
+
+/* the moving scan line + glow band */
+.scan-line {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 5;
+  height: 2px; background: #1E6FD9;
+  box-shadow: 0 0 18px 3px rgba(30,111,217,0.95), 0 0 46px 12px rgba(30,111,217,0.55);
+  opacity: 0;
+}
+.scan-band {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+  height: 130px;
+  background: linear-gradient(to bottom, rgba(30,111,217,0.32) 0%, rgba(30,111,217,0.04) 70%, transparent 100%);
+  opacity: 0;
+}
+.scan-card.scanning .scan-line { animation: scanSweep 2.5s cubic-bezier(.45,0,.25,1); }
+.scan-card.scanning .scan-band { animation: scanSweep 2.5s cubic-bezier(.45,0,.25,1); }
+@keyframes scanSweep {
+  0%   { top: -4%; opacity: 0; }
+  7%   { opacity: 1; }
+  93%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* status chip bottom-left of photo */
+.scan-chip {
+  position: absolute; left: 14px; bottom: 14px; z-index: 6;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-radius: 9px;
+  background: rgba(5,7,13,0.78); backdrop-filter: blur(8px);
+  border: 1px solid rgba(30,111,217,0.4);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #7FB2F2;
+}
+.scan-card.done .scan-chip { border-color: rgba(16,185,129,0.45); color: #6EE7B7; }
+.scan-chip .dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #1E6FD9; flex-shrink: 0;
+  box-shadow: 0 0 8px #1E6FD9; animation: scanBlink 1s infinite;
+}
+.scan-card.done .scan-chip .dot { background: #10B981; box-shadow: 0 0 8px #10B981; animation: none; }
+@keyframes scanBlink { 0%,100%{opacity:.35} 50%{opacity:1} }
+
+/* ── Terminal readout ── */
+.scan-readout {
+  background: rgba(5,7,13,0.55);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px 26px;
+  display: flex; flex-direction: column;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.scan-readout-head {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+  color: #7FB2F2; padding-bottom: 16px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.scan-readout-head .bars { display: inline-flex; gap: 3px; }
+.scan-readout-head .bars i { width: 3px; height: 12px; background: #1E6FD9; border-radius: 1px; display: inline-block; animation: scanEq 1s infinite ease-in-out; }
+.scan-readout-head .bars i:nth-child(2){ animation-delay: .15s; } .scan-readout-head .bars i:nth-child(3){ animation-delay: .3s; }
+@keyframes scanEq { 0%,100%{ transform: scaleY(.4); } 50%{ transform: scaleY(1); } }
+.scan-readout.done .scan-readout-head { color: #6EE7B7; }
+.scan-readout.done .scan-readout-head .bars i { background: #10B981; animation: none; }
+
+.scan-metrics { display: flex; flex-direction: column; gap: 15px; flex: 1; }
+.scan-metric {
+  font-size: 14px; line-height: 1.4; color: var(--green);
+  opacity: 0; transform: translateX(-6px);
+  transition: opacity .25s, transform .25s;
+  word-break: break-word;
+}
+.scan-metric.in { opacity: 1; transform: none; }
+.scan-metric .lab { color: #2E9E73; }
+.scan-metric .val { color: #34D399; font-weight: 600; text-shadow: 0 0 14px rgba(16,185,129,0.35); }
+.scan-metric .caret { display: inline-block; width: 8px; color: #34D399; animation: scanBlink .8s steps(1) infinite; }
+
+.scan-complete {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+  display: none; align-items: center; gap: 10px;
+  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #6EE7B7;
+}
+.scan-complete.show { display: flex; animation: scanFade .4s both; }
+.scan-retake {
+  margin-top: 18px; align-self: flex-start;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-family: 'Outfit', sans-serif;
+  font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 10px; cursor: pointer;
+  transition: all .2s; opacity: 0;
+}
+.scan-retake.show { opacity: 1; }
+.scan-retake:hover { border-color: var(--border-active); color: var(--text); }
+
+@media (max-width: 760px) {
+  .scan-layout { grid-template-columns: 1fr; }
+  .scan-card { max-height: 440px; }
+}
+
+
+/* ══════════════════════════════════════
+   LOADING SCREEN — upgraded
+══════════════════════════════════════ */
+.ob-generating {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 250;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ob-generating.show { display: flex; }
+
+.gen-video-bg {
+  position: absolute; inset: 0; overflow: hidden; z-index: 0;
+}
+.gen-video-bg video {
+  width: 100%; height: 100%; object-fit: cover;
+  filter: brightness(0.3);
+}
+.gen-video-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(8,12,20,0.2) 0%, rgba(8,12,20,0.85) 100%);
+}
+
+.gen-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 24px;
+  max-width: 400px; width: 100%;
+  padding: 40px 20px;
+}
+
+.gen-logo-wrap { margin-bottom: -8px; }
+.gen-logo { height: 48px; opacity: 0.9; }
+
+/* Triple ring pulse */
+.gen-ring-wrap {
+  position: relative;
+  width: 100px; height: 100px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gen-ring-outer {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(37,99,235,0.2);
+  animation: pulseRing 2s ease-out infinite;
+}
+.gen-ring-inner {
+  position: absolute; inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(37,99,235,0.15);
+  animation: pulseRing 2s ease-out infinite 0.4s;
+}
+@keyframes pulseRing {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+.gen-ring {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-right-color: var(--blue);
+  animation: spin 0.9s linear infinite;
+  position: relative; z-index: 2;
+}
+
+.gen-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: 1px; text-align: center;
+  text-transform: uppercase;
+  color: #fff; margin-top: -8px;
+}
+.gen-sub {
+  font-size: 14px; color: rgba(248,250,252,0.65);
+  font-family: 'Outfit', sans-serif;
+  text-align: center; max-width: 300px;
+  line-height: 1.5; margin-top: -12px;
+}
+
+/* Step items */
+.gen-steps {
+  display: flex; flex-direction: column;
+  gap: 12px; width: 100%;
+}
+.gen-step-item {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 13px; color: var(--dimmed);
+  font-family: 'Outfit', sans-serif;
+  transition: color 0.4s;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(15,22,35,0.5);
+  border: 1px solid transparent;
+  transition: all 0.4s;
+}
+.gen-step-item.active {
+  color: #fff;
+  border-color: rgba(37,99,235,0.3);
+  background: rgba(37,99,235,0.08);
+}
+.gen-step-item.done {
+  color: var(--green);
+  border-color: rgba(16,185,129,0.2);
+  background: rgba(16,185,129,0.05);
+}
+.gs-icon {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: inherit;
+}
+.gen-step-item.active .gs-icon { color: var(--blue); }
+.gen-step-item.done .gs-icon { color: var(--green); }
+
+/* ══ SUCCESS SCREEN ══ */
+.success-screen {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--bg);
+}
+.success-screen.show { display: flex; }
+
+/* Video BG */
+.success-video-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+}
+.success-video-bg video {
+  width: 100%; height: 100%; object-fit: cover; opacity: 0.45;
+}
+.success-video-bg::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(8,12,20,0.3) 0%, rgba(8,12,20,0.1) 40%, rgba(8,12,20,0.65) 80%, rgba(8,12,20,1) 100%),
+    linear-gradient(to right, rgba(8,12,20,0.85) 0%, transparent 28%, transparent 72%, rgba(8,12,20,0.85) 100%);
+}
+
+/* TRAINERS */
+.success-trainer {
+  position: absolute; bottom: 0; z-index: 2;
+  height: 90vh; max-height: 820px;
+  animation: trainerSlide 1s cubic-bezier(0.16,1,0.3,1) both;
+}
+.success-trainer img {
+  height: 100%; width: auto;
+  object-fit: contain; object-position: bottom; display: block;
+}
+.success-trainer-left  { left: -10px; transform-origin: left bottom; }
+.success-trainer-right { right: -10px; transform-origin: right bottom; }
+.success-trainer-left::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right, rgba(8,12,20,0.5) 0%, transparent 45%);
+  pointer-events: none;
+}
+.success-trainer-right::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to left, rgba(8,12,20,0.5) 0%, transparent 45%);
+  pointer-events: none;
+}
+@keyframes trainerSlide {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* CENTER */
+.success-center {
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 18px;
+  max-width: 600px; width: 100%;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.success-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--green);
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  padding: 6px 18px; border-radius: 20px;
+  animation: fadeUp 0.5s ease 0.1s both;
+}
+
+.success-headline {
+  font-family: 'Oswald', sans-serif;
+  font-size: clamp(48px, 7vw, 80px);
+  font-weight: 700; text-transform: uppercase;
+  color: #fff; line-height: 1;
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+.success-name { color: var(--blue); }
+.success-dot  { color: var(--blue); }
+
+.success-tagline {
+  font-size: 16px; color: rgba(248,250,252,0.8);
+  font-family: 'Outfit', sans-serif; line-height: 1.5;
+  animation: fadeUp 0.5s ease 0.3s both;
+}
+
+/* Cards */
+.success-cards {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 12px; width: 100%;
+  animation: fadeUp 0.5s ease 0.4s both;
+}
+.success-card {
+  background: rgba(8,12,20,0.75);
+  border: 1px solid rgba(30,41,59,0.9);
+  border-radius: 14px; padding: 18px 16px;
+  text-align: left; backdrop-filter: blur(16px);
+  transition: transform 0.22s, border-color 0.22s;
+}
+.success-card:hover { transform: translateY(-3px); border-color: rgba(37,99,235,0.4); }
+.success-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+  margin-bottom: 8px; display: block;
+}
+.success-card-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 26px; font-weight: 700; color: #fff; line-height: 1;
+}
+
+/* CTA */
+.success-cta {
+  background: var(--blue); color: #fff; border: none;
+  padding: 17px 52px; border-radius: 12px;
+  font-family: 'Oswald', sans-serif;
+  font-size: 18px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; width: 100%;
+  transition: background 0.22s, transform 0.22s, box-shadow 0.22s;
+  animation: fadeUp 0.5s ease 0.5s both;
+}
+.success-cta:hover {
+  background: var(--blue-h);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(37,99,235,0.4);
+}
+
+
+.success-cta-secondary {
+  display:block; width:100%; max-width:500px; margin:0 auto 12px;
+  padding:14px 32px;
+  background:rgba(16,185,129,0.1); color:var(--green);
+  border:1.5px solid rgba(16,185,129,0.3);
+  border-radius:12px; font-family:'Oswald',sans-serif;
+  font-size:17px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; cursor:pointer;
+  transition:all 0.22s;
+}
+.success-cta-secondary:hover {
+  background:rgba(16,185,129,0.18); border-color:var(--green);
+  transform:translateY(-1px);
+}
+.success-note {
+  font-size: 12px; color: rgba(248,250,252,0.45);
+  font-family: 'Outfit', sans-serif;
+  animation: fadeUp 0.5s ease 0.6s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .success-trainer { height: 55vh; }
+  .success-cards { grid-template-columns: 1fr; }
+  .success-headline { font-size: 42px; }
+}
+
+
+/* ── NAV LOGO — same as landing ── */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: visible;
+}
+.nav-logo img {
+  height: 80px;
+  width: auto;
+  filter: brightness(1.1);
+  transform: scale(1.6);
+  transform-origin: left center;
+  margin-right: 40px;
+}
+
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<!-- WRAPPER -->
+<div class="ob-wrapper">
+
+  <!-- TOP BAR -->
+  <div class="ob-topbar">
+    <a href="dashboard.html" class="nav-logo"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a>
+    <button class="ob-back" onclick="goBack()">
+      ← <span data-i18n="back">Back</span>
+    </button>
+    <!-- Language switcher removed: language is read from localStorage (set on index / dashboard). -->
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="ob-progress-wrap">
+    <div class="ob-progress-meta">
+      <span class="ob-step-label" id="stepLabel">GOAL</span>
+      <span class="ob-step-fraction" id="stepFraction">1 / 7</span>
+    </div>
+    <div class="ob-progress-track">
+      <div class="ob-progress-fill" id="progressFill" style="width: 14%"></div>
+    </div>
+  </div>
+
+  <!-- DOTS -->
+  <div class="ob-step-dots" id="stepDots"></div>
+
+  <!-- STAGE -->
+  <div class="ob-stage">
+
+    <!-- ═══ STEP 1 — GOAL ═══ -->
+    <div class="ob-step active" id="step-1" style="max-width:1100px;">
+      <div class="goal-header">
+        <div class="ob-step-tag" data-i18n="step1.tag">Step 1 of 7</div>
+        <div class="ob-step-title" data-i18n-html="step1.title">What's your<br>main goal?</div>
+        <div class="ob-step-sub" data-i18n="step1.sub">This shapes everything — your plan, your meals, your AI coach.</div>
+      </div>
+
+      <!-- GOAL PHOTO CARDS -->
+      <div class="goal-cards">
+
+        <!-- CARD 1: LOSE WEIGHT -->
+        <div class="goal-card" data-step="1" data-value="lose" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Lose-Weight.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="goal.num1">GOAL 01</div>
+
+          <!-- INFOGRAPHIC: calorie ring + deficit badge -->
+          <div class="goal-card-infographic">
+            <svg class="infog-lose" viewBox="0 0 88 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="44" cy="44" r="35" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+              <circle class="ring-progress" cx="44" cy="44" r="35" stroke="#2563EB" stroke-width="7" stroke-linecap="round"/>
+              <text x="44" y="41" text-anchor="middle" fill="#F8FAFC" font-family="JetBrains Mono,monospace" font-size="13" font-weight="500">-4.8</text>
+              <text x="44" y="54" text-anchor="middle" fill="#94A3B8" font-family="Outfit,sans-serif" font-size="7">KG / MO</text>
+            </svg>
+            <div class="infog-lose-label">
+              <span>−480</span>
+              <small>kcal deficit</small>
+            </div>
+          </div>
+
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="goal.lose">Lose Weight</div>
+            <div class="goal-card-desc" data-i18n="goal.lose_desc">Calorie deficit + cardio focus</div>
+          </div>
+          <div class="goal-card-plus">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </div>
+
+        <!-- CARD 2: GAIN MUSCLE -->
+        <div class="goal-card" data-step="1" data-value="gain" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Gain-Muscle.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="goal.num2">GOAL 02</div>
+
+          <!-- INFOGRAPHIC: muscle bars -->
+          <div class="goal-card-infographic">
+            <div class="infog-gain">
+              <div class="infog-bar-row">
+                <div class="infog-bar-label">Chest</div>
+                <div class="infog-bar-track"><div class="infog-bar-fill b1" style="width:82%"></div></div>
+              </div>
+              <div class="infog-bar-row">
+                <div class="infog-bar-label">Back</div>
+                <div class="infog-bar-track"><div class="infog-bar-fill b2" style="width:91%"></div></div>
+              </div>
+              <div class="infog-bar-row">
+                <div class="infog-bar-label">Legs</div>
+                <div class="infog-bar-track"><div class="infog-bar-fill b3" style="width:74%"></div></div>
+              </div>
+            </div>
+            <div class="infog-gain-badge">
+              <span>+12 kg</span>
+              <small>muscle gain</small>
+            </div>
+          </div>
+
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="goal.gain">Gain Muscle</div>
+            <div class="goal-card-desc" data-i18n="goal.gain_desc">Protein surplus + strength training</div>
+          </div>
+          <div class="goal-card-plus">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </div>
+
+        <!-- CARD 3: STAY FIT -->
+        <div class="goal-card" data-step="1" data-value="maintain" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Stay-Fit.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="goal.num3">GOAL 03</div>
+
+          <!-- INFOGRAPHIC: score ring -->
+          <div class="goal-card-infographic">
+            <svg class="infog-fit" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+              <circle class="ring-progress-fit" cx="40" cy="40" r="32" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+              <text x="40" y="37" text-anchor="middle" fill="#F8FAFC" font-family="JetBrains Mono,monospace" font-size="14" font-weight="500">9.2</text>
+              <text x="40" y="50" text-anchor="middle" fill="#94A3B8" font-family="Outfit,sans-serif" font-size="7">SCORE</text>
+            </svg>
+            <div class="infog-fit-score">
+              <span>5×</span>
+              <small>per week</small>
+            </div>
+          </div>
+
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="goal.maintain">Stay Fit</div>
+            <div class="goal-card-desc" data-i18n="goal.maintain_desc">Maintain shape + balanced plan</div>
+          </div>
+          <div class="goal-card-plus">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+        </div>
+
+      </div><!-- /goal-cards -->
+
+      <div class="goal-nav">
+        <button class="btn-primary" id="next-1" onclick="nextStep()" disabled data-i18n="btn.continue">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2 — LIFESTYLE ═══ -->
+    <div class="ob-step" id="step-2" style="max-width:1100px;">
+      <div class="goal-header">
+        <div class="ob-step-tag" data-i18n="step2.tag">Step 2 of 7</div>
+        <div class="ob-step-title" data-i18n-html="step2.title">Your daily<br>lifestyle</div>
+        <div class="ob-step-sub" data-i18n="step2.sub">How active are you outside of workouts? This calibrates your calorie target.</div>
+      </div>
+      <div class="goal-cards">
+        <div class="goal-card" data-step="2" data-value="sedentary" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Sedentary.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="life.num1">LIFESTYLE 01</div>
+          <div class="goal-card-infographic">
+            <div class="infog-steps-badge"><span class="val">3.2K</span><small>steps/day</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="life.sedentary">Sedentary</div>
+            <div class="goal-card-desc" data-i18n="life.sedentary_desc">Desk job, mostly sitting</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="goal-card" data-step="2" data-value="moderate" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Moderately-Active.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="life.num2">LIFESTYLE 02</div>
+          <div class="goal-card-infographic">
+            <div class="infog-steps-mod"><span class="val">8.4K</span><small>steps/day</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="life.moderate">Moderately Active</div>
+            <div class="goal-card-desc" data-i18n="life.moderate_desc">Walking, light movement daily</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="goal-card" data-step="2" data-value="active" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Very-Active.jpg');"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="life.num3">LIFESTYLE 03</div>
+          <div class="goal-card-infographic">
+            <svg class="infog-hr" viewBox="0 0 76 76" fill="none">
+              <circle cx="38" cy="38" r="30" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+              <circle class="ring-hr" cx="38" cy="38" r="30" stroke="#EF4444" stroke-width="6" stroke-linecap="round"/>
+              <text x="38" y="35" text-anchor="middle" fill="#F8FAFC" font-family="JetBrains Mono,monospace" font-size="13" font-weight="500">168</text>
+              <text x="38" y="47" text-anchor="middle" fill="#94A3B8" font-family="Outfit,sans-serif" font-size="7">BPM</text>
+            </svg>
+            <div class="infog-hr-badge"><span class="val">2×</span><small>per day</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="life.active">Very Active</div>
+            <div class="goal-card-desc" data-i18n="life.active_desc">Physical job or training twice daily</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+      </div>
+      <div class="goal-nav">
+        <button class="btn-ghost" onclick="goBack()" data-i18n="btn.back">← Back</button>
+        <button class="btn-primary" id="next-2" onclick="nextStep()" disabled data-i18n="btn.continue">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 3 — TRAINING PLACE ═══ -->
+    <div class="ob-step" id="step-3" style="max-width:1100px;">
+      <div class="goal-header">
+        <div class="ob-step-tag" data-i18n="step3.tag">Step 3 of 7</div>
+        <div class="ob-step-title" data-i18n-html="step3.title">Where do<br>you train?</div>
+        <div class="ob-step-sub" data-i18n="step3.sub">Your plan will be built around the equipment you actually have.</div>
+      </div>
+      <div class="goal-cards cols-4">
+        <div class="goal-card" data-step="3" data-value="gym" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Gym.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="place.num1">PLACE 01</div>
+          <div class="goal-card-infographic">
+            <div class="infog-equipment"><span class="val">40+</span><small>machines</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="place.gym">Gym</div>
+            <div class="goal-card-desc" data-i18n="place.gym_desc">Full equipment available</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="goal-card" data-step="3" data-value="home" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Home.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="place.num2">PLACE 02</div>
+          <div class="goal-card-infographic">
+            <div class="infog-home-badge"><span class="val">320</span><small>kcal/session</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="place.home">Home</div>
+            <div class="goal-card-desc" data-i18n="place.home_desc">Bodyweight or minimal gear</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="goal-card" data-step="3" data-value="outdoor" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Outdoors.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="place.num3">PLACE 03</div>
+          <div class="goal-card-infographic">
+            <svg class="infog-outdoor" viewBox="0 0 72 72" fill="none">
+              <circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+              <circle class="ring-outdoor" cx="36" cy="36" r="30" stroke="#10B981" stroke-width="6" stroke-linecap="round"/>
+              <text x="36" y="33" text-anchor="middle" fill="#F8FAFC" font-family="JetBrains Mono,monospace" font-size="12" font-weight="500">5.2</text>
+              <text x="36" y="45" text-anchor="middle" fill="#94A3B8" font-family="Outfit,sans-serif" font-size="7">KM/RUN</text>
+            </svg>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="place.outdoor">Outdoors</div>
+            <div class="goal-card-desc" data-i18n="place.outdoor_desc">Park, street, running</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="goal-card" data-step="3" data-value="none" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Not-Training-Yet.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="place.num4">PLACE 04</div>
+          <div class="goal-card-infographic">
+            <div class="infog-start-badge"><span class="val">DAY 1</span><small>starts now</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="place.none">Not Training Yet</div>
+            <div class="goal-card-desc" data-i18n="place.none_desc">We'll start you from scratch</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+      </div>
+      <div class="goal-nav">
+        <button class="btn-ghost" onclick="goBack()" data-i18n="btn.back">← Back</button>
+        <button class="btn-primary" id="next-3" onclick="nextStep()" disabled data-i18n="btn.continue">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 4 — LEVEL ═══ -->
+    <div class="ob-step" id="step-4" style="max-width:1100px;">
+      <div class="goal-header">
+        <div class="ob-step-tag" data-i18n="step4.tag">Step 4 of 7</div>
+        <div class="ob-step-title" data-i18n-html="step4.title">Your fitness<br>level</div>
+        <div class="ob-step-sub" data-i18n="step4.sub">No judgment — your plan adapts to where you are right now.</div>
+      </div>
+      <div class="goal-cards">
+        <!-- BEGINNER -->
+        <div class="goal-card" data-step="4" data-value="beginner" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Beginner.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="level.num1">LEVEL 01</div>
+          <div class="goal-card-infographic">
+            <div class="infog-weeks-badge"><span class="val">0–3</span><small>months exp.</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="level.beginner">Beginner</div>
+            <div class="goal-card-desc" data-i18n="level.beginner_desc">Just starting out or returning after a break</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <!-- INTERMEDIATE -->
+        <div class="goal-card" data-step="4" data-value="intermediate" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Intermediate.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="level.num2">LEVEL 02</div>
+          <div class="goal-card-infographic">
+            <div class="infog-months-badge"><span class="val">6–24</span><small>months exp.</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="level.intermediate">Intermediate</div>
+            <div class="goal-card-desc" data-i18n="level.intermediate_desc">Training regularly for 6+ months</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <!-- ADVANCED -->
+        <div class="goal-card" data-step="4" data-value="advanced" onclick="selectGoalCard(this)">
+          <div class="goal-card-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Advanced.jpg');background-position:center center;"></div>
+          <div class="goal-card-overlay"></div>
+          <div class="goal-card-num" data-i18n="level.num3">LEVEL 03</div>
+          <div class="goal-card-infographic">
+            <svg class="infog-years-ring" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="35" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+              <circle class="ring-years" cx="40" cy="40" r="35" stroke="#F59E0B" stroke-width="6" stroke-linecap="round"/>
+              <text x="40" y="37" text-anchor="middle" fill="#F8FAFC" font-family="JetBrains Mono,monospace" font-size="14" font-weight="500">2+</text>
+              <text x="40" y="50" text-anchor="middle" fill="#94A3B8" font-family="Outfit,sans-serif" font-size="7">YEARS</text>
+            </svg>
+            <div class="infog-years-badge"><span class="val">PRO</span><small>level</small></div>
+          </div>
+          <div class="goal-card-body" style="padding-right:64px;">
+            <div class="goal-card-title" data-i18n="level.advanced">Advanced</div>
+            <div class="goal-card-desc" data-i18n="level.advanced_desc">2+ years, training is a lifestyle</div>
+          </div>
+          <div class="goal-card-plus"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+      </div>
+      <div class="goal-nav">
+        <button class="btn-ghost" onclick="goBack()" data-i18n="btn.back">← Back</button>
+        <button class="btn-primary" id="next-4" onclick="nextStep()" disabled data-i18n="btn.continue">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 5 — TRAINING FREQUENCY & DURATION ═══ -->
+    <div class="ob-step" id="step-5" style="max-width:1100px;">
+      <div class="goal-header">
+        <div class="ob-step-tag" data-i18n="s5.tag">Step 5 of 7</div>
+        <div class="ob-step-title" data-i18n-html="s5.title">How often do<br><span style="color:var(--blue)">you train?</span></div>
+        <div class="ob-step-sub" data-i18n="s5.sub">This helps us build the perfect weekly schedule for you.</div>
+      </div>
+
+      <!-- Training days per week -->
+      <div style="margin-bottom:32px;">
+        <div class="ob-step-sub" style="margin-bottom:16px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);" data-i18n="s5.days_label">Days per week</div>
+        <div class="freq-cards" id="freq-days">
+          <div class="freq-card" data-value="2" onclick="selectFreq('days',2,this)">
+            <div class="freq-num">2</div>
+            <div class="freq-label" data-i18n="s5.light">Light</div>
+          </div>
+          <div class="freq-card" data-value="3" onclick="selectFreq('days',3,this)">
+            <div class="freq-num">3</div>
+            <div class="freq-label" data-i18n="s5.moderate">Moderate</div>
+          </div>
+          <div class="freq-card" data-value="4" onclick="selectFreq('days',4,this)">
+            <div class="freq-num">4</div>
+            <div class="freq-label" data-i18n="s5.active">Active</div>
+          </div>
+          <div class="freq-card" data-value="5" onclick="selectFreq('days',5,this)">
+            <div class="freq-num">5</div>
+            <div class="freq-label" data-i18n="s5.intensive">Intensive</div>
+          </div>
+          <div class="freq-card" data-value="6" onclick="selectFreq('days',6,this)">
+            <div class="freq-num">6</div>
+            <div class="freq-label" data-i18n="s5.athlete">Athlete</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session duration -->
+      <div style="margin-bottom:40px;">
+        <div class="ob-step-sub" style="margin-bottom:16px;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);" data-i18n="s5.minutes_label">Minutes per session</div>
+        <div class="freq-cards" id="freq-duration">
+          <div class="freq-card" data-value="30" onclick="selectFreq('duration',30,this)">
+            <div class="freq-num">30</div>
+            <div class="freq-label" data-i18n="s5.quick">Quick</div>
+          </div>
+          <div class="freq-card" data-value="45" onclick="selectFreq('duration',45,this)">
+            <div class="freq-num">45</div>
+            <div class="freq-label" data-i18n="s5.standard">Standard</div>
+          </div>
+          <div class="freq-card" data-value="60" onclick="selectFreq('duration',60,this)">
+            <div class="freq-num">60</div>
+            <div class="freq-label" data-i18n="s5.full">Full</div>
+          </div>
+          <div class="freq-card" data-value="90" onclick="selectFreq('duration',90,this)">
+            <div class="freq-num">90</div>
+            <div class="freq-label" data-i18n="s5.extended">Extended</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="goal-nav">
+        <button class="btn-ghost" onclick="goBack()" data-i18n="btn.back">← Back</button>
+        <button class="btn-primary" id="step5-next" onclick="nextStep()" style="opacity:0.4;pointer-events:none;" data-i18n="btn.continue">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 6 — SPLIT SCREEN ═══ -->
+    <div class="ob-step" id="step-6" style="max-width:1100px;">
+
+      <div class="split-header">
+        <div class="ob-step-tag" data-i18n="step6.tag">Step 6 of 7</div>
+        <div class="ob-step-title" data-i18n-html="step6.title">How should<br>AI see you?</div>
+        <div class="ob-step-sub" data-i18n="step6.sub">Choose one method. Both give you an equally accurate starting plan.</div>
+      </div>
+
+      <div class="split-wrap">
+
+        <!-- LEFT — UPLOAD PHOTO -->
+        <div class="split-half" id="card-photo" onclick="selectMethod('photo')">
+          <div class="split-half-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Mirror-Selfie.png');"></div>
+          <div class="split-half-overlay"></div>
+          <div class="split-badge" data-i18n="method.badge1">OPTION 01</div>
+          <div class="split-half-content">
+            <div class="split-title" data-i18n="method.photo">Upload a Photo</div>
+            <div class="split-sub" data-i18n="method.photo_desc">AI analyzes your body type, estimates body composition, builds your baseline instantly.</div>
+            <div class="split-upload-zone" id="uploadArea" onclick="event.stopPropagation(); document.getElementById('photoInput').click()">
+              <img src="" alt="" class="split-upload-preview" id="photoPreview">
+              <div id="uploadPlaceholder">
+                <div style="font-size:24px;">📁</div>
+                <p data-i18n="upload.cta">Click to upload or drag & drop</p>
+                <small data-i18n="upload.hint">JPG, PNG · Max 10MB · Private & secure</small>
+              </div>
+              <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+              <div id="uploadStatus" style="display:none; font-size:13px; margin-top:8px; font-weight:600;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OR DIVIDER -->
+        <div class="split-or">
+          <div class="split-or-line"></div>
+          <div class="split-or-text">OR</div>
+          <div class="split-or-line"></div>
+        </div>
+
+        <!-- RIGHT — MANUAL -->
+        <div class="split-half" id="card-manual" onclick="selectMethod('manual')">
+          <div class="split-half-bg" style="background-image:url('https://builtwithai.pro/fitai/media/Tape-Measure.png');background-position:center 15%;"></div>
+          <div class="split-half-overlay"></div>
+          <div class="split-badge" data-i18n="method.badge2">OPTION 02</div>
+          <div class="split-half-content">
+            <div class="split-title" data-i18n="method.manual">Enter Manually</div>
+            <div class="split-sub" data-i18n="method.manual_desc">Input your measurements. Perfect if you prefer privacy.</div>
+            <div class="split-manual-fields" id="manualFields">
+              <div class="split-manual-row">
+                <div>
+                  <label class="split-ob-label" data-i18n="field.height">Height</label>
+                  <input type="number" class="split-ob-input" placeholder="175 cm" id="height" min="100" max="250" onclick="event.stopPropagation()" oninput="checkStep6()">
+                </div>
+                <div>
+                  <label class="split-ob-label" data-i18n="field.weight">Weight</label>
+                  <input type="number" class="split-ob-input" placeholder="70 kg" id="weight" min="30" max="300" onclick="event.stopPropagation()" oninput="checkStep6()">
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /split-wrap -->
+
+      <!-- ═══ AI BODY SCAN (cinematic) ═══ -->
+      <div class="scan-stage" id="scanStage">
+        <div class="scan-layout">
+
+          <!-- Photo + scanner -->
+          <div class="scan-card" id="scanCard">
+            <img src="" alt="Your photo" class="scan-photo" id="scanPhoto">
+            <div class="scan-band"></div>
+            <div class="scan-line"></div>
+            <div class="scan-reticle"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+            <div class="scan-chip" id="scanChip"><span class="dot"></span><span id="scanChipText">Initializing body scan</span></div>
+          </div>
+
+          <!-- Terminal readout -->
+          <div class="scan-readout" id="scanReadout">
+            <div class="scan-readout-head">
+              <span class="bars"><i></i><i></i><i></i></span>
+              <span id="scanReadoutTitle">AI Vision · Body Analysis</span>
+            </div>
+            <div class="scan-metrics" id="scanMetrics"></div>
+            <div class="scan-complete" id="scanComplete">✓ <span id="scanCompleteText">Analysis complete</span></div>
+            <button class="scan-retake" id="scanRetake" onclick="retakeScan()" data-i18n="scan.retake">↺ Retake photo</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="split-nav">
+        <button class="btn-ghost" onclick="goBack()" data-i18n="btn.back">← Back</button>
+        <button class="btn-primary" id="next-6" onclick="finish()" disabled data-i18n="btn.getplan">GENERATE MY PLAN</button>
+      </div>
+    </div>
+
+
+  </div><!-- /stage -->
+</div><!-- /wrapper -->
+
+<!-- GENERATING SCREEN -->
+<!-- ══ LOADING SCREEN ══ -->
+<div class="ob-generating" id="generatingScreen">
+  <!-- Video BG -->
+  <div class="gen-video-bg">
+    <video autoplay muted loop playsinline>
+      <source src="https://builtwithai.pro/fitai/media/quest-bg.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="gen-content">
+    <!-- Animated logo -->
+    <div class="gen-logo-wrap">
+      <img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI" class="gen-logo">
+    </div>
+
+    <!-- Pulse ring -->
+    <div class="gen-ring-wrap">
+      <div class="gen-ring-outer"></div>
+      <div class="gen-ring-inner"></div>
+      <div class="gen-ring"></div>
+    </div>
+
+    <div class="gen-title" data-i18n="gen.title">Building your plan...</div>
+    <div class="gen-sub" data-i18n="gen.sub">AI is analyzing your data and creating a 100% personalized plan</div>
+
+    <div class="gen-steps" id="genSteps">
+      <div class="gen-step-item active" id="gs-1">
+        <div class="gs-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path class="gs-check" d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span data-i18n="gen.s1">Analyzing your profile & goals</span>
+      </div>
+      <div class="gen-step-item" id="gs-2">
+        <div class="gs-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path class="gs-check" d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span data-i18n="gen.s2">Calculating your TDEE & nutrition targets</span>
+      </div>
+      <div class="gen-step-item" id="gs-3">
+        <div class="gs-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path class="gs-check" d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span data-i18n="gen.s3">Generating your 7-day training plan</span>
+      </div>
+      <div class="gen-step-item" id="gs-4">
+        <div class="gs-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path class="gs-check" d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <span data-i18n="gen.s4">Setting up your AI coach</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SUCCESS SCREEN ══ -->
+<div class="success-screen" id="successScreen">
+
+  <!-- Video BG -->
+  <div class="success-video-bg">
+    <video autoplay muted loop playsinline>
+      <source src="https://builtwithai.pro/fitai/media/quest-bg.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- TRAINER LEFT -->
+  <div class="success-trainer success-trainer-left">
+    <img src="https://builtwithai.pro/fitai/media/man.png" alt="Trainer">
+  </div>
+
+  <!-- TRAINER RIGHT -->
+  <div class="success-trainer success-trainer-right">
+    <img src="https://builtwithai.pro/fitai/media/woman1.png" alt="Trainer">
+  </div>
+
+  <!-- CENTER CONTENT -->
+  <div class="success-center">
+    <div class="success-tag" data-i18n="success.tag">PLAN GENERATED SUCCESSFULLY</div>
+
+    <div class="success-headline">
+      <span data-i18n="success.line1">Welcome,</span>
+      <span class="success-name" id="successName">Alex</span><span class="success-dot">.</span>
+    </div>
+    <div class="success-tagline" data-i18n="success.sub">Your 100% personalized fitness plan is ready</div>
+
+    <!-- Result cards -->
+    <div class="success-cards">
+      <div class="success-card" id="sc-goal">
+        <div class="success-card-label" data-i18n="sc.goal">PRIMARY GOAL</div>
+        <div class="success-card-value" id="sc-goal-val">Lose Weight</div>
+      </div>
+      <div class="success-card" id="sc-kcal">
+        <div class="success-card-label" data-i18n="sc.kcal">DAILY CALORIES</div>
+        <div class="success-card-value" id="sc-kcal-val">1,850 <span style="font-size:14px;font-family:Outfit,sans-serif;font-weight:400;color:var(--muted)">kcal</span></div>
+      </div>
+      <div class="success-card" id="sc-level">
+        <div class="success-card-label" data-i18n="sc.level">FITNESS LEVEL</div>
+        <div class="success-card-value" id="sc-level-val">Beginner</div>
+      </div>
+    </div>
+
+    <button class="success-cta" onclick="window.location.href='dashboard.html'" data-i18n="success.cta">GO TO MY DASHBOARD →</button>
+    <button class="success-cta-secondary" onclick="goToNutritionOnboarding()">
+      🥗 Set Up My Nutrition Plan
+    </button>
+    <p class="success-note" data-i18n="success.note">You can always set up nutrition later from your dashboard</p>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const N8N_WEBHOOK   = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-onboarding';
+const N8N_BODY_ANALYSIS = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-body-analysis';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── STATE ──
+let currentStep = 1;
+const TOTAL = 7;
+const answers = {};
+
+const STEP_LABELS = {
+  en: ['GOAL','LIFESTYLE','TRAINING','LEVEL','DIET','BODY'],
+  ua: ['ЦІЛЬ','СПОСІБ ЖИТТЯ','ТРЕНУВАННЯ','РІВЕНЬ','ХАРЧУВАННЯ','ТІЛО']
+};
+
+let lang = localStorage.getItem('fitai_lang') || 'en';
+
+// ── I18N (dictionary lives in shared i18n.js) ──
+// Delegates to the shared engine (window.FitAILang from i18n.js).
+function t(key) { return FitAILang.t(key, lang); }
+
+function applyTranslations() {
+  // Engine translates [data-i18n] / [data-i18n-html]; titles use data-i18n-html.
+  FitAILang.apply(lang);
+  // Update step label / progress
+  updateUI();
+}
+
+function setLang(l) {
+  lang = FitAILang.set(l);   // persist + apply via shared engine
+  updateUI();
+}
+
+// ── DOTS ──
+function renderDots() {
+  const wrap = document.getElementById('stepDots');
+  wrap.innerHTML = '';
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'ob-dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    wrap.appendChild(d);
+  }
+}
+
+// ── UI UPDATE ──
+function updateUI() {
+  const labels = STEP_LABELS[lang];
+  document.getElementById('stepLabel').textContent = labels[currentStep - 1];
+  document.getElementById('stepFraction').textContent = `${currentStep} / ${TOTAL}`;
+  const pct = Math.round((currentStep / TOTAL) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  renderDots();
+}
+
+// ── GOAL CARD SELECT ──
+function selectGoalCard(el) {
+  const step = el.dataset.step;
+  document.querySelectorAll(`.goal-card[data-step="${step}"]`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[`step${step}`] = el.dataset.value;
+  const btn = document.getElementById(`next-${step}`);
+  if (btn) btn.disabled = false;
+}
+
+// ── SINGLE SELECT ──
+function selectOption(el) {
+  const step = el.dataset.step;
+  document.querySelectorAll(`.ob-option[data-step="${step}"]`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[`step${step}`] = el.dataset.value;
+
+  // Enable next button
+  const nextBtn = document.getElementById(`next-${step}`);
+  if (nextBtn) nextBtn.disabled = false;
+
+  // Special: step 7 gender check
+  if (step === '7g') checkStep7();
+}
+
+// ── DIET MULTI SELECT ──
+function toggleDiet(el) {
+  // Deselect "none" if selecting something specific
+  document.querySelector('.diet-card-none')?.classList.remove('selected');
+  el.classList.toggle('selected');
+  answers.restrictions = [...document.querySelectorAll('#restrict-options .diet-card.selected')].map(o => o.dataset.value);
+}
+
+function toggleDietNone(el) {
+  // Selecting "no restrictions" deselects everything else
+  document.querySelectorAll('#restrict-options .diet-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.restrictions = ['none'];
+}
+
+// Legacy (unused but kept for safety)
+function toggleMulti(el) { toggleDiet(el); }
+function selectNone(el) { toggleDietNone(el); }
+
+
+// ── STEP 5 — FREQUENCY & DURATION ──
+const freqAnswers = { days: null, duration: null };
+
+function selectFreq(type, val, el) {
+  freqAnswers[type] = val;
+  const container = document.getElementById(`freq-${type === 'days' ? 'days' : 'duration'}`);
+  container.querySelectorAll('.freq-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Enable continue if both selected
+  if (freqAnswers.days && freqAnswers.duration) {
+    const btn = document.getElementById('step5-next');
+    if (btn) { btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+    answers.training_days_per_week = freqAnswers.days;
+    answers.session_duration_min   = freqAnswers.duration;
+  }
+}
+
+// ── STEP 6 — SPLIT METHOD ──
+let method6 = null;
+function selectMethod(m) {
+  method6 = m;
+  document.getElementById('card-photo').classList.toggle('active', m === 'photo');
+  document.getElementById('card-manual').classList.toggle('active', m === 'manual');
+  checkStep6();
+}
+
+function checkStep6() {
+  const btn = document.getElementById('next-6');
+  if (!method6) { btn.disabled = true; return; }
+  if (method6 === 'photo') {
+    btn.disabled = !answers.photoUploaded;
+  } else {
+    const h = document.getElementById('height')?.value;
+    const w = document.getElementById('weight')?.value;
+    btn.disabled = !(h && w);
+  }
+}
+
+async function previewPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Show local preview immediately — no base64 needed
+  const blobUrl = URL.createObjectURL(file);
+  const preview = document.getElementById('photoPreview');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  preview.src = blobUrl;
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+
+  // Show uploading status
+  const uploadStatus = document.getElementById('uploadStatus');
+  if (uploadStatus) {
+    uploadStatus.textContent = 'Uploading...';
+    uploadStatus.style.display = 'block';
+    uploadStatus.style.color = 'var(--muted)';
+  }
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const userId = session.user.id;
+    const ext    = file.type.split('/')[1] || 'jpg';
+    const path   = `body-photos/${userId}_${Date.now()}.${ext}`;
+
+    // Upload directly from browser to Supabase Storage
+    const { error: uploadError } = await sb.storage
+      .from('fitai-users')
+      .upload(path, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL — this is what we send to n8n (no base64!)
+    const { data: urlData } = sb.storage.from('fitai-users').getPublicUrl(path);
+    answers.photoUrl      = urlData.publicUrl;
+    answers.photoUploaded = true;
+
+    if (uploadStatus) {
+      uploadStatus.textContent = '✓ Photo uploaded';
+      uploadStatus.style.color = 'var(--green)';
+    }
+
+    // ── Launch the cinematic AI Body Scan ──
+    checkStep6();
+    startBodyScan(blobUrl, urlData.publicUrl);
+    return;
+  } catch (err) {
+    console.error('Photo upload error:', err);
+    answers.photoUploaded = false;
+    answers.photoUrl      = null;
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    if (uploadStatus) {
+      uploadStatus.textContent = 'Upload failed — try again';
+      uploadStatus.style.color = 'var(--red)';
+    }
+  }
+
+  checkStep6();
+}
+
+// ══════════════════════════════════════
+//  AI BODY SCAN — cinematic step-6 moment
+// ══════════════════════════════════════
+let scanProfile = null;   // cached {gender, age} for kcal estimate
+let scanBusy = false;
+
+const SCAN_T = {
+  en: { scanning:'Scanning body composition', complete:'Analysis complete', captured:'Photo captured',
+        title:'AI Vision · Body Analysis',
+        l_type:'Body type detected', l_fat:'Body fat estimated', l_muscle:'Muscle potential',
+        l_kcal:'Recommended caloric target', l_full:'Full body analysis', v_building:'building with your plan' },
+  ua: { scanning:'Сканування композиції тіла', complete:'Аналіз завершено', captured:'Фото отримано',
+        title:'AI Vision · Аналіз тіла',
+        l_type:'Тип статури', l_fat:'Відсоток жиру', l_muscle:'Мʼязовий потенціал',
+        l_kcal:'Рекомендована норма калорій', l_full:'Повний аналіз тіла', v_building:'будується разом з планом' }
+};
+const ST = () => SCAN_T[lang] || SCAN_T.en;
+
+const BODY_TYPE_MAP = {
+  ectomorph:{ en:'Ectomorph', ua:'Ектоморф' },
+  mesomorph:{ en:'Mesomorph', ua:'Мезоморф' },
+  endomorph:{ en:'Endomorph', ua:'Ендоморф' }
+};
+const MUSCLE_MAP = {
+  Excellent:{ en:'Excellent', ua:'Відмінний' }, High:{ en:'High', ua:'Високий' },
+  Good:{ en:'Good', ua:'Добрий' }, Moderate:{ en:'Moderate', ua:'Помірний' }
+};
+
+const scanDelay = (ms) => new Promise(r => setTimeout(r, ms));
+function setScanChip(text){ const t = document.getElementById('scanChipText'); if (t) t.textContent = text; }
+function capitalize(s){ return s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : s; }
+
+function localBodyType(raw){
+  const m = BODY_TYPE_MAP[(raw || '').toLowerCase()];
+  return m ? (m[lang] || m.en) : (raw ? capitalize(raw) : null);
+}
+function muscleFromType(raw){
+  const t = (raw || '').toLowerCase();
+  if (t === 'mesomorph') return 'Excellent';
+  if (t === 'endomorph') return 'High';
+  if (t === 'ectomorph') return 'Good';
+  return 'High';
+}
+function localMuscle(key){ const m = MUSCLE_MAP[key]; return m ? (m[lang] || m.en) : key; }
+
+function estimateKcal(goal){
+  const g = scanProfile && scanProfile.gender ? String(scanProfile.gender).toLowerCase() : null;
+  let base = g === 'female' ? 1900 : (g === 'male' ? 2400 : 2150);
+  if (goal === 'lose') base -= 350;
+  else if (goal === 'gain') base += 350;
+  return Math.round(base / 10) * 10;
+}
+
+// Typewriter — types text into an element char by char
+function typeText(el, text, speed){
+  return new Promise(resolve => {
+    let i = 0;
+    (function tick(){
+      el.textContent = text.slice(0, i);
+      if (i < text.length) { i++; setTimeout(tick, speed); }
+      else resolve();
+    })();
+  });
+}
+
+// Render terminal metric lines one by one with typing effect
+async function renderScanLines(pairs){
+  const box = document.getElementById('scanMetrics');
+  box.innerHTML = '';
+  for (const [label, value] of pairs){
+    const line  = document.createElement('div'); line.className = 'scan-metric';
+    const lab   = document.createElement('span'); lab.className = 'lab';
+    const val   = document.createElement('span'); val.className = 'val';
+    const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▋';
+    line.append(lab, val, caret);
+    box.appendChild(line);
+    requestAnimationFrame(() => line.classList.add('in'));
+    await typeText(lab, label + '... ', 15);
+    await typeText(val, String(value), 34);
+    caret.remove();
+    await scanDelay(170);
+  }
+}
+
+async function fetchBodyAnalysis(photoUrl){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error('no session');
+  // best-effort: cache gender/age for the caloric estimate
+  if (!scanProfile){
+    try {
+      const pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${session.user.id}&select=gender,age`,
+        { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${session.access_token}` } });
+      const pa = await pr.json();
+      if (pa && pa[0]) scanProfile = pa[0];
+    } catch(e){ console.error(e); }
+  }
+  const r = await fetch(N8N_BODY_ANALYSIS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photo_url: photoUrl, user_id: session.user.id, goal: answers.step1 || null, lang: localStorage.getItem('fitai_lang') || 'en' })
+  });
+  if (!r.ok) throw new Error('analysis ' + r.status);
+  const j = await r.json();
+  return j.analysis || j;
+}
+
+async function startBodyScan(localUrl, photoUrl){
+  if (scanBusy) return;
+  scanBusy = true;
+
+  const stage   = document.getElementById('scanStage');
+  const wrap    = document.querySelector('#step-6 .split-wrap');
+  const card    = document.getElementById('scanCard');
+  const readout = document.getElementById('scanReadout');
+  const img     = document.getElementById('scanPhoto');
+
+  // reset state
+  document.getElementById('scanMetrics').innerHTML = '';
+  document.getElementById('scanComplete').classList.remove('show');
+  document.getElementById('scanRetake').classList.remove('show');
+  card.classList.remove('done'); readout.classList.remove('done');
+  document.getElementById('scanReadoutTitle').textContent = ST().title;
+
+  img.src = localUrl;
+  if (wrap) wrap.style.display = 'none';
+  stage.classList.add('show');
+
+  // (re)start the sweep animation
+  card.classList.remove('scanning'); void card.offsetWidth; card.classList.add('scanning');
+  setScanChip(ST().scanning);
+
+  // run the real GPT-4o Vision analysis while the line sweeps (min one full sweep)
+  let analysis = null;
+  try {
+    const [resp] = await Promise.all([ fetchBodyAnalysis(photoUrl), scanDelay(2600) ]);
+    analysis = resp;
+  } catch(e){ console.warn('Body scan analysis failed:', e); }
+
+  card.classList.remove('scanning');
+  card.classList.add('done');
+  readout.classList.add('done');
+
+  const t = ST();
+  if (analysis && analysis.body_type){
+    answers.bodyAnalysis = analysis;
+    setScanChip(t.complete);
+    const bodyType = localBodyType(analysis.body_type) || '—';
+    const bodyFat  = (analysis.body_fat_pct != null) ? Math.round(analysis.body_fat_pct) + '%' : '—';
+    const muscle   = analysis.muscle_potential ? capitalize(analysis.muscle_potential)
+                                               : localMuscle(muscleFromType(analysis.body_type));
+    const kcalNum  = analysis.recommended_kcal || estimateKcal(answers.step1);
+    await renderScanLines([
+      [t.l_type,   bodyType],
+      [t.l_fat,    bodyFat],
+      [t.l_muscle, muscle],
+      [t.l_kcal,   kcalNum.toLocaleString() + ' kcal']
+    ]);
+  } else {
+    // graceful fallback — photo is uploaded; the full analysis rides along with the plan
+    setScanChip(t.captured);
+    await renderScanLines([
+      [t.l_type, '✓ ' + t.captured],
+      [t.l_kcal, estimateKcal(answers.step1).toLocaleString() + ' kcal'],
+      [t.l_full, t.v_building]
+    ]);
+  }
+
+  document.getElementById('scanCompleteText').textContent = t.complete;
+  document.getElementById('scanComplete').classList.add('show');
+  document.getElementById('scanRetake').classList.add('show');
+  scanBusy = false;
+}
+
+function retakeScan(){
+  document.getElementById('scanStage').classList.remove('show');
+  const wrap = document.querySelector('#step-6 .split-wrap');
+  if (wrap) wrap.style.display = '';
+  const preview = document.getElementById('photoPreview');
+  if (preview){ preview.src = ''; preview.style.display = 'none'; }
+  const ph = document.getElementById('uploadPlaceholder'); if (ph) ph.style.display = 'block';
+  const us = document.getElementById('uploadStatus');      if (us) us.style.display = 'none';
+  const input = document.getElementById('photoInput');     if (input) input.value = '';
+  answers.photoUploaded = false; answers.photoUrl = null; answers.bodyAnalysis = null;
+  checkStep6();
+}
+
+// ── STEP 7 ──
+// selectGender removed — gender handled in Step 5 body data section
+function checkStep7() {}
+
+// ── NAVIGATION ──
+function nextStep() {
+  if (currentStep >= TOTAL) return finish();
+
+  const current = document.getElementById(`step-${currentStep}`);
+  current.classList.add('exit');
+
+  setTimeout(() => {
+    current.classList.remove('active', 'exit');
+    currentStep++;
+    const next = document.getElementById(`step-${currentStep}`);
+    next.classList.add('active');
+    updateUI();
+    applyTranslations();
+    window.scrollTo(0, 0);
+  }, 280);
+}
+
+function goBack() {
+  if (currentStep === 1) {
+    window.location.href = 'index.html';
+    return;
+  }
+  const current = document.getElementById(`step-${currentStep}`);
+  current.style.animation = 'none';
+  current.classList.remove('active');
+  currentStep--;
+  const prev = document.getElementById(`step-${currentStep}`);
+  prev.classList.add('active');
+  updateUI();
+  applyTranslations();
+  window.scrollTo(0, 0);
+}
+
+// ── FINISH ──
+async function finish() {
+  sessionStorage.setItem('fitai_onboarding', JSON.stringify(answers));
+
+  document.getElementById('generatingScreen').classList.add('show');
+  setGenStep(0);
+
+  try {
+    // Get existing session — user logged in via signin.html
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      document.getElementById('generatingScreen').classList.remove('show');
+      sessionStorage.setItem('fitai_after_signin', 'onboarding');
+      window.location.href = 'signin.html';
+      return;
+    }
+    const userId = session.user.id;
+
+    setGenStep(1);
+
+    // Fetch real name/age/gender from profiles table (saved during registration)
+    let profileName = 'User';
+    let profileAge  = null;
+    let profileGender = null;
+    try {
+      const profileResp = await fetch(
+        `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=name,age,gender`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON,
+            Authorization: `Bearer ${session.access_token}`
+          }
+        }
+      );
+      const profileArr = await profileResp.json();
+      if (profileArr && profileArr[0]) {
+        profileName   = profileArr[0].name   || 'User';
+        answers.name  = profileName;
+        profileAge    = profileArr[0].age    || null;
+        profileGender = profileArr[0].gender || null;
+      }
+    } catch(e) {
+      console.warn('Could not fetch profile, using defaults:', e);
+    }
+
+    setGenStep(2);
+
+    // Only include height/weight if actually filled
+    const heightVal = parseInt(document.getElementById('height')?.value) || null;
+    const weightVal = parseFloat(document.getElementById('weight')?.value) || null;
+
+    const payload = {
+      user_id:        userId,
+      name:           profileName,
+      age:            profileAge,
+      gender:         profileGender,
+      goal:                   answers.step1  || 'maintain',
+      lifestyle:              answers.step2  || 'moderate',
+      training_place:         answers.step3  || 'gym',
+      fitness_level:          answers.step4  || 'beginner',
+      training_days_per_week: answers.training_days_per_week || 3,
+      session_duration_min:   answers.session_duration_min   || 60,
+      restrictions:           [],
+      body_method:    answers.photoUploaded ? 'photo' : 'manual',
+      lang:           lang
+    };
+
+    // Only add height/weight if user actually entered them
+    if (heightVal) payload.height_cm = heightVal;
+    if (weightVal) payload.weight_kg = weightVal;
+
+    // If photo method — send only the public URL (already uploaded to Supabase Storage)
+    if (answers.photoUploaded && answers.photoUrl) {
+      payload.photo_url = answers.photoUrl;
+    }
+
+    const n8nResp = await fetch(N8N_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!n8nResp.ok) throw new Error('n8n error: ' + n8nResp.status);
+    const planData = await n8nResp.json();
+
+    setGenStep(3);
+    sessionStorage.setItem('fitai_plan', JSON.stringify(planData));
+    sessionStorage.setItem('fitai_onboarding', JSON.stringify({ ...answers, user_id: userId }));
+
+    setTimeout(() => {
+      document.getElementById('gs-4').className = 'gen-step-item done';
+      setTimeout(() => showSuccess(planData), 600);
+    }, 1000);
+
+  } catch (err) {
+    console.error('FitAI finish error:', err);
+    document.getElementById('generatingScreen').classList.remove('show');
+    alert(lang === 'ua' ? 'Щось пішло не так. Спробуй ще раз.' : 'Something went wrong. Please try again.');
+  }
+}
+
+// Helper: animate loading steps
+function setGenStep(index) {
+  const steps = ['gs-1','gs-2','gs-3','gs-4'];
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (i < index)  el.className = 'gen-step-item done';
+    else if (i === index) el.className = 'gen-step-item active';
+    else el.className = 'gen-step-item';
+  });
+}
+
+
+function goToNutritionOnboarding() {
+  // Save plan data to sessionStorage so nutrition onboarding can access it
+  window.location.href = 'nutrition-onboarding.html';
+}
+
+function showSuccess(planData) {
+  document.getElementById('generatingScreen').classList.remove('show');
+  document.getElementById('successScreen').classList.add('show');
+
+  // Name
+  document.getElementById('successName').textContent = answers.name || 'Alex';
+
+  // Goal card — from onboarding answers
+  const goalMap = {
+    lose:     { en: 'Lose Weight', ua: 'Схуднути' },
+    gain:     { en: 'Gain Muscle', ua: 'Набрати масу' },
+    maintain: { en: 'Stay Fit',    ua: 'Підтримати форму' }
+  };
+  const goal = goalMap[answers.step1] || goalMap.maintain;
+  document.getElementById('sc-goal-val').textContent = lang === 'ua' ? goal.ua : goal.en;
+
+  // Calories — real from n8n or fallback
+  const kcal = planData?.daily_kcal;
+  document.getElementById('sc-kcal-val').innerHTML = kcal
+    ? `${kcal.toLocaleString()} <span style="font-size:14px;font-family:Outfit,sans-serif;font-weight:400;color:var(--muted)">kcal</span>`
+    : '2,000 <span style="font-size:14px;font-family:Outfit,sans-serif;font-weight:400;color:var(--muted)">kcal</span>';
+
+  // Level — from onboarding answers
+  const levelMap = {
+    beginner:     { en: 'Beginner',     ua: 'Початківець' },
+    intermediate: { en: 'Intermediate', ua: 'Середній' },
+    advanced:     { en: 'Advanced',     ua: 'Досвідчений' }
+  };
+  const level = levelMap[answers.step4] || levelMap.beginner;
+  document.getElementById('sc-level-val').textContent = lang === 'ua' ? level.ua : level.en;
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Drag & drop for photo
+  const area = document.getElementById('uploadArea');
+  if (area) {
+    area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = 'var(--blue)'; });
+    area.addEventListener('dragleave', () => { area.style.borderColor = ''; });
+    area.addEventListener('drop', e => {
+      e.preventDefault();
+      area.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        document.getElementById('photoInput').files = e.dataTransfer.files;
+        previewPhoto(document.getElementById('photoInput'));
+      }
+    });
+  }
+
+  // Height/weight inputs trigger step 6 check
+  ['height','weight'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', checkStep6);
+  });
+
+  // Apply lang
+  setLang(lang);
+  renderDots();
+  updateUI();
+});
+</script>
+</body>
+</html>

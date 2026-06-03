@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition — FitAI</title>
+<meta name="description" content="Your AI-generated meal plan, adapted to your training every day.">
+<meta property="og:title" content="Nutrition — FitAI">
+<meta property="og:description" content="Your AI-generated meal plan, adapted to your training every day.">
+<meta property="og:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fitai.app/nutrition.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nutrition — FitAI">
+<meta name="twitter:description" content="Your AI-generated meal plan, adapted to your training every day.">
+<meta name="twitter:image" content="https://builtwithai.pro/fitai/media/bg.jpg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#080C14; --surface:#0F1623; --elevated:#161E2E;
+  --border:#1E293B; --blue:#2563EB; --green:#10B981;
+  --amber:#F59E0B; --red:#EF4444;
+  --text:#F8FAFC; --muted:#94A3B8; --dimmed:#475569;
+  --page-pad:48px;
+}
+body { background:var(--bg); color:var(--text); font-family:'Outfit',sans-serif; min-height:100vh; }
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 var(--page-pad); height:64px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,12,20,0.94); backdrop-filter:blur(20px);
+}
+.nav-logo img { height:68px; filter:brightness(1.1); transform:scale(1.5); transform-origin:left center; }
+.nav-center { display:flex; align-items:center; gap:4px; }
+.nav-link { background:none; border:none; color:var(--dimmed); font-family:'Outfit',sans-serif; font-size:13px; font-weight:500; padding:8px 14px; border-radius:8px; cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; }
+.nav-link:hover { color:var(--text); background:rgba(255,255,255,0.04); }
+.nav-link.active { color:var(--text); background:rgba(37,99,235,0.1); }
+.nav-link-nutrition { background:rgba(16,185,129,0.08); border:1.5px solid rgba(16,185,129,0.3); color:var(--green); padding:7px 16px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+.nav-right { display:flex; align-items:center; gap:16px; }
+.nav-avatar { width:34px; height:34px; border-radius:50%; background:var(--blue); display:flex; align-items:center; justify-content:center; font-family:'Oswald',sans-serif; font-size:15px; color:#fff; font-weight:700; }
+/* ── Nav avatar: photo / gradient-initial + dropdown menu (shared) ── */
+.nav-avatar{cursor:pointer;overflow:hidden;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;border-radius:50%;}
+.nav-avatar.loading{opacity:0.55;pointer-events:none;}
+.nav-avatar-wrap{position:relative;display:inline-flex;}
+.nav-avatar-menu{position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:#0F1623;border:1px solid rgba(255,255,255,0.10);border-radius:12px;padding:6px;box-shadow:0 24px 48px -16px rgba(0,0,0,0.7);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility .18s;z-index:600;}
+.nav-avatar-menu.open{opacity:1;visibility:visible;transform:translateY(0);}
+.nav-avatar-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:#F8FAFC;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;text-align:left;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.nav-avatar-menu button:hover{background:rgba(255,255,255,0.06);}
+.nav-avatar-menu button svg{width:15px;height:15px;flex-shrink:0;opacity:0.85;}
+.nav-avatar-menu button.danger{color:#F87171;}
+.nav-user { display:flex; align-items:center; gap:10px; font-size:14px; color:var(--muted); }
+.nav-btn { background:none; border:1.5px solid var(--border); color:var(--muted); padding:7px 16px; border-radius:8px; font-family:'Outfit',sans-serif; font-size:13px; cursor:pointer; transition:all 0.2s; }
+.nav-btn:hover { border-color:var(--muted); color:var(--text); }
+
+/* ── PAGE ── */
+.page { position:relative; z-index:1; padding:80px var(--page-pad) 60px; }
+
+/* ── HERO ── */
+.n-hero { padding:32px 0 28px; border-bottom:1px solid var(--border); margin-bottom:32px; }
+.n-hero-tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+.n-hero-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,6vw,72px); line-height:1; color:var(--text); margin-bottom:8px; }
+.n-hero-title span { color:var(--green); }
+/* UA Cyrillic fix: Bebas Neue lacks Cyrillic glyphs → swap hero title to Oswald (already loaded). Numeric macro/kcal values stay on Bebas. */
+html[lang="ua"] .n-hero-title { font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:0; }
+.n-hero-sub { font-size:15px; color:var(--muted); margin-bottom:24px; }
+.n-macro-row { display:flex; gap:12px; flex-wrap:wrap; }
+.n-macro-chip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 20px; text-align:center; min-width:110px; }
+.n-macro-val { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; }
+.n-macro-val.blue { color:var(--blue); }
+.n-macro-val.green { color:var(--green); }
+.n-macro-val.amber { color:var(--amber); }
+.n-macro-val.red { color:#f97316; }
+.n-macro-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--dimmed); margin-top:4px; }
+
+/* ── ACTION BUTTONS ── */
+.n-actions { display:flex; gap:12px; margin-bottom:32px; flex-wrap:wrap; }
+.btn-regen { display:flex; align-items:center; justify-content:center; gap:8px; background:var(--green); border:1.5px solid var(--green); color:#fff; padding:10px 22px; border-radius:10px; font-family:'Outfit',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; box-shadow:0 6px 18px -8px rgba(16,185,129,0.7); }
+.btn-regen:hover { background:#0da271; transform:translateY(-1px); box-shadow:0 8px 22px -8px rgba(16,185,129,0.85); }
+.btn-regen svg { width:14px; height:14px; stroke:#fff; }
+.btn-full-ob { display:flex; align-items:center; gap:8px; background:var(--green); color:#fff; border:none; padding:11px 22px; border-radius:10px; font-family:'Oswald',sans-serif; font-size:15px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.22s; }
+.btn-full-ob:hover { background:#0da271; transform:translateY(-1px); box-shadow:0 8px 24px rgba(16,185,129,0.3); }
+
+/* ── SCAN MEAL BUTTON ── */
+.btn-scan-meal {
+  display:flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,rgba(37,99,235,0.15),rgba(16,185,129,0.12));
+  border:1.5px solid rgba(37,99,235,0.45);
+  color:var(--text); padding:10px 22px; border-radius:10px;
+  font-family:'Outfit',sans-serif; font-size:14px; font-weight:600;
+  cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden;
+}
+.btn-scan-meal::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(37,99,235,0.1),rgba(16,185,129,0.08));
+  opacity:0; transition:opacity 0.25s;
+}
+.btn-scan-meal:hover { border-color:var(--blue); transform:translateY(-1px); box-shadow:0 8px 28px rgba(37,99,235,0.25); }
+.btn-scan-meal:hover::before { opacity:1; }
+.btn-scan-emoji { font-size:18px; line-height:1; animation:scanPulse 2.5s ease-in-out infinite; }
+@keyframes scanPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+.btn-scan-badge {
+  font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:500;
+  letter-spacing:1.5px; text-transform:uppercase;
+  background:rgba(37,99,235,0.2); border:1px solid rgba(37,99,235,0.4);
+  color:var(--blue); padding:2px 7px; border-radius:4px;
+}
+
+/* ── SCAN MODAL ── */
+.scan-overlay {
+  position:fixed; inset:0; z-index:600;
+  background:rgba(0,0,0,0.88); backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; opacity:0; pointer-events:none; transition:opacity 0.3s;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+}
+.scan-overlay.open { opacity:1; pointer-events:auto; }
+.scan-modal {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:24px; width:100%; max-width:480px;
+  position:relative; transform:scale(0.93) translateY(20px);
+  transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  overflow:hidden;
+}
+.scan-overlay.open .scan-modal { transform:scale(1) translateY(0); }
+
+/* Modal top accent line */
+.scan-modal::before {
+  content:''; display:block; height:3px;
+  background:linear-gradient(90deg,var(--blue),var(--green));
+}
+
+.scan-modal-inner { padding:28px; }
+.scan-modal-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+.scan-modal-tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--blue); background:rgba(37,99,235,0.1); border:1px solid rgba(37,99,235,0.25); padding:3px 10px; border-radius:20px; margin-bottom:8px; display:inline-block; }
+.scan-modal-title { font-family:'Oswald',sans-serif; font-size:26px; font-weight:700; text-transform:uppercase; color:var(--text); line-height:1.1; }
+.scan-modal-title span { color:var(--blue); }
+.scan-close { background:none; border:1.5px solid var(--border); color:var(--dimmed); width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; font-size:14px; }
+.scan-close:hover { border-color:var(--text); color:var(--text); }
+
+/* Drop zone */
+.scan-dropzone {
+  border:2px dashed var(--border); border-radius:16px;
+  padding:36px 20px; text-align:center; cursor:pointer;
+  transition:all 0.25s; position:relative; margin-bottom:20px;
+  background:rgba(8,12,20,0.5);
+}
+.scan-dropzone:hover, .scan-dropzone.dragover {
+  border-color:var(--blue); background:rgba(37,99,235,0.06);
+}
+.scan-dropzone-icon { font-size:40px; margin-bottom:12px; line-height:1; }
+.scan-dropzone-text { font-family:'Outfit',sans-serif; font-size:14px; color:var(--muted); margin-bottom:6px; }
+.scan-dropzone-sub { font-size:12px; color:var(--dimmed); }
+.scan-dropzone-btn {
+  display:inline-flex; align-items:center; gap:6px; margin-top:14px;
+  background:rgba(37,99,235,0.1); border:1.5px solid rgba(37,99,235,0.35);
+  color:var(--blue); padding:8px 18px; border-radius:8px;
+  font-family:'Outfit',sans-serif; font-size:13px; font-weight:600; cursor:pointer;
+  transition:all 0.2s;
+}
+.scan-dropzone-btn:hover { background:rgba(37,99,235,0.18); }
+#scanFileInput { display:none; }
+
+/* Preview */
+.scan-preview { display:none; position:relative; margin-bottom:20px; border-radius:14px; overflow:hidden; }
+.scan-preview img { width:100%; max-height:240px; object-fit:cover; display:block; }
+.scan-preview-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to top,rgba(8,12,20,0.7) 0%,transparent 50%);
+}
+.scan-preview-change {
+  position:absolute; top:12px; right:12px;
+  background:rgba(8,12,20,0.75); border:1px solid var(--border);
+  color:var(--muted); padding:5px 10px; border-radius:8px;
+  font-size:11px; font-family:'JetBrains Mono',monospace;
+  letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all 0.2s; backdrop-filter:blur(4px);
+}
+.scan-preview-change:hover { color:var(--text); border-color:var(--muted); }
+
+/* Meal scan — identical scanning effect to the fridge scan (reuses frSweep / frPulse) */
+.scan-preview.scanning { border:1px solid rgba(30,111,217,0.35); box-shadow:0 0 0 1px rgba(30,111,217,0.12), 0 28px 70px -30px rgba(30,111,217,0.5); }
+.scan-preview.scanning img { animation:frPulse 2.4s ease-in-out infinite; }
+.scan-preview.scanning .scan-preview-change { display:none; }
+.scan-preview::before {
+  content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+  background-image:linear-gradient(rgba(30,111,217,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(30,111,217,0.1) 1px,transparent 1px);
+  background-size:34px 34px; opacity:0; transition:opacity 0.4s;
+}
+.scan-preview.scanning::before { opacity:1; }
+.scan-sweep-line { position:absolute; left:0; right:0; top:0; z-index:5; height:2px; background:#1E6FD9; box-shadow:0 0 18px 3px rgba(30,111,217,0.95), 0 0 46px 12px rgba(30,111,217,0.55); opacity:0; }
+.scan-sweep-band { position:absolute; left:0; right:0; top:0; z-index:3; height:120px; background:linear-gradient(to bottom,rgba(30,111,217,0.32) 0%,rgba(30,111,217,0.04) 70%,transparent 100%); opacity:0; }
+.scan-preview.scanning .scan-sweep-line,
+.scan-preview.scanning .scan-sweep-band { animation:frSweep 2.4s cubic-bezier(0.45,0,0.25,1) infinite; }
+.scan-reticle { position:absolute; inset:12px; z-index:4; pointer-events:none; }
+.scan-reticle span { position:absolute; width:22px; height:22px; border:2px solid rgba(30,111,217,0.85); filter:drop-shadow(0 0 6px rgba(30,111,217,0.6)); opacity:0; transition:opacity 0.4s; }
+.scan-preview.scanning .scan-reticle span, .scan-preview.done .scan-reticle span { opacity:1; }
+.scan-reticle .tl { top:0; left:0; border-right:0; border-bottom:0; }
+.scan-reticle .tr { top:0; right:0; border-left:0; border-bottom:0; }
+.scan-reticle .bl { bottom:0; left:0; border-right:0; border-top:0; }
+.scan-reticle .br { bottom:0; right:0; border-left:0; border-top:0; }
+.scan-preview.done { border:1px solid rgba(16,185,129,0.5); box-shadow:0 0 0 1px rgba(16,185,129,0.18), 0 28px 70px -30px rgba(16,185,129,0.4); }
+.scan-preview.done .scan-reticle span { border-color:rgba(16,185,129,0.85); filter:drop-shadow(0 0 6px rgba(16,185,129,0.55)); }
+
+/* Scan loading */
+.scan-loading { display:none; flex-direction:column; align-items:center; gap:14px; padding:28px; }
+.scan-loading.show { display:flex; }
+.scan-loading-ring {
+  width:52px; height:52px; border-radius:50%;
+  border:3px solid var(--border); border-top-color:var(--blue);
+  animation:spin 0.9s linear infinite;
+}
+.scan-loading-line {
+  font-family:'JetBrains Mono',monospace; font-size:12px;
+  color:var(--blue); letter-spacing:1.5px; text-transform:uppercase;
+  animation:scanBlink 1.4s ease-in-out infinite;
+}
+@keyframes scanBlink { 0%,100%{opacity:0.4} 50%{opacity:1} }
+.scan-loading-sub { font-size:12px; color:var(--dimmed); }
+
+/* Result */
+.scan-result { display:none; }
+.scan-result.show { display:block; }
+.scan-result-dish { font-family:'Oswald',sans-serif; font-size:22px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:4px; }
+.scan-result-grams { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dimmed); letter-spacing:1px; margin-bottom:16px; }
+.scan-macros-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+.scan-macro-box { background:var(--elevated); border:1px solid var(--border); border-radius:10px; padding:10px 8px; text-align:center; }
+.scan-macro-val { font-family:'Bebas Neue',sans-serif; font-size:22px; line-height:1; }
+.scan-macro-lbl { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--dimmed); margin-top:3px; }
+.scan-confidence { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--dimmed); margin-bottom:20px; }
+.scan-confidence-dot { width:6px; height:6px; border-radius:50%; }
+.scan-note { font-size:12px; color:var(--dimmed); background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:8px; padding:8px 12px; margin-bottom:16px; line-height:1.6; }
+
+/* Action buttons */
+.scan-actions { display:flex; gap:10px; }
+.scan-save-btn {
+  flex:1; background:var(--blue); color:#fff; border:none;
+  padding:13px 20px; border-radius:10px;
+  font-family:'Oswald',sans-serif; font-size:16px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+  transition:all 0.22s; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.scan-save-btn:hover { background:#1D4ED8; transform:translateY(-1px); box-shadow:0 8px 24px rgba(37,99,235,0.35); }
+.scan-save-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.scan-dismiss-btn {
+  background:none; border:1.5px solid var(--border); color:var(--muted);
+  padding:13px 20px; border-radius:10px;
+  font-family:'Outfit',sans-serif; font-size:14px; cursor:pointer;
+  transition:all 0.2s;
+}
+.scan-dismiss-btn:hover { border-color:var(--muted); color:var(--text); }
+.scan-again-btn {
+  width:100%; background:none; border:1.5px dashed var(--border); color:var(--dimmed);
+  padding:10px; border-radius:10px; font-size:13px; cursor:pointer;
+  font-family:'Outfit',sans-serif; transition:all 0.2s; margin-top:10px;
+}
+.scan-again-btn:hover { border-color:var(--blue); color:var(--blue); }
+
+/* ── DAY TABS ── */
+.day-tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:32px; overflow-x:auto; scrollbar-width:none; }
+.day-tabs::-webkit-scrollbar { display:none; }
+.day-tab-btn {
+  background:none; border:none; color:var(--dimmed);
+  font-family:'Outfit',sans-serif; font-size:13px; font-weight:500;
+  padding:12px 20px; border-bottom:2px solid transparent;
+  cursor:pointer; transition:all 0.2s; white-space:nowrap;
+  display:flex; align-items:center; gap:6px; position:relative; top:1px;
+}
+.day-tab-btn:hover { color:var(--text); }
+.day-tab-btn.active { color:var(--green); border-bottom-color:var(--green); }
+.day-tab-btn.rest-day { opacity:0.5; }
+/* Dots: current day = blue, training day = white (same as training plan); never both */
+.day-tab-btn .today-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--blue); margin-left:4px; vertical-align:middle; }
+.day-tab-btn .train-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:rgba(248,250,252,0.35); margin-left:4px; vertical-align:middle; }
+
+/* ── DAY SUMMARY ── */
+.day-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.day-title { font-family:'Oswald',sans-serif; font-size:28px; font-weight:700; text-transform:uppercase; }
+.day-type-badge { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; padding:5px 12px; border-radius:20px; }
+.day-type-badge.training { background:rgba(37,99,235,0.1); color:var(--blue); border:1px solid rgba(37,99,235,0.25); }
+.day-type-badge.rest { background:rgba(148,163,184,0.08); color:var(--muted); border:1px solid var(--border); }
+.day-macros { display:flex; gap:10px; flex-wrap:wrap; }
+.day-macro-item { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 16px; text-align:center; }
+.day-macro-val { font-family:'Bebas Neue',sans-serif; font-size:22px; line-height:1; }
+.day-macro-label { font-size:10px; color:var(--dimmed); font-family:'JetBrains Mono',monospace; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+
+/* ── MEAL GRID ── */
+.meal-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.n-meal-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+  display:flex; flex-direction:column;
+}
+.n-meal-card:hover { border-color:rgba(16,185,129,0.35); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.3); }
+.n-meal-card-img { width:100%; height:160px; object-fit:cover; background:var(--elevated); display:block; }
+.n-meal-card-body { padding:16px; flex:1; display:flex; flex-direction:column; }
+.n-meal-time { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); letter-spacing:1px; margin-bottom:6px; }
+.n-meal-name { font-family:'Oswald',sans-serif; font-size:20px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:6px; line-height:1.1; }
+.n-meal-foods { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:12px; flex:1; }
+.n-meal-macros { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.n-macro-tag { font-family:'JetBrains Mono',monospace; font-size:10px; padding:3px 8px; border-radius:5px; letter-spacing:0.5px; }
+.n-macro-tag.kcal { background:rgba(37,99,235,0.1); color:var(--blue); }
+.n-macro-tag.protein { background:rgba(16,185,129,0.1); color:var(--green); }
+.n-macro-tag.carbs { background:rgba(245,158,11,0.1); color:var(--amber); }
+.n-macro-tag.fat { background:rgba(249,115,22,0.1); color:#f97316; }
+.n-meal-footer { display:flex; align-items:center; justify-content:space-between; }
+.n-meal-kcal { display:flex; align-items:baseline; gap:4px; }
+.n-meal-kcal-val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--text); }
+.n-meal-kcal-label { font-size:11px; color:var(--dimmed); }
+.n-recipe-btn { background:none; border:1.5px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+.n-recipe-btn:hover { border-color:var(--green); color:var(--green); }
+.n-meal-bar { height:3px; background:var(--border); border-radius:2px; margin-top:12px; overflow:hidden; }
+.n-meal-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--green)); border-radius:2px; }
+
+/* ── NO PLAN CTA ── */
+.n-no-plan { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - 160px); padding:80px 40px; text-align:center; }
+.n-no-plan-icon { font-size:64px; margin-bottom:24px; }
+.n-no-plan-title { font-family:'Oswald',sans-serif; font-size:36px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:12px; }
+.n-no-plan-sub { font-size:15px; color:var(--muted); margin-bottom:32px; max-width:480px; line-height:1.7; }
+.n-no-plan-btn { display:flex; align-items:center; gap:10px; background:var(--green); color:#fff; border:none; padding:15px 32px; border-radius:12px; font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.22s; }
+.n-no-plan-btn:hover { background:#0da271; transform:translateY(-1px); box-shadow:0 10px 32px rgba(16,185,129,0.35); }
+
+
+/* ── FRIDGE SECTION ── */
+.fridge-section { margin-top:48px; border-top:1px solid var(--border); padding-top:40px; }
+.fridge-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.fridge-title { font-family:'Oswald',sans-serif; font-size:22px; font-weight:700; text-transform:uppercase; color:var(--text); }
+.fridge-title span { color:var(--green); }
+.fridge-tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--green); background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); padding:3px 10px; border-radius:20px; }
+
+/* Step 1 - category */
+.fridge-categories { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:28px; }
+.fridge-cat {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1.5px solid var(--border);
+  border-radius:12px; padding:10px 16px; cursor:pointer;
+  font-family:'Outfit',sans-serif; font-size:14px; font-weight:500;
+  color:var(--muted); transition:all 0.2s;
+}
+.fridge-cat:hover { border-color:rgba(16,185,129,0.4); color:var(--text); }
+.fridge-cat.selected { border-color:var(--green); background:rgba(16,185,129,0.08); color:var(--green); }
+.fridge-cat-icon { font-size:18px; }
+
+/* Step 2 - ingredients */
+.fridge-ingredients-wrap { margin-bottom:24px; }
+.fridge-ing-label { font-size:11px; color:var(--muted); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; display:block; }
+.fridge-ing-list { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.fridge-ing-row { display:flex; align-items:center; gap:8px; }
+.fridge-ing-input {
+  flex:1; background:rgba(8,12,20,0.7); border:1.5px solid var(--border);
+  border-radius:10px; padding:11px 14px; color:var(--text);
+  font-family:'Outfit',sans-serif; font-size:14px; outline:none;
+  transition:border-color 0.2s;
+}
+.fridge-ing-input:focus { border-color:var(--green); }
+.fridge-ing-input::placeholder { color:var(--dimmed); }
+.fridge-ing-remove {
+  width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border);
+  background:none; color:var(--dimmed); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; transition:all 0.2s; font-size:16px; flex-shrink:0;
+}
+.fridge-ing-remove:hover { border-color:var(--red); color:var(--red); }
+.fridge-add-btn {
+  display:flex; align-items:center; gap:6px; background:none;
+  border:1.5px dashed var(--border); color:var(--muted);
+  padding:9px 16px; border-radius:10px; font-size:13px;
+  font-family:'Outfit',sans-serif; cursor:pointer; transition:all 0.2s; width:fit-content;
+}
+.fridge-add-btn:hover { border-color:var(--green); color:var(--green); }
+
+.fridge-generate-btn {
+  width:100%; padding:14px; background:var(--green); color:#fff; border:none;
+  border-radius:10px; font-family:'Oswald',sans-serif; font-size:18px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.22s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.fridge-generate-btn:hover:not(:disabled) { background:#0da271; transform:translateY(-1px); box-shadow:0 8px 24px rgba(16,185,129,0.3); }
+.fridge-generate-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* Results */
+.fridge-results { margin-top:32px; }
+.fridge-results-title { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:20px; }
+.fridge-results-title span { color:var(--green); }
+.fridge-dishes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+
+.fridge-dish-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  transition:all 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.fridge-dish-card:hover { border-color:rgba(16,185,129,0.35); transform:translateY(-3px); box-shadow:0 12px 32px rgba(0,0,0,0.3); }
+.fridge-dish-img { width:100%; height:160px; object-fit:cover; background:var(--elevated); display:block; }
+.fridge-dish-body { padding:16px; }
+.fridge-dish-name { font-family:'Oswald',sans-serif; font-size:20px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:6px; }
+.fridge-dish-desc { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:14px; }
+.fridge-dish-footer { display:flex; align-items:center; justify-content:space-between; }
+.fridge-dish-kcal { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--text); }
+.fridge-dish-kcal-label { font-size:10px; color:var(--dimmed); }
+.fridge-dish-recipe-btn { background:none; border:1.5px solid var(--border); color:var(--muted); padding:6px 12px; border-radius:8px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+.fridge-dish-recipe-btn:hover { border-color:var(--green); color:var(--green); }
+.fridge-save-btn { background:none; border:1.5px solid var(--border); color:var(--muted); width:32px; height:32px; border-radius:8px; font-size:16px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+.fridge-save-btn:hover { border-color:var(--amber); color:var(--amber); }
+.fridge-save-btn.saved { border-color:var(--amber); color:var(--amber); background:rgba(245,158,11,0.1); }
+
+/* Generating state */
+.fridge-generating {
+  display:none; flex-direction:column; align-items:center; gap:16px;
+  padding:40px; text-align:center;
+}
+.fridge-generating.show { display:flex; }
+.fridge-gen-spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--green); animation:spin 0.8s linear infinite; }
+
+/* ── FRIDGE PHOTO UPLOAD + AI SCAN (reuses onboarding body-scan style) ── */
+.fridge-photo-block { margin-bottom:24px; }
+.fridge-photo-zone {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  border:1.5px dashed var(--border); border-radius:16px;
+  padding:28px 20px; cursor:pointer; text-align:center;
+  background:rgba(255,255,255,0.015); transition:all 0.2s;
+}
+.fridge-photo-zone:hover { border-color:rgba(16,185,129,0.5); background:rgba(16,185,129,0.04); }
+.fridge-photo-zone.dragover { border-color:var(--green); background:rgba(16,185,129,0.08); }
+.fridge-photo-zone .fpz-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); color:var(--green); }
+.fridge-photo-zone .fpz-title { font-size:14px; font-weight:600; color:var(--text); }
+.fridge-photo-zone .fpz-title b { color:var(--green); }
+.fridge-photo-zone .fpz-hint { font-size:12px; color:var(--dimmed); }
+
+.fridge-scan { display:none; }
+.fridge-scan.show { display:block; animation:frFade 0.4s ease both; }
+@keyframes frFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+.fridge-scan-layout { display:grid; grid-template-columns:minmax(0,360px) minmax(0,1fr); gap:18px; align-items:start; }
+@media (max-width:720px){ .fridge-scan-layout { grid-template-columns:1fr; } }
+
+.fridge-scan-card {
+  position:relative; border-radius:18px; overflow:hidden; background:#05070D;
+  border:1px solid rgba(30,111,217,0.35); aspect-ratio:4/3;
+  width:100%; min-width:0; align-self:start;
+  box-shadow:0 0 0 1px rgba(30,111,217,0.12), 0 28px 70px -30px rgba(30,111,217,0.5);
+  transition:border-color 0.5s, box-shadow 0.5s;
+}
+.fridge-scan-photo { width:100%; height:100%; object-fit:cover; display:block; filter:contrast(1.05) saturate(1.04) brightness(0.96); }
+.fridge-scan-card.scanning .fridge-scan-photo { animation:frPulse 2.4s ease-in-out infinite; }
+@keyframes frPulse { 0%,100% { filter:contrast(1.05) saturate(1.04) brightness(0.96); } 50% { filter:contrast(1.14) saturate(1.22) brightness(1.08); } }
+.fridge-scan-card::before {
+  content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+  background-image:linear-gradient(rgba(30,111,217,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(30,111,217,0.1) 1px,transparent 1px);
+  background-size:34px 34px; opacity:0; transition:opacity 0.4s;
+}
+.fridge-scan-card.scanning::before { opacity:1; }
+.fridge-scan-line {
+  position:absolute; left:0; right:0; top:0; z-index:5; height:2px; background:#1E6FD9;
+  box-shadow:0 0 18px 3px rgba(30,111,217,0.95), 0 0 46px 12px rgba(30,111,217,0.55); opacity:0;
+}
+.fridge-scan-band {
+  position:absolute; left:0; right:0; top:0; z-index:3; height:120px;
+  background:linear-gradient(to bottom,rgba(30,111,217,0.32) 0%,rgba(30,111,217,0.04) 70%,transparent 100%); opacity:0;
+}
+.fridge-scan-card.scanning .fridge-scan-line,
+.fridge-scan-card.scanning .fridge-scan-band { animation:frSweep 2.4s cubic-bezier(0.45,0,0.25,1) infinite; }
+@keyframes frSweep { 0% { top:-4%; opacity:0; } 7% { opacity:1; } 93% { opacity:1; } 100% { top:100%; opacity:0; } }
+.fridge-reticle { position:absolute; inset:12px; z-index:4; pointer-events:none; }
+.fridge-reticle span { position:absolute; width:22px; height:22px; border:2px solid rgba(30,111,217,0.85); filter:drop-shadow(0 0 6px rgba(30,111,217,0.6)); opacity:0; transition:opacity 0.4s; }
+.fridge-scan-card.scanning .fridge-reticle span, .fridge-scan-card.done .fridge-reticle span { opacity:1; }
+.fridge-reticle .tl { top:0; left:0; border-right:0; border-bottom:0; }
+.fridge-reticle .tr { top:0; right:0; border-left:0; border-bottom:0; }
+.fridge-reticle .bl { bottom:0; left:0; border-right:0; border-top:0; }
+.fridge-reticle .br { bottom:0; right:0; border-left:0; border-top:0; }
+.fridge-scan-card.done { border-color:rgba(16,185,129,0.5); box-shadow:0 0 0 1px rgba(16,185,129,0.18), 0 28px 70px -30px rgba(16,185,129,0.4); }
+.fridge-scan-card.done .fridge-reticle span { border-color:rgba(16,185,129,0.85); filter:drop-shadow(0 0 6px rgba(16,185,129,0.55)); }
+.fridge-scan-chip {
+  position:absolute; left:12px; bottom:12px; z-index:6; display:inline-flex; align-items:center; gap:8px;
+  padding:6px 11px; border-radius:8px; background:rgba(5,7,13,0.78); backdrop-filter:blur(8px);
+  border:1px solid rgba(30,111,217,0.4); font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#7FB2F2;
+}
+.fridge-scan-card.done .fridge-scan-chip { border-color:rgba(16,185,129,0.45); color:#6EE7B7; }
+.fridge-scan-chip .dot { width:7px; height:7px; border-radius:50%; background:#1E6FD9; flex-shrink:0; box-shadow:0 0 8px #1E6FD9; animation:frBlink 1s infinite; }
+.fridge-scan-card.done .fridge-scan-chip .dot { background:#10B981; box-shadow:0 0 8px #10B981; animation:none; }
+@keyframes frBlink { 0%,100% { opacity:0.35; } 50% { opacity:1; } }
+.fridge-scan-x { position:absolute; top:10px; right:10px; z-index:7; width:30px; height:30px; border-radius:8px; background:rgba(5,7,13,0.8); border:1px solid var(--border); color:var(--muted); cursor:pointer; font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.fridge-scan-x:hover { border-color:var(--red); color:var(--red); }
+
+.fridge-readout { background:rgba(5,7,13,0.55); border:1px solid var(--border); border-radius:18px; padding:20px 22px; display:flex; flex-direction:column; font-family:'JetBrains Mono',monospace; min-height:160px; }
+.fridge-readout-head { display:flex; align-items:center; gap:10px; font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:#7FB2F2; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border); }
+.fridge-readout-head .bars { display:inline-flex; gap:3px; }
+.fridge-readout-head .bars i { width:3px; height:11px; background:#1E6FD9; border-radius:1px; display:inline-block; animation:frEq 1s infinite ease-in-out; }
+.fridge-readout-head .bars i:nth-child(2){ animation-delay:0.15s; } .fridge-readout-head .bars i:nth-child(3){ animation-delay:0.3s; }
+@keyframes frEq { 0%,100% { transform:scaleY(0.4); } 50% { transform:scaleY(1); } }
+.fridge-readout.done .fridge-readout-head { color:#6EE7B7; }
+.fridge-readout.done .fridge-readout-head .bars i { background:#10B981; animation:none; }
+.fridge-readout-list { display:flex; flex-direction:column; gap:9px; flex:1; }
+.fridge-readout-line { font-size:13px; line-height:1.4; color:var(--green); opacity:0; transform:translateX(-6px); transition:opacity 0.25s, transform 0.25s; }
+.fridge-readout-line.in { opacity:1; transform:none; }
+.fridge-readout-line .lab { color:#2E9E73; }
+.fridge-readout-line .val { color:#34D399; font-weight:600; }
+.fridge-readout-line .caret { display:inline-block; width:7px; color:#34D399; animation:frBlink 0.8s steps(1) infinite; }
+.fridge-readout-empty { font-size:12px; color:var(--dimmed); line-height:1.6; }
+
+/* ── RECIPE MODAL ── */
+.recipe-overlay { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:24px; opacity:0; pointer-events:none; transition:opacity 0.25s; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.recipe-overlay.open { opacity:1; pointer-events:auto; }
+.recipe-modal { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; width:100%; max-width:560px; position:relative; transform:scale(0.95) translateY(16px); transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); max-height:80vh; overflow-y:auto; scrollbar-width:none; }
+.recipe-modal::-webkit-scrollbar { display:none; }
+.recipe-overlay.open .recipe-modal { transform:scale(1) translateY(0); }
+.recipe-tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+.recipe-title { font-family:'Oswald',sans-serif; font-size:28px; font-weight:700; text-transform:uppercase; color:var(--text); margin-bottom:20px; }
+.recipe-body { font-size:14px; color:var(--muted); line-height:1.8; }
+.recipe-close { position:absolute; top:16px; right:16px; background:none; border:1.5px solid var(--border); color:var(--muted); width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.recipe-close:hover { border-color:var(--text); color:var(--text); }
+.recipe-spinner { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--green); animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── LOADING ── */
+.n-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px; gap:20px; }
+.n-loader { width:44px; height:44px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--green); animation:spin 0.9s linear infinite; }
+
+@media(max-width:768px) {
+  :root { --page-pad:20px; }
+  nav { padding:0 20px; }
+  .nav-center { display:none; }
+  .nav-user { flex-direction:row-reverse; }
+  .nav-btn { display:none; }
+  .meal-grid { grid-template-columns:1fr; }
+
+  /* Symmetric side-by-side action buttons (New Plan + Scan Meal) */
+  .n-actions { flex-wrap:nowrap; }
+  .n-actions .btn-regen, .n-actions .btn-scan-meal { flex:1 1 0; min-width:0; padding-left:12px; padding-right:12px; }
+
+  /* Sticky day tabs — strictly horizontal scroll, no vertical movement on page scroll */
+  .day-tabs {
+    position:sticky; top:64px; z-index:150;
+    background:var(--bg);
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+  }
+  .day-tab-btn { scroll-snap-align:start; }
+}
+/* ── PREMIUM PAYWALL + UPGRADE PILL ── */
+.nav-upgrade{display:none;align-items:center;gap:5px;text-decoration:none;background:linear-gradient(135deg,#2A7CE6,#1D4ED8);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:7px 15px;border-radius:9px;border:1px solid rgba(255,255,255,0.16);box-shadow:0 4px 14px -4px rgba(37,99,235,0.6);transition:all 0.2s;}
+.nav-upgrade:hover{transform:translateY(-1px);box-shadow:0 8px 22px -5px rgba(37,99,235,0.75);}
+.nav-upgrade span{font-size:13px;line-height:1;}
+.pw-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,7,13,0.72);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity 0.25s;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pw-overlay.open{opacity:1;pointer-events:auto;}
+.pw-modal{position:relative;width:100%;max-width:420px;background:radial-gradient(120% 70% at 100% 0%,rgba(37,99,235,0.14),transparent 58%),linear-gradient(180deg,rgba(37,99,235,0.06),var(--surface) 42%);border:1px solid rgba(37,99,235,0.3);border-radius:20px;padding:32px 28px 26px;box-shadow:0 0 0 1px rgba(37,99,235,0.06),0 40px 100px -30px rgba(0,0,0,0.8);transform:translateY(12px) scale(0.98);transition:transform 0.28s cubic-bezier(0.16,1,0.3,1);text-align:center;}
+.pw-overlay.open .pw-modal{transform:none;}
+.pw-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue) 28%,var(--green) 72%,transparent);}
+.pw-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.pw-close:hover{color:var(--text);border-color:var(--muted);}
+.pw-close svg{width:14px;height:14px;}
+.pw-badge{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#7FB2F2;margin-bottom:14px;}
+.pw-badge svg{width:13px;height:13px;}
+.pw-title{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text);line-height:1.1;margin-bottom:10px;}
+.pw-line{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:24px;}
+.pw-cta{display:block;width:100%;padding:14px;border-radius:12px;background:linear-gradient(180deg,#2A7CE6,var(--blue));color:#fff;border:1px solid rgba(255,255,255,0.16);font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all 0.2s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),0 10px 30px -12px rgba(37,99,235,0.6);}
+.pw-cta:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 16px 40px -12px rgba(37,99,235,0.75);}
+.pw-skip{display:block;width:100%;margin-top:10px;background:none;border:none;color:var(--muted);font-family:'Outfit',sans-serif;font-size:12.5px;cursor:pointer;opacity:0.8;}
+.pw-skip:hover{opacity:1;}
+</style>
+<script>window.addEventListener('unhandledrejection',function(ev){console.error('Unhandled promise rejection:',ev.reason);});</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><a href="dashboard.html"><img src="https://builtwithai.pro/fitai/media/logo.png" alt="FitAI"></a></div>
+  <div class="nav-center">
+    <a href="dashboard.html" class="nav-link" data-i18n="nav.dashboard">Dashboard</a>
+    <a href="library.html" class="nav-link" data-i18n="nav.library">Library</a>
+    <a href="nutrition.html" class="nav-link-nutrition" data-i18n="nav.nutrition">🥗 Nutrition</a>
+    <a href="saved-dishes.html" class="nav-link" style="position:relative;" id="savedNavLink" data-i18n="nav.saved">⭐ Saved</a>
+    <a href="referral.html" class="nav-link" data-i18n="nav.invite">🎁 Invite</a>
+  </div>
+  <div class="nav-right">
+    <a href="pricing.html" class="nav-upgrade" id="navUpgrade" data-i18n-html="nav.upgrade">Upgrade <span>⚡</span></a>
+    <div class="nav-user">
+      <div class="nav-avatar" id="navAvatar">B</div>
+      <span id="navName">...</span>
+    </div>
+    <button class="nav-btn" onclick="signOut()" data-i18n="nav.signout">Sign Out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- LOADING -->
+  <div class="n-loading" id="loadingEl">
+    <div class="n-loader"></div>
+    <div style="font-size:14px;color:var(--muted);" data-i18n="nut.loading">Loading your nutrition plan...</div>
+  </div>
+
+  <!-- NO PLAN -->
+  <div class="n-no-plan" id="noPlanEl" style="display:none;">
+    <div class="n-no-plan-icon">🥗</div>
+    <div class="n-no-plan-title" data-i18n="nut.noplan_title">No Nutrition Plan Yet</div>
+    <div class="n-no-plan-sub" data-i18n="nut.noplan_sub">Set up your personalized 7-day meal plan. AI builds it around your training schedule, goals, and food preferences — in under 30 seconds.</div>
+    <button class="n-no-plan-btn" onclick="window.location.href='nutrition-onboarding.html'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span data-i18n="nut.noplan_btn">Set Up My Nutrition Plan</span>
+    </button>
+  </div>
+
+  <!-- PLAN CONTENT -->
+  <div id="planContent" style="display:none;">
+
+    <!-- Hero -->
+    <div class="n-hero">
+      <div class="n-hero-tag" data-i18n="nut.hero_tag">🥗 Your Nutrition Plan</div>
+      <div class="n-hero-title" data-i18n-html="nut.hero_title">WEEKLY <span>FUEL</span><br>PLAN</div>
+      <div class="n-hero-sub" id="planSummary" data-i18n="nut.hero_sub">Personalized for your training and goals</div>
+      <div class="n-macro-row">
+        <div class="n-macro-chip"><div class="n-macro-val blue" id="m-kcal">—</div><div class="n-macro-label" data-i18n="dash.calories">Calories</div></div>
+        <div class="n-macro-chip"><div class="n-macro-val green" id="m-protein">—</div><div class="n-macro-label" data-i18n="dash.protein">Protein</div></div>
+        <div class="n-macro-chip"><div class="n-macro-val amber" id="m-carbs">—</div><div class="n-macro-label" data-i18n="dash.carbs">Carbs</div></div>
+        <div class="n-macro-chip"><div class="n-macro-val red" id="m-fat">—</div><div class="n-macro-label" data-i18n="dash.fat">Fat</div></div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="n-actions">
+      <button class="btn-regen" onclick="window.location.href='nutrition-onboarding.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span data-i18n="dash.new_nut_plan">New Nutrition Plan</span>
+      </button>
+      <button class="btn-scan-meal" onclick="openScanModal()">
+        <span class="btn-scan-emoji">📸</span>
+        <span data-i18n="nut.scan_my_meal">Scan My Meal</span>
+        <span class="btn-scan-badge">AI</span>
+      </button>
+    </div>
+
+    <!-- Day tabs -->
+    <div class="day-tabs" id="dayTabs"></div>
+
+    <!-- Day meals -->
+    <div id="dayContent"></div>
+
+  <!-- ═══ WHAT'S IN MY FRIDGE ═══ -->
+  <div class="fridge-section">
+    <div class="fridge-header">
+      <div>
+        <div class="fridge-title" data-i18n-html="nut.fridge_title">What's in my <span>fridge?</span></div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px;" data-i18n="nut.fridge_sub">Tell AI what you have — get meal ideas instantly</div>
+      </div>
+      <span class="fridge-tag" data-i18n="nut.ai_powered">AI POWERED</span>
+    </div>
+
+    <!-- Step 1: Category -->
+    <div style="margin-bottom:20px;">
+      <span style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:12px;" data-i18n="nut.cook_q">What do you want to cook?</span>
+      <div class="fridge-categories" id="fridgeCategories">
+        <div class="fridge-cat selected" data-cat="any" onclick="selectFridgeCat('any',this)"><span class="fridge-cat-icon">🍽️</span> <span data-i18n="nut.cat_any">Anything</span></div>
+        <div class="fridge-cat" data-cat="breakfast" onclick="selectFridgeCat('breakfast',this)"><span class="fridge-cat-icon">🍳</span> <span data-i18n="nut.cat_breakfast">Breakfast</span></div>
+        <div class="fridge-cat" data-cat="lunch" onclick="selectFridgeCat('lunch',this)"><span class="fridge-cat-icon">🥗</span> <span data-i18n="nut.cat_lunch">Lunch</span></div>
+        <div class="fridge-cat" data-cat="dinner" onclick="selectFridgeCat('dinner',this)"><span class="fridge-cat-icon">🍲</span> <span data-i18n="nut.cat_dinner">Dinner</span></div>
+        <div class="fridge-cat" data-cat="snack" onclick="selectFridgeCat('snack',this)"><span class="fridge-cat-icon">🥙</span> <span data-i18n="nut.cat_snack">Snack</span></div>
+        <div class="fridge-cat" data-cat="protein" onclick="selectFridgeCat('protein',this)"><span class="fridge-cat-icon">💪</span> <span data-i18n="nut.cat_protein">High Protein</span></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Ingredients -->
+    <div class="fridge-ingredients-wrap">
+      <span class="fridge-ing-label" data-i18n="nut.have_q">What do you have in the fridge?</span>
+      <div class="fridge-ing-list" id="fridgeIngList">
+        <div class="fridge-ing-row">
+          <input class="fridge-ing-input" placeholder="e.g. chicken breast" data-i18n-ph="nut.ph_chicken" type="text">
+          <button class="fridge-ing-remove" onclick="removeFridgeIng(this)" style="opacity:0.3;pointer-events:none;">×</button>
+        </div>
+        <div class="fridge-ing-row">
+          <input class="fridge-ing-input" placeholder="e.g. eggs" data-i18n-ph="nut.ph_eggs" type="text">
+          <button class="fridge-ing-remove" onclick="removeFridgeIng(this)" style="opacity:0.3;pointer-events:none;">×</button>
+        </div>
+        <div class="fridge-ing-row">
+          <input class="fridge-ing-input" placeholder="e.g. broccoli" data-i18n-ph="nut.ph_broccoli" type="text">
+          <button class="fridge-ing-remove" onclick="removeFridgeIng(this)" style="opacity:0.3;pointer-events:none;">×</button>
+        </div>
+      </div>
+      <button class="fridge-add-btn" onclick="addFridgeIng()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span data-i18n="nut.add_ing">Add ingredient</span>
+      </button>
+    </div>
+
+    <!-- Step 2b: Upload a fridge photo (AI Vision detects ingredients) -->
+    <div class="fridge-photo-block">
+      <span class="fridge-ing-label" data-i18n="nut.snap_label">Or snap a photo of your fridge / ingredients</span>
+
+      <!-- Drop zone -->
+      <div class="fridge-photo-zone" id="fridgePhotoZone"
+           onclick="document.getElementById('fridgePhotoInput').click()"
+           ondragover="event.preventDefault(); this.classList.add('dragover');"
+           ondragleave="this.classList.remove('dragover');"
+           ondrop="fridgeDrop(event)">
+        <div class="fpz-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="fpz-title" data-i18n-html="nut.tap_upload"><b>Tap to upload</b> or drag &amp; drop a photo</div>
+        <div class="fpz-hint" data-i18n="nut.fpz_hint">AI detects your ingredients automatically · JPG, PNG</div>
+        <input type="file" id="fridgePhotoInput" accept="image/*" style="display:none" onchange="handleFridgePhoto(this)">
+      </div>
+
+      <!-- Scan preview (reuses the onboarding body-scan style) -->
+      <div class="fridge-scan" id="fridgeScan">
+        <div class="fridge-scan-layout">
+          <div class="fridge-scan-card" id="fridgeScanCard">
+            <img src="" alt="Fridge photo" class="fridge-scan-photo" id="fridgeScanPhoto">
+            <div class="fridge-scan-band"></div>
+            <div class="fridge-scan-line"></div>
+            <div class="fridge-reticle"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div>
+            <div class="fridge-scan-chip"><span class="dot"></span><span id="fridgeScanChipText" data-i18n="nut.photo_attached">Photo attached</span></div>
+            <button class="fridge-scan-x" onclick="removeFridgePhoto()" title="Remove photo">×</button>
+          </div>
+          <div class="fridge-readout" id="fridgeReadout">
+            <div class="fridge-readout-head"><span class="bars"><i></i><i></i><i></i></span><span data-i18n="nut.ai_vision_scan">AI Vision · Ingredient Scan</span></div>
+            <div class="fridge-readout-list" id="fridgeReadoutList">
+              <div class="fridge-readout-empty" data-i18n="nut.ready_scan">Ready to scan. Hit “Generate Dish Ideas” to detect ingredients from your photo.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="fridge-generate-btn" id="fridgeGenBtn" onclick="generateFridgeDishes()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <span data-i18n="nut.gen_dishes">Generate Dish Ideas</span>
+    </button>
+
+    <!-- Generating state -->
+    <div class="fridge-generating" id="fridgeGenerating">
+      <div class="fridge-gen-spinner"></div>
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:18px;text-transform:uppercase;margin-bottom:4px;" data-i18n="nut.ai_thinking">AI is thinking...</div>
+        <div style="font-size:13px;color:var(--muted);" data-i18n="nut.finding_dishes">Finding the best dishes from your ingredients</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="fridge-results" id="fridgeResults" style="display:none;">
+      <div class="fridge-results-title"><span data-i18n="nut.your">Your</span> <span id="fridgeResultsCount">3</span> <span data-i18n="nut.dish_ideas">dish ideas</span></div>
+      <div class="fridge-dishes-grid" id="fridgeDishesGrid"></div>
+    </div>
+
+    <!-- Saved count + link -->
+    <div id="savedDishesLink" style="display:none;margin-top:24px;padding:16px 20px;background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.2);border-radius:14px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">⭐</span>
+        <div>
+          <div style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;color:var(--text);">
+            <span id="savedDishCount">0</span> saved dish<span id="savedDishPlural">es</span>
+          </div>
+          <div style="font-size:11px;color:var(--dimmed);margin-top:1px;">Your liked recipes are waiting</div>
+        </div>
+      </div>
+      <a href="saved-dishes.html" style="display:flex;align-items:center;gap:6px;background:rgba(245,158,11,0.1);border:1.5px solid rgba(245,158,11,0.3);color:var(--amber);padding:8px 16px;border-radius:8px;font-size:12px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all 0.2s;" data-i18n="dash.view_all">
+        View all →
+      </a>
+    </div>
+  </div>
+
+  </div><!-- /planContent -->
+</div><!-- /page -->
+
+
+<!-- SCAN MEAL MODAL -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-modal">
+    <div class="scan-modal-inner">
+      <div class="scan-modal-head">
+        <div>
+          <div class="scan-modal-tag" data-i18n="nut.scan_tag">📸 AI Vision</div>
+          <div class="scan-modal-title" data-i18n-html="nut.scan_title">SCAN <span>MY</span> MEAL</div>
+        </div>
+        <button class="scan-close" onclick="closeScanModal()">✕</button>
+      </div>
+      <div class="scan-dropzone" id="scanDropzone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleScanDrop(event)" onclick="document.getElementById('scanFileInput').click()">
+        <div class="scan-dropzone-icon">🍽️</div>
+        <div class="scan-dropzone-text" data-i18n="nut.scan_drop">Drop your meal photo here</div>
+        <div class="scan-dropzone-sub" data-i18n="nut.scan_drop_sub">or click to choose from your device</div>
+        <div class="scan-dropzone-btn" data-i18n="nut.scan_upload_btn">📁 Upload Photo</div>
+        <input type="file" id="scanFileInput" accept="image/*" onchange="handleScanFile(event)">
+      </div>
+      <div class="scan-preview" id="scanPreview"><img id="scanPreviewImg" src="" alt="Meal preview"><div class="scan-preview-overlay"></div><div class="scan-sweep-band"></div><div class="scan-sweep-line"></div><div class="scan-reticle"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div><button class="scan-preview-change" onclick="resetScan()" data-i18n="nut.change_photo">Change photo</button></div>
+      <button class="scan-save-btn" id="scanAnalyzeBtn" style="display:none;width:100%;margin-bottom:10px;" onclick="analyzeMeal()" data-i18n="nut.analyze_ai">🔍 Analyze with AI</button>
+      <div class="scan-loading" id="scanLoading"><div class="scan-loading-ring"></div><div class="scan-loading-line" data-i18n="nut.analyzing">Analyzing meal...</div><div class="scan-loading-sub" data-i18n="nut.reading_plate">GPT-4o Vision is reading your plate</div></div>
+      <div class="scan-result" id="scanResult">
+        <div class="scan-result-dish" id="scanDishName">—</div>
+        <div class="scan-result-grams" id="scanGrams">— g estimated portion</div>
+        <div class="scan-macros-row">
+          <div class="scan-macro-box"><div class="scan-macro-val" style="color:var(--blue)" id="scanKcal">—</div><div class="scan-macro-lbl" data-i18n="nut.l_kcal">kcal</div></div>
+          <div class="scan-macro-box"><div class="scan-macro-val" style="color:var(--green)" id="scanProt">—</div><div class="scan-macro-lbl" data-i18n="nut.l_protein">protein</div></div>
+          <div class="scan-macro-box"><div class="scan-macro-val" style="color:var(--amber)" id="scanCarb">—</div><div class="scan-macro-lbl" data-i18n="nut.l_carbs">carbs</div></div>
+          <div class="scan-macro-box"><div class="scan-macro-val" style="color:#f97316" id="scanFat">—</div><div class="scan-macro-lbl" data-i18n="nut.l_fat">fat</div></div>
+        </div>
+        <div class="scan-confidence" id="scanConfidence"><div class="scan-confidence-dot" id="scanConfDot" style="background:var(--green)"></div><span id="scanConfText">High confidence</span></div>
+        <div class="scan-note" id="scanNote" style="display:none;"></div>
+        <div class="scan-actions"><button class="scan-save-btn" id="scanSaveBtn" onclick="saveScanToLog()" data-i18n="nut.save_log">✓ Save to Food Log</button><button class="scan-dismiss-btn" onclick="closeScanModal()" data-i18n="nut.dismiss">Dismiss</button></div>
+        <button class="scan-again-btn" onclick="resetScan()" data-i18n="nut.scan_another">📸 Scan another meal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECIPE MODAL -->
+<div class="recipe-overlay" id="recipeOverlay">
+  <div class="recipe-modal">
+    <button class="recipe-close" onclick="closeRecipe()">✕</button>
+    <div class="recipe-tag" data-i18n="nut.recipe_tag">🍳 Recipe</div>
+    <div class="recipe-title" id="recipeTitle">...</div>
+    <div class="recipe-body" id="recipeBody">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="recipe-spinner"></div>
+        <span data-i18n="nut.getting_recipe">Getting recipe from AI...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://bgdhcbtqetmaahqgpybo.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZGhjYnRxZXRtYWFocWdweWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4ODY5MDgsImV4cCI6MjA5NTQ2MjkwOH0.DGYXbWp_ungAE0S4bzp7jJSLmVkx-h2_SUaAS6HjWyk';
+const UNSPLASH_KEY  = 'Rk9KvTZhsOJNw-ajfLSQfoLxkyjNsxTyMF2Rl_7VZJ8';
+const RECIPE_WEBHOOK    = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-recipe';
+const FOOD_SCAN_WEBHOOK = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-food-scan';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════════════════════════
+//  NAV AVATAR — photo upload + gradient-initial fallback (shared block)
+//  Storage: fitai-users/avatars/{user_id} → profiles.avatar_url
+// ════════════════════════════════════════════════════════════════
+const FitAIAvatar = (() => {
+  const AV_BUCKET = 'fitai-users';
+  const GRADIENTS = [
+    'linear-gradient(135deg,#2563EB,#7C3AED)',
+    'linear-gradient(135deg,#10B981,#0EA5E9)',
+    'linear-gradient(135deg,#F59E0B,#EF4444)',
+    'linear-gradient(135deg,#EC4899,#8B5CF6)',
+    'linear-gradient(135deg,#06B6D4,#3B82F6)',
+    'linear-gradient(135deg,#8B5CF6,#EC4899)',
+    'linear-gradient(135deg,#22C55E,#15803D)',
+    'linear-gradient(135deg,#F43F5E,#FB923C)'
+  ];
+  const cfg = { elId:'navAvatar', uid:null, token:null, name:'', avatarUrl:null };
+  let menuEl = null, fileEl = null, wrapEl = null, wired = false;
+
+  const el = () => document.getElementById(cfg.elId);
+  const letterFor = n => { const s=(n||'').trim(); return s ? s.charAt(0).toUpperCase() : '?'; };
+  function gradientFor(seed){
+    const s = (seed||'?').toString().toUpperCase();
+    let h = 0; for (let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+    return GRADIENTS[h % GRADIENTS.length];
+  }
+
+  function render(){
+    const a = el(); if (!a) return;
+    if (cfg.avatarUrl){
+      a.style.background = 'none';
+      const grad = gradientFor(cfg.name || cfg.uid), ltr = letterFor(cfg.name);
+      a.innerHTML = '<img src="'+cfg.avatarUrl+'" alt="" onerror="this.onerror=null;this.parentNode.style.background=\''+grad+'\';this.parentNode.textContent=\''+ltr+'\';">';
+    } else {
+      a.style.background = gradientFor(cfg.name || cfg.uid);
+      a.textContent = letterFor(cfg.name);
+    }
+    if (menuEl){
+      const rm = menuEl.querySelector('[data-act=remove]');
+      if (rm) rm.style.display = cfg.avatarUrl ? '' : 'none';
+    }
+  }
+
+  function buildMenu(){
+    const a = el(); if (!a || wired) return;
+    wrapEl = document.createElement('div');
+    wrapEl.className = 'nav-avatar-wrap';
+    a.parentNode.insertBefore(wrapEl, a);
+    wrapEl.appendChild(a);
+
+    menuEl = document.createElement('div');
+    menuEl.className = 'nav-avatar-menu';
+    menuEl.innerHTML =
+      '<button data-act="upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span data-i18n="nav.upload_photo">Upload photo</span></button>' +
+      '<button data-act="remove" class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span data-i18n="nav.remove_photo">Remove photo</span></button>' +
+      '<div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 6px;"></div>' +
+      '<button data-act="signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span data-i18n="nav.signout">Sign Out</span></button>';
+    wrapEl.appendChild(menuEl);
+
+    fileEl = document.createElement('input');
+    fileEl.type = 'file'; fileEl.accept = 'image/*'; fileEl.style.display = 'none';
+    wrapEl.appendChild(fileEl);
+
+    a.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.toggle('open'); });
+    document.addEventListener('click', () => menuEl.classList.remove('open'));
+    menuEl.querySelector('[data-act=upload]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); fileEl.click(); });
+    menuEl.querySelector('[data-act=remove]').addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); removePhoto(); });
+    const _so = menuEl.querySelector('[data-act=signout]');
+    if (_so) _so.addEventListener('click', e => { e.stopPropagation(); menuEl.classList.remove('open'); if (typeof signOut === 'function') signOut(); });
+    fileEl.addEventListener('change', onFile);
+    wired = true;
+    if (window.FitAILang) FitAILang.apply();
+  }
+
+  async function onFile(e){
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !cfg.uid || !cfg.token) return;
+    if (!file.type.startsWith('image/')) { alert(FitAILang.t('av.err_image')); return; }
+    if (file.size > 5*1024*1024) { alert(FitAILang.t('av.err_too_large')); return; }
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const path = 'avatars/' + cfg.uid;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/' + AV_BUCKET + '/' + path, {
+        method:'POST',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':file.type, 'x-upsert':'true' },
+        body:file
+      });
+      if (!up.ok) throw new Error('Storage upload failed ('+up.status+')');
+      const publicUrl = SUPABASE_URL + '/storage/v1/object/public/' + AV_BUCKET + '/' + path + '?t=' + Date.now();
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: publicUrl })
+      });
+      if (!pr.ok) throw new Error('Saving avatar failed ('+pr.status+')');
+      cfg.avatarUrl = publicUrl;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = publicUrl;
+      render();
+    } catch(err){
+      alert(err.message || FitAILang.t('av.err_upload'));
+    } finally {
+      if (a) a.classList.remove('loading');
+    }
+  }
+
+  async function removePhoto(){
+    if (!cfg.uid || !cfg.token) return;
+    const a = el(); if (a) a.classList.add('loading');
+    try {
+      const pr = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + cfg.uid, {
+        method:'PATCH',
+        headers:{ apikey:SUPABASE_ANON, Authorization:'Bearer '+cfg.token, 'Content-Type':'application/json', Prefer:'return=minimal' },
+        body: JSON.stringify({ avatar_url: null })
+      });
+      if (!pr.ok) throw new Error('Could not remove photo ('+pr.status+')');
+      cfg.avatarUrl = null;
+      if (typeof currentProfile === 'object' && currentProfile) currentProfile.avatar_url = null;
+      render();
+    } catch(err){ alert(err.message || FitAILang.t('av.err_remove')); }
+    finally { if (a) a.classList.remove('loading'); }
+  }
+
+  function init(opts){
+    cfg.elId      = opts.elId || 'navAvatar';
+    cfg.uid       = opts.uid || null;
+    cfg.token     = opts.token || null;
+    cfg.name      = opts.name || '';
+    cfg.avatarUrl = opts.avatarUrl || null;
+    buildMenu();
+    render();
+  }
+  return { init, render };
+})();
+
+// ── PREMIUM GATING ──
+let currentProfile = null;
+let currentUserId = null;
+function isPremium(){ return !!(currentProfile && currentProfile.plan === 'premium'); }
+function showPaywall(title, line){
+  document.getElementById('pwTitle').textContent = title;
+  document.getElementById('pwLine').textContent = line;
+  document.getElementById('paywallOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePaywall(){
+  document.getElementById('paywallOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function refreshUpgradePill(){
+  const up = document.getElementById('navUpgrade');
+  if (up) up.style.display = isPremium() ? 'none' : 'inline-flex';
+}
+// Free users get 3 food scans / day (per user, localStorage)
+function foodScanKey(){ const d = new Date().toISOString().slice(0,10); return 'fitai_foodscans_' + (currentUserId || 'anon') + '_' + d; }
+function foodScansToday(){ return parseInt(localStorage.getItem(foodScanKey()) || '0', 10) || 0; }
+function incFoodScan(){ try { localStorage.setItem(foodScanKey(), String(foodScansToday() + 1)); } catch(e){ console.error(e); } }
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+let nutritionData = null;
+let activeDay = null;
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', async () => {
+  cleanImageCache();
+  renderSavedDishes();
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'signin.html'; return; }
+
+  const uid = session.user.id;
+  currentUserId = uid;
+  const headers = { apikey:SUPABASE_ANON, Authorization:`Bearer ${session.access_token}` };
+
+  const [profResp, nutritionResp] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${uid}&select=name,plan,avatar_url`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/nutrition_plans?user_id=eq.${uid}&select=*&order=created_at.desc&limit=1`, { headers })
+  ]);
+
+  const profile = (await profResp.json())[0] || {};
+  currentProfile = profile;
+  refreshUpgradePill();
+  const rawData = (await nutritionResp.json())[0] || null;
+
+  const name = profile.name || 'User';
+  document.getElementById('navName').textContent = name;
+  FitAIAvatar.init({ uid, token: session.access_token, name, avatarUrl: profile.avatar_url });
+
+  document.getElementById('loadingEl').style.display = 'none';
+
+  if (!rawData) {
+    document.getElementById('noPlanEl').style.display = 'flex';
+    return;
+  }
+
+  nutritionData = rawData;
+  renderPlan();
+});
+
+function renderPlan() {
+  document.getElementById('planContent').style.display = 'block';
+
+  // Hero macros
+  document.getElementById('m-kcal').textContent = (nutritionData.daily_kcal||'—').toLocaleString();
+  document.getElementById('m-protein').textContent = (nutritionData.protein_g||'—')+'g';
+  document.getElementById('m-carbs').textContent = (nutritionData.carbs_g||'—')+'g';
+  document.getElementById('m-fat').textContent = (nutritionData.fat_g||'—')+'g';
+  if (nutritionData.summary) document.getElementById('planSummary').textContent = nutritionData.summary;
+
+  // Build day tabs
+  const week = nutritionData.week || [];
+  const tabsEl = document.getElementById('dayTabs');
+  tabsEl.innerHTML = '';
+
+  // Get today
+  const todayIdx = new Date().getDay();
+  const todayName = DAYS[todayIdx === 0 ? 6 : todayIdx - 1];
+  const firstDay = week[0]?.day || DAYS[0];
+  activeDay = week.find(d => d.day === todayName)?.day || firstDay;
+
+  week.forEach(d => {
+    const isTraining = d.is_training_day;
+    const isToday = d.day === todayName;
+    const btn = document.createElement('button');
+    btn.className = 'day-tab-btn' +
+      (isTraining ? ' training-day' : ' rest-day') +
+      (d.day === activeDay ? ' active' : '');
+    btn.textContent = d.day.slice(0, 3);
+    // Current day = blue dot; training day (when not today) = white dot; never both
+    if (isToday) {
+      const dot = document.createElement('span');
+      dot.className = 'today-dot';
+      btn.appendChild(dot);
+    } else if (isTraining) {
+      const dot = document.createElement('span');
+      dot.className = 'train-dot';
+      btn.appendChild(dot);
+    }
+    btn.onclick = () => {
+      document.querySelectorAll('.day-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeDay = d.day;
+      renderDay(d);
+    };
+    tabsEl.appendChild(btn);
+  });
+
+  // Render active day
+  const activeDayData = week.find(d => d.day === activeDay);
+  if (activeDayData) renderDay(activeDayData);
+}
+
+function renderDay(d) {
+  const meals = d.meals || [];
+  const totals = d.totals || {};
+  const isTraining = d.is_training_day;
+  const totalKcal = meals.reduce((s,m) => s+(m.kcal||0), 0) || 1;
+
+  const content = document.getElementById('dayContent');
+  content.innerHTML = `
+    <div class="day-header">
+      <div>
+        <div class="day-title">${d.day}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span class="day-type-badge ${isTraining ? 'training' : 'rest'}">${isTraining ? '🏋️ Training Day' : '😴 Rest Day'}</span>
+        <div class="day-macros">
+          <div class="day-macro-item"><div class="day-macro-val" style="color:var(--blue)">${totals.kcal||totalKcal}</div><div class="day-macro-label">kcal</div></div>
+          <div class="day-macro-item"><div class="day-macro-val" style="color:var(--green)">${totals.protein_g||'—'}g</div><div class="day-macro-label">protein</div></div>
+          <div class="day-macro-item"><div class="day-macro-val" style="color:var(--amber)">${totals.carbs_g||'—'}g</div><div class="day-macro-label">carbs</div></div>
+          <div class="day-macro-item"><div class="day-macro-val" style="color:#f97316">${totals.fat_g||'—'}g</div><div class="day-macro-label">fat</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="meal-grid" id="mealGrid">
+      ${meals.map((m,i) => {
+        const pct = Math.round(((m.kcal||0)/totalKcal)*100);
+        return `
+        <div class="n-meal-card">
+          <img class="n-meal-card-img" data-meal="${encodeURIComponent((m.foods&&m.foods[0])||m.meal)}" alt="${m.meal}" style="background:var(--elevated);">
+          <div class="n-meal-card-body">
+            <div class="n-meal-time">${m.time||''}</div>
+            <div class="n-meal-name">${m.meal}</div>
+            <div class="n-meal-foods">${(m.foods||[]).join(', ')}</div>
+            <div class="n-meal-macros">
+              <span class="n-macro-tag kcal">${m.kcal||0} kcal</span>
+              ${m.protein_g ? `<span class="n-macro-tag protein">${m.protein_g}g P</span>` : ''}
+              ${m.carbs_g   ? `<span class="n-macro-tag carbs">${m.carbs_g}g C</span>`   : ''}
+              ${m.fat_g     ? `<span class="n-macro-tag fat">${m.fat_g}g F</span>`       : ''}
+            </div>
+            <div class="n-meal-footer">
+              <div class="n-meal-kcal">
+                <span class="n-meal-kcal-val">${m.kcal||0}</span>
+                <span class="n-meal-kcal-label">kcal</span>
+              </div>
+              <button class="n-recipe-btn" onclick="openRecipe('${m.meal.replace(/'/g,"\\'")}',${JSON.stringify(m.foods||[]).replace(/"/g,"'")})">Recipe</button>
+            </div>
+            <div class="n-meal-bar"><div class="n-meal-bar-fill" style="width:${pct}%"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  // Load Unsplash images
+  loadImages();
+}
+
+async function loadImages() {
+  const imgs = document.querySelectorAll('[data-meal]');
+  for (const img of imgs) {
+    try {
+      const keyword = decodeURIComponent(img.dataset.meal);
+      const cacheKey = 'fitai_img_' + keyword.toLowerCase().replace(/\s+/g,'_').slice(0,40);
+
+      // Check cache first — avoid burning API quota on reload
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) { img.src = cached; continue; }
+
+      const r = await fetch(
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword+' food meal')}&orientation=landscape&client_id=${UNSPLASH_KEY}`,
+        { headers:{ 'Accept-Version':'v1' } }
+      );
+      if (!r.ok) continue;
+      const d = await r.json();
+      const url = d.urls?.small || d.urls?.regular;
+      if (url) {
+        img.src = url;
+        // Cache for 24 hours
+        localStorage.setItem(cacheKey, url);
+        localStorage.setItem(cacheKey + '_ts', Date.now().toString());
+      }
+    } catch(e) { console.error(e); }
+  }
+}
+
+// Clean expired image cache (older than 24h) on load
+function cleanImageCache() {
+  const DAY = 86400000;
+  Object.keys(localStorage)
+    .filter(k => k.endsWith('_ts') && k.startsWith('fitai_img_'))
+    .forEach(k => {
+      if (Date.now() - parseInt(localStorage.getItem(k)||'0') > DAY) {
+        localStorage.removeItem(k);
+        localStorage.removeItem(k.replace('_ts',''));
+      }
+    });
+}
+
+
+
+// ── SAVED DISHES ──────────────────────────────────────────────────
+const SAVED_KEY = 'fitai_saved_dishes';
+
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch(e) { return []; }
+}
+function setSaved(arr) { localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); }
+
+function saveDish(idx, name, kcal, description, ingredients) {
+  const btn = document.getElementById('save-' + idx);
+  const saved = getSaved();
+  const imgUrl = (window._fridgeImgUrls && window._fridgeImgUrls[idx]) || '';
+
+  const existIdx = saved.findIndex(s => s.name === name);
+  if (existIdx >= 0) {
+    saved.splice(existIdx, 1);
+    if (btn) { btn.textContent = '♡'; btn.classList.remove('saved'); }
+  } else {
+    saved.push({ name, kcal: kcal||0, imgUrl, description: description||'', ingredients: ingredients||[] });
+    if (btn) { btn.textContent = '♥'; btn.classList.add('saved'); }
+  }
+  setSaved(saved);
+  renderSavedDishes();
+}
+
+function renderSavedDishes() {
+  const saved = getSaved();
+  const link = document.getElementById('savedDishesLink');
+  const countEl = document.getElementById('savedDishCount');
+  const pluralEl = document.getElementById('savedDishPlural');
+  if (link) {
+    if (!saved.length) { link.style.display = 'none'; }
+    else {
+      link.style.display = 'flex';
+      if (countEl) countEl.textContent = saved.length;
+      if (pluralEl) pluralEl.textContent = saved.length === 1 ? '' : 'es';
+    }
+  }
+  // Also mark current fridge results as saved/unsaved
+  if (window._fridgeDishes) {
+    window._fridgeDishes.forEach((d, idx) => {
+      const btn = document.getElementById('save-' + idx);
+      if (!btn) return;
+      if (saved.find(s => s.name === d.name)) {
+        btn.textContent = '♥'; btn.classList.add('saved');
+      } else {
+        btn.textContent = '♡'; btn.classList.remove('saved');
+      }
+    });
+  }
+  // Cards are rendered in saved-dishes.html — nothing to render here
+
+  // Also mark current results as saved
+  if (window._fridgeDishes) {
+    window._fridgeDishes.forEach((d, idx) => {
+      if (saved.find(s => s.name === d.name)) {
+        const btn = document.getElementById('save-' + idx);
+        if (btn) { btn.textContent = '♥'; btn.classList.add('saved'); }
+      }
+    });
+  }
+}
+
+function removeSaved(idx) {
+  const saved = getSaved();
+  saved.splice(idx, 1);
+  setSaved(saved);
+  renderSavedDishes();
+}
+
+function clearSavedDishes() {
+  if (!confirm('Clear all saved dishes?')) return;
+  setSaved([]);
+  renderSavedDishes();
+}
+
+// ── FRIDGE SYSTEM ─────────────────────────────────────────────────
+const FRIDGE_WEBHOOK = 'https://n8n.srv1421181.hstgr.cloud/webhook/fitai-fridge';
+let selectedFridgeCat = 'any';
+
+// ── Fridge photo (AI Vision) ──
+let fridgePhotoDataUrl = null;   // data URL — used for preview + sent as base64 to n8n
+let fridgePhotoMime = null;
+
+// Read + downscale an image file to a JPEG data URL (smaller payload, faster Vision)
+function fileToScaledDataURL(file, maxDim){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        try {
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        } catch(e){ resolve(reader.result); }
+      };
+      img.onerror = () => resolve(reader.result);
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function setFridgeChip(text){ const t = document.getElementById('fridgeScanChipText'); if (t) t.textContent = text; }
+
+async function handleFridgePhotoFile(file){
+  if (!file || !file.type || !file.type.startsWith('image/')) return;
+  try {
+    fridgePhotoDataUrl = await fileToScaledDataURL(file, 1024);
+    fridgePhotoMime = 'image/jpeg';
+  } catch(e){ fridgePhotoDataUrl = null; return; }
+
+  document.getElementById('fridgeScanPhoto').src = fridgePhotoDataUrl;
+  document.getElementById('fridgePhotoZone').style.display = 'none';
+  document.getElementById('fridgeScan').classList.add('show');
+  const card = document.getElementById('fridgeScanCard');
+  const readout = document.getElementById('fridgeReadout');
+  card.classList.remove('scanning', 'done');
+  readout.classList.remove('done');
+  setFridgeChip('Photo attached');
+  document.getElementById('fridgeReadoutList').innerHTML =
+    '<div class="fridge-readout-empty">Ready to scan. Hit “Generate Dish Ideas” to detect ingredients.</div>';
+}
+function handleFridgePhoto(input){ const f = input.files && input.files[0]; if (f) handleFridgePhotoFile(f); }
+function fridgeDrop(e){
+  e.preventDefault();
+  const zone = document.getElementById('fridgePhotoZone');
+  if (zone) zone.classList.remove('dragover');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) handleFridgePhotoFile(f);
+}
+function removeFridgePhoto(){
+  fridgePhotoDataUrl = null; fridgePhotoMime = null;
+  document.getElementById('fridgeScan').classList.remove('show');
+  document.getElementById('fridgePhotoZone').style.display = '';
+  const input = document.getElementById('fridgePhotoInput'); if (input) input.value = '';
+  const card = document.getElementById('fridgeScanCard');
+  if (card) card.classList.remove('scanning', 'done');
+}
+
+// Terminal-style typewriter reveal of detected ingredients
+const frDelay = (ms) => new Promise(r => setTimeout(r, ms));
+function frTypeText(el, text, speed){
+  return new Promise(resolve => {
+    let i = 0;
+    (function tick(){
+      el.textContent = text.slice(0, i);
+      if (i < text.length){ i++; setTimeout(tick, speed); }
+      else resolve();
+    })();
+  });
+}
+async function frRenderDetected(items){
+  const box = document.getElementById('fridgeReadoutList');
+  box.innerHTML = '';
+  if (!items || !items.length){
+    box.innerHTML = '<div class="fridge-readout-empty">No clear ingredients detected — try a closer photo or type them in above.</div>';
+    return;
+  }
+  for (const item of items){
+    const line  = document.createElement('div'); line.className = 'fridge-readout-line';
+    const lab   = document.createElement('span'); lab.className = 'lab';
+    const val   = document.createElement('span'); val.className = 'val';
+    const caret = document.createElement('span'); caret.className = 'caret'; caret.textContent = '▋';
+    line.append(lab, val, caret);
+    box.appendChild(line);
+    requestAnimationFrame(() => line.classList.add('in'));
+    await frTypeText(lab, 'Detected... ', 14);
+    await frTypeText(val, String(item), 28);
+    caret.remove();
+    await frDelay(110);
+  }
+}
+
+function selectFridgeCat(cat, el) {
+  selectedFridgeCat = cat;
+  document.querySelectorAll('.fridge-cat').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function addFridgeIng() {
+  const list = document.getElementById('fridgeIngList');
+  const row = document.createElement('div');
+  row.className = 'fridge-ing-row';
+  row.innerHTML = `
+    <input class="fridge-ing-input" placeholder="e.g. tomatoes" type="text">
+    <button class="fridge-ing-remove" onclick="removeFridgeIng(this)">×</button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+
+  // Enable remove on existing single rows
+  list.querySelectorAll('.fridge-ing-remove').forEach(btn => {
+    btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+  });
+}
+
+function removeFridgeIng(btn) {
+  const row = btn.closest('.fridge-ing-row');
+  const list = document.getElementById('fridgeIngList');
+  if (list.children.length > 1) {
+    row.remove();
+    if (list.children.length === 1) {
+      const lastBtn = list.querySelector('.fridge-ing-remove');
+      if (lastBtn) { lastBtn.style.opacity='0.3'; lastBtn.style.pointerEvents='none'; }
+    }
+  }
+}
+
+async function generateFridgeDishes() {
+  const inputs = [...document.querySelectorAll('.fridge-ing-input')];
+  const ingredients = inputs.map(i => i.value.trim()).filter(Boolean);
+
+  if (ingredients.length === 0 && !fridgePhotoDataUrl) {
+    inputs[0]?.focus();
+    inputs[0]?.style.setProperty('border-color','var(--red)');
+    setTimeout(() => inputs[0]?.style.removeProperty('border-color'), 2000);
+    return;
+  }
+
+  const btn = document.getElementById('fridgeGenBtn');
+  const genEl = document.getElementById('fridgeGenerating');
+  const resultsEl = document.getElementById('fridgeResults');
+
+  btn.disabled = true;
+  resultsEl.style.display = 'none';
+  const usingPhoto = !!fridgePhotoDataUrl;
+  if (usingPhoto) {
+    document.getElementById('fridgeScan').classList.add('show');
+    document.getElementById('fridgePhotoZone').style.display = 'none';
+    const scanCard = document.getElementById('fridgeScanCard');
+    const scanReadout = document.getElementById('fridgeReadout');
+    scanCard.classList.remove('done'); scanReadout.classList.remove('done');
+    document.getElementById('fridgeReadoutList').innerHTML = '<div class="fridge-readout-empty">Scanning photo for ingredients…</div>';
+    scanCard.classList.remove('scanning'); void scanCard.offsetWidth; scanCard.classList.add('scanning');
+    setFridgeChip('Scanning fridge');
+  } else {
+    genEl.classList.add('show');
+  }
+
+  try {
+    // resolve user_id from the user's profile, guarded against fetch/shape errors
+    let fridgeUserId = null;
+    try {
+      const sess = (await sb.auth.getSession()).data.session;
+      if (sess) {
+        const pr = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id`, { headers:{ apikey:SUPABASE_ANON, Authorization:`Bearer ${sess.access_token}` } });
+        if (pr.ok) {
+          const prData = await pr.json();
+          if (Array.isArray(prData) && prData[0]) fridgeUserId = prData[0].id;
+        } else {
+          console.error('fridge user_id lookup: HTTP ' + pr.status);
+        }
+      }
+    } catch(e) { console.error('fridge user_id lookup failed:', e); }
+
+    const r = await fetch(FRIDGE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ingredients,
+        category: selectedFridgeCat,
+        photo_base64: fridgePhotoDataUrl || null,
+        mime_type: fridgePhotoMime || null,
+        user_id: fridgeUserId,
+        lang: localStorage.getItem('fitai_lang') || 'en'
+      })
+    });
+
+    const data = await r.json();
+    const dishes = data.dishes || [];
+    const detected = Array.isArray(data.detected_ingredients) ? data.detected_ingredients : [];
+
+    if (usingPhoto) {
+      const scanCard = document.getElementById('fridgeScanCard');
+      const scanReadout = document.getElementById('fridgeReadout');
+      scanCard.classList.remove('scanning'); scanCard.classList.add('done'); scanReadout.classList.add('done');
+      setFridgeChip(detected.length ? 'Scan complete' : 'Photo captured');
+      await frRenderDetected(detected);
+    } else {
+      genEl.classList.remove('show');
+    }
+
+    if (!dishes.length) throw new Error('No dishes returned');
+
+    document.getElementById('fridgeResultsCount').textContent = dishes.length;
+    const grid = document.getElementById('fridgeDishesGrid');
+    grid.innerHTML = '';
+    dishes.forEach((d, i) => {
+      const card = document.createElement('div');
+      card.className = 'fridge-dish-card';
+      card.innerHTML =
+        '<img class="fridge-dish-img" style="background:var(--elevated);">' +
+        '<div class="fridge-dish-body">' +
+          '<div class="fridge-dish-name">' + d.name + '</div>' +
+          '<div class="fridge-dish-desc">' + (d.description || (d.ingredients||[]).join(', ')) + '</div>' +
+          '<div class="fridge-dish-footer">' +
+            '<div><span class="fridge-dish-kcal">' + (d.kcal||'—') + '</span><span class="fridge-dish-kcal-label"> kcal</span></div>' +
+            '<div style="display:flex;gap:6px;">' +
+              '<button class="fridge-dish-recipe-btn">Recipe</button>' +
+              '<button class="fridge-save-btn" id="save-' + i + '">♡</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      const img = card.querySelector('.fridge-dish-img');
+      img.setAttribute('data-dish', encodeURIComponent((d.ingredients&&d.ingredients[0])||d.name));
+      img.setAttribute('data-idx', String(i));
+      img.alt = d.name;
+      card.querySelector('.fridge-dish-recipe-btn').onclick = function() { openRecipe(d.name, d.ingredients||[]); };
+      card.querySelector('.fridge-save-btn').onclick = function() { saveDish(i, d.name, d.kcal||0, d.description||'', d.ingredients||[]); };
+      grid.appendChild(card);
+    });
+
+    resultsEl.style.display = 'block';
+
+    // Load dish images
+    const dishImgs = document.querySelectorAll('[data-dish]');
+    for (const img of dishImgs) {
+      try {
+        const keyword = decodeURIComponent(img.dataset.dish);
+        const cacheKey = 'fitai_img_dish_' + keyword.toLowerCase().replace(/\s+/g,'_').slice(0,40);
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) { img.src = cached; continue; }
+        const resp = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(keyword+' food dish')}&orientation=landscape&client_id=Rk9KvTZhsOJNw-ajfLSQfoLxkyjNsxTyMF2Rl_7VZJ8`, { headers:{'Accept-Version':'v1'} });
+        if (!resp.ok) continue;
+        const json = await resp.json();
+        const url = json.urls?.small;
+        if (url) {
+          img.src = url;
+          localStorage.setItem(cacheKey, url);
+          // Also store for save function
+          if (window._fridgeImgUrls !== undefined) {
+            const idx = img.dataset.idx;
+            if (idx !== undefined) window._fridgeImgUrls[idx] = url;
+          }
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    // Scroll to results
+    resultsEl.scrollIntoView({ behavior:'smooth', block:'start' });
+
+    // Store current dishes for save function
+    window._fridgeDishes = dishes;
+    window._fridgeImgUrls = {};
+
+    // Render saved dishes
+    renderSavedDishes();
+
+  } catch(e) {
+    genEl.classList.remove('show');
+    const scanCard = document.getElementById('fridgeScanCard');
+    if (scanCard) scanCard.classList.remove('scanning');
+    if (fridgePhotoDataUrl) setFridgeChip('Scan failed');
+    alert(FitAILang.t('nut.err_dishes'));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── RECIPE ──
+async function openRecipe(mealName, foods) {
+  document.getElementById('recipeTitle').textContent = mealName;
+  document.getElementById('recipeBody').innerHTML = '<div style="display:flex;align-items:center;gap:12px;"><div class="recipe-spinner"></div><span style="color:var(--muted)">' + FitAILang.t('nut.getting_recipe') + '</span></div>';
+  document.getElementById('recipeOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const foodArr = typeof foods === 'string' ? foods.split(',').map(f=>f.trim()) : foods;
+    const r = await fetch(RECIPE_WEBHOOK, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ meal: mealName, foods: foodArr, lang: localStorage.getItem('fitai_lang') || 'en' })
+    });
+    const data = await r.json();
+    const recipe = data.recipe || data.text || 'Recipe not available.';
+    document.getElementById('recipeBody').innerHTML = formatRecipe(recipe);
+  } catch(e) {
+    document.getElementById('recipeBody').innerHTML = '<p style="color:var(--red)">' + FitAILang.t('dash.err_recipe') + '</p>';
+  }
+}
+
+function formatRecipe(text) {
+  return text
+    .split('\n')
+    .filter(l => l.trim())
+    .map(l => {
+      const clean = l.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text)">$1</strong>');
+      if (l.match(/^\*\*[A-Z]/) || l.match(/^#{1,3}\s/))
+        return `<div style="font-family:'Oswald',sans-serif;font-size:16px;color:var(--green);margin:16px 0 8px;text-transform:uppercase;">${clean.replace(/^#+\s/,'').replace(/\*\*/g,'')}</div>`;
+      if (l.match(/^\d+\./))  return `<div style="padding:5px 0;color:var(--text);">${clean}</div>`;
+      if (l.match(/^[-•*]/)) return `<div style="padding:4px 0 4px 8px;color:var(--muted);border-left:2px solid var(--border);margin-left:4px;">${clean.replace(/^[-•*]\s*/,'')}</div>`;
+      return `<p style="margin-bottom:8px;color:var(--muted);">${clean}</p>`;
+    }).join('');
+}
+
+function closeRecipe() {
+  document.getElementById('recipeOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('recipeOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('recipeOverlay')) closeRecipe();
+});
+
+// ── SCAN MEAL ────────────────────────────────────────────────────
+let scanFileData   = null;  // base64 string
+let scanMimeType   = 'image/jpeg';
+let scanResultData = null;  // last GPT result
+
+function openScanModal() {
+  if (!isPremium() && foodScansToday() >= 3) {
+    showPaywall('Unlimited Food Scans', 'You’ve used your 3 free meal scans today. Go Premium for unlimited AI food analysis.');
+    return;
+  }
+  resetScan();
+  document.getElementById('scanOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeScanModal() {
+  document.getElementById('scanOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('scanOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('scanOverlay')) closeScanModal();
+});
+
+function resetScan() {
+  scanFileData   = null;
+  scanResultData = null;
+  document.getElementById('scanDropzone').style.display = 'block';
+  const scanPrev = document.getElementById('scanPreview');
+  scanPrev.style.display  = 'none';
+  scanPrev.classList.remove('scanning', 'done');
+  document.getElementById('scanAnalyzeBtn').style.display = 'none';
+  document.getElementById('scanLoading').classList.remove('show');
+  document.getElementById('scanResult').classList.remove('show');
+  document.getElementById('scanFileInput').value = '';
+}
+
+function handleScanDrop(e) {
+  e.preventDefault();
+  document.getElementById('scanDropzone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadScanFile(file);
+}
+
+function handleScanFile(e) {
+  const file = e.target.files[0];
+  if (file) loadScanFile(file);
+}
+
+function loadScanFile(file) {
+  scanMimeType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    // Store only the base64 part (strip "data:...;base64,")
+    scanFileData = dataUrl.split(',')[1];
+
+    // Show preview
+    document.getElementById('scanPreviewImg').src = dataUrl;
+    document.getElementById('scanDropzone').style.display  = 'none';
+    document.getElementById('scanPreview').style.display   = 'block';
+    document.getElementById('scanAnalyzeBtn').style.display = 'block';
+    document.getElementById('scanResult').classList.remove('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeMeal() {
+  if (!scanFileData) return;
+
+  // UI: keep the photo visible and run the fridge-style scanning effect over it
+  document.getElementById('scanAnalyzeBtn').style.display = 'none';
+  const scanPrevEl = document.getElementById('scanPreview');
+  scanPrevEl.style.display = 'block';
+  scanPrevEl.classList.remove('done');
+  scanPrevEl.classList.add('scanning');
+  document.getElementById('scanLoading').classList.add('show');
+  document.getElementById('scanResult').classList.remove('show');
+
+  try {
+    // Get user session for user_id
+    const { data:{ session } } = await sb.auth.getSession();
+    const userId = session?.user?.id || null;
+
+    const resp = await fetch(FOOD_SCAN_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        photo_base64: scanFileData,
+        mime_type:    scanMimeType,
+        user_id:      userId,
+        lang:         localStorage.getItem('fitai_lang') || 'en'
+      })
+    });
+
+    if (!resp.ok) throw new Error('Webhook error ' + resp.status);
+    const data = await resp.json();
+
+    if (!data.success) throw new Error('Scan failed');
+
+    incFoodScan(); // count this successful scan toward the free daily limit
+    scanResultData = data;
+
+    // Populate result UI
+    document.getElementById('scanDishName').textContent = data.dish || '—';
+    document.getElementById('scanGrams').textContent    = (data.grams || '—') + 'g estimated portion';
+    document.getElementById('scanKcal').textContent     = data.kcal ?? '—';
+    document.getElementById('scanProt').textContent     = (data.prot ?? '—') + 'g';
+    document.getElementById('scanCarb').textContent     = (data.carb ?? '—') + 'g';
+    document.getElementById('scanFat').textContent      = (data.fat  ?? '—') + 'g';
+
+    // Confidence badge
+    const confMap = {
+      high:   { color:'var(--green)', text:'High confidence' },
+      medium: { color:'var(--amber)', text:'Medium confidence' },
+      low:    { color:'var(--red)',   text:'Low confidence — review manually' }
+    };
+    const conf = confMap[data.confidence] || confMap.medium;
+    document.getElementById('scanConfDot').style.background = conf.color;
+    document.getElementById('scanConfText').textContent = conf.text;
+
+    // Optional note
+    const noteEl = document.getElementById('scanNote');
+    if (data.note) {
+      noteEl.textContent = '💡 ' + data.note;
+      noteEl.style.display = 'block';
+    } else {
+      noteEl.style.display = 'none';
+    }
+
+    // Show result — settle the scan into its "done" state
+    document.getElementById('scanLoading').classList.remove('show');
+    const scanPrevDone = document.getElementById('scanPreview');
+    scanPrevDone.classList.remove('scanning');
+    scanPrevDone.classList.add('done');
+    scanPrevDone.style.display = 'block';
+    document.getElementById('scanResult').classList.add('show');
+
+  } catch(err) {
+    document.getElementById('scanLoading').classList.remove('show');
+    const scanPrevErr = document.getElementById('scanPreview');
+    scanPrevErr.classList.remove('scanning', 'done');
+    scanPrevErr.style.display   = 'block';
+    document.getElementById('scanAnalyzeBtn').style.display = 'block';
+    alert(FitAILang.t('nut.err_analyze'));
+    console.error('Scan error:', err);
+  }
+}
+
+async function saveScanToLog() {
+  if (!scanResultData) return;
+
+  const btn = document.getElementById('scanSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const { data:{ session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const now      = new Date();
+    const mealType = getMealTypeByHour(now.getHours());
+    const uid      = session.user.id;
+    const token    = session.access_token;
+
+    // ── 1. Upload photo to Supabase Storage ──
+    let photoUrl = null;
+    if (scanFileData && scanMimeType) {
+      try {
+        btn.textContent = 'Uploading photo...';
+        // Convert base64 → Blob
+        const byteChars = atob(scanFileData);
+        const byteArr   = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteArr], { type: scanMimeType });
+
+        const ext      = scanMimeType.split('/')[1] || 'jpg';
+        const filePath = `${uid}/${now.toISOString().replace(/[:.]/g,'-')}.${ext}`;
+
+        const uploadResp = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/food-photos/${filePath}`,
+          {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_ANON,
+              Authorization: `Bearer ${token}`,
+              'Content-Type': scanMimeType,
+              'x-upsert': 'true'
+            },
+            body: blob
+          }
+        );
+
+        if (uploadResp.ok) {
+          // Public URL
+          photoUrl = `${SUPABASE_URL}/storage/v1/object/public/food-photos/${filePath}`;
+        } else {
+          console.warn('Photo upload failed:', await uploadResp.text());
+          // Continue saving without photo — not critical
+        }
+      } catch(uploadErr) {
+        console.warn('Photo upload error:', uploadErr);
+        // Non-critical — save entry without photo
+      }
+    }
+
+    // ── 2. Save to food_log ──
+    btn.textContent = 'Saving...';
+
+    const headers = {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    };
+
+    const payload = {
+      user_id:    uid,
+      date:       now.toISOString().slice(0, 10),
+      meal_type:  mealType,
+      dish:       scanResultData.dish,
+      grams:      Number(scanResultData.grams) || 0,
+      kcal:       Number(scanResultData.kcal)  || 0,
+      prot:       Number(scanResultData.prot)  || 0,
+      fat:        Number(scanResultData.fat)   || 0,
+      carb:       Number(scanResultData.carb)  || 0,
+      scanned_at: scanResultData.scanned_at    || now.toISOString(),
+      photo_url:  photoUrl  // null if upload failed — that's OK
+    };
+
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/food_log`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!r.ok) {
+      const errBody = await r.text();
+      console.error('food_log save error:', r.status, errBody);
+      throw new Error(errBody);
+    }
+
+    btn.textContent = '✓ Saved!';
+    btn.style.background = 'var(--green)';
+    // signal the dashboard to re-fetch today's food log when it next becomes visible
+    try { localStorage.setItem('fitai_foodlog_dirty', '1'); } catch(e){}
+    setTimeout(() => closeScanModal(), 1400);
+
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = '✓ Save to Food Log';
+    alert(FitAILang.t('nut.err_save'));
+    console.error('Save error:', err);
+  }
+}
+
+function getMealTypeByHour(h) {
+  if (h >= 5  && h < 11) return 'breakfast';
+  if (h >= 11 && h < 15) return 'lunch';
+  if (h >= 15 && h < 18) return 'snack';
+  if (h >= 18 && h < 22) return 'dinner';
+  return 'snack';
+}
+</script>
+<!-- ── PREMIUM PAYWALL ── -->
+<div class="pw-overlay" id="paywallOverlay" onclick="if(event.target===this)closePaywall()">
+  <div class="pw-modal" role="dialog" aria-modal="true" aria-label="Premium feature">
+    <button class="pw-close" onclick="closePaywall()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <div class="pw-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Premium feature</div>
+    <div class="pw-title" id="pwTitle">Premium feature</div>
+    <div class="pw-line" id="pwLine"></div>
+    <a class="pw-cta" href="pricing.html">See plans →</a>
+    <button class="pw-skip" onclick="closePaywall()">Maybe later</button>
+  </div>
+</div>
+</body>
+</html>
