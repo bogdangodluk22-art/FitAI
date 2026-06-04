@@ -223,7 +223,7 @@
     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <span data-i18n="pricing.cancel_anytime">Cancel anytime</span></span>
     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> <span data-i18n="pricing.r_instant">Instant access</span></span>
   </div>
-  <p class="fineprint" data-i18n-html="pricing.fineprint">Test mode — no real charges yet. Manage or cancel your membership anytime from your <a href="dashboard.html">dashboard</a>.</p>
+  <p class="fineprint" data-i18n-html="pricing.fineprint">Manage or cancel your membership anytime from your <a href="dashboard.html">dashboard</a>.</p>
 
 </div>
 
@@ -236,8 +236,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 // client_reference_id (= Supabase user id) + prefilled_email are appended at checkout
 // time so the Stripe webhook can map the payment back to the right user.
 const STRIPE_LINKS = {
-  monthly: 'https://buy.stripe.com/test_dRmfZg7lb9EV7Ua7KF6sw00',
-  annual:  ''  // TODO: paste your Annual Payment Link here
+  monthly: 'https://buy.stripe.com/7sY4gz3oS5Bc3cn7kXfEk00',
+  annual:  'https://buy.stripe.com/cNi28r5x0aVwbITdJlfEk01'
 };
 
 let currentProfile = null;
